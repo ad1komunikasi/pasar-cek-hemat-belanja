@@ -77,19 +77,45 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "PasarCek – Cek Harga Dulu, Belanja Lebih Hemat" },
-      { name: "description", content: "Bandingkan harga sembako antar pasar terdekat secara real-time. Hemat pengeluaran rumah tangga setiap hari bersama PasarCek." },
       { name: "author", content: "PasarCek" },
-      { property: "og:title", content: "PasarCek – Cek Harga Dulu, Belanja Lebih Hemat" },
-      { property: "og:description", content: "Bandingkan harga sembako antar pasar terdekat secara real-time." },
+      { property: "og:site_name", content: "PasarCek" },
       { property: "og:type", content: "website" },
+      { property: "og:locale", content: "id_ID" },
       { name: "twitter:card", content: "summary_large_image" },
+      { name: "robots", content: "index, follow, max-image-preview:large" },
     ],
     links: [
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       { rel: "stylesheet", href: "https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" },
       { rel: "stylesheet", href: appCss },
+    ],
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@graph": [
+            {
+              "@type": "Organization",
+              name: "PasarCek",
+              url: "/",
+              logo: "/og-image.jpg",
+              description: "Aplikasi cek dan bandingkan harga sembako antar pasar terdekat untuk keluarga Indonesia",
+            },
+            {
+              "@type": "WebSite",
+              name: "PasarCek",
+              url: "/",
+              potentialAction: {
+                "@type": "SearchAction",
+                target: { "@type": "EntryPoint", urlTemplate: "/?q={search_term_string}" },
+                "query-input": "required name=search_term_string",
+              },
+            },
+          ],
+        }),
+      },
     ],
   }),
   shellComponent: RootShell,
@@ -100,7 +126,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 
 function RootShell({ children }: { children: ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="id">
       <head>
         <HeadContent />
       </head>

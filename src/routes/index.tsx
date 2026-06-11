@@ -14,13 +14,52 @@ import mockupImg from "@/assets/app-mockup.png";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "PasarCek – Cek Harga Dulu, Belanja Lebih Hemat" },
-      { name: "description", content: "Bandingkan harga sembako antar pasar terdekat secara real-time. Hemat pengeluaran rumah tangga bersama PasarCek." },
-      { property: "og:title", content: "PasarCek – Cek Harga Dulu, Belanja Lebih Hemat" },
-      { property: "og:description", content: "Aplikasi cek harga sembako & pasar termurah di sekitar Anda." },
+      { title: "PasarCek — Cek & Bandingkan Harga Sembako Terdekat | Gratis" },
+      { name: "description", content: "Cek harga sembako terbaru dan bandingkan antar pasar terdekat. Hemat waktu & uang belanja harian keluarga. Download aplikasi PasarCek gratis!" },
+      { name: "keywords", content: "cek harga sembako, harga beras hari ini, bandingkan harga pasar, aplikasi belanja hemat, harga cabai, harga telur terdekat, pasar tradisional" },
+      { property: "og:title", content: "PasarCek — Cek & Bandingkan Harga Sembako Terdekat" },
+      { property: "og:description", content: "Cek harga sembako terbaru dan bandingkan antar pasar terdekat. Hemat waktu & uang belanja harian keluarga." },
       { property: "og:url", content: "/" },
+      { property: "og:image", content: "/og-image.jpg" },
+      { property: "og:image:alt", content: "PasarCek — Aplikasi cek harga sembako terbaru" },
+      { property: "og:image:width", content: "1200" },
+      { property: "og:image:height", content: "630" },
+      { name: "twitter:title", content: "PasarCek — Cek & Bandingkan Harga Sembako Terdekat" },
+      { name: "twitter:description", content: "Cek harga sembako terbaru dan bandingkan antar pasar terdekat. Hemat waktu & uang belanja harian keluarga." },
+      { name: "twitter:image", content: "/twitter-image.jpg" },
+      { name: "twitter:image:alt", content: "PasarCek — Aplikasi cek harga sembako terbaru" },
     ],
     links: [{ rel: "canonical", href: "/" }],
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "SoftwareApplication",
+          name: "PasarCek",
+          applicationCategory: "ShoppingApplication",
+          operatingSystem: "iOS, Android",
+          offers: {
+            "@type": "Offer",
+            price: "0",
+            priceCurrency: "IDR",
+          },
+          description: "Aplikasi cek harga sembako terbaru dan bandingkan antar pasar terdekat untuk belanja lebih hemat.",
+          aggregateRating: {
+            "@type": "AggregateRating",
+            ratingValue: "4.8",
+            ratingCount: "1000",
+          },
+          featureList: [
+            "Harga sembako real-time",
+            "Bandingkan harga antar pasar",
+            "Notifikasi harga turun",
+            "Daftar belanja pintar",
+            "Pasar terdekat berbasis lokasi",
+          ],
+        }),
+      },
+    ],
   }),
   component: LandingPage,
 });
