@@ -10,6 +10,8 @@ import heroImg from "@/assets/hero-illustration.png";
 import problemImg from "@/assets/problem-illustration.png";
 import familyImg from "@/assets/family-illustration.png";
 import mockupImg from "@/assets/app-mockup.png";
+import cookingOilImg from "@/assets/cooking-oil.png";
+import shallotsImg from "@/assets/shallots.png";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -369,9 +371,176 @@ function AppPreview() {
         <SectionTitle eyebrow="Preview Aplikasi" title="Lihat Tampilan Aplikasi" subtitle="Antarmuka yang bersih, ramah, dan mudah dipahami siapa saja." />
         <div className="relative rounded-3xl bg-gradient-hero p-8 md:p-12 border border-border overflow-hidden">
           <div className="absolute -top-20 -right-20 h-72 w-72 rounded-full bg-accent/20 blur-3xl" />
-          <div className="relative flex items-center justify-center">
-            <img src={mockupImg} alt="Tampilan aplikasi PasarCek" width={700} height={1200} loading="lazy" className="w-full max-w-sm drop-shadow-2xl animate-float" />
+          
+          <div className="relative flex items-center justify-center animate-float">
+            {/* Phone Simulator Frame */}
+            <div className="relative w-full max-w-[325px] h-[600px] rounded-[3rem] border-[10px] border-slate-900 bg-background shadow-elevated overflow-hidden select-none flex flex-col text-left">
+              
+              {/* Phone Speaker & Camera (Notch) */}
+              <div className="absolute top-2 left-1/2 -translate-x-1/2 w-28 h-5 bg-slate-900 rounded-full z-30 flex items-center justify-center">
+                <div className="w-2.5 h-2.5 bg-slate-800 rounded-full ml-auto mr-4" />
+              </div>
+
+              {/* Status Bar */}
+              <div className="px-5 pt-3 pb-1 flex justify-between items-center text-[10px] font-bold text-foreground/75 z-20 bg-white">
+                <span>09:41</span>
+                <div className="flex items-center gap-1.5">
+                  <svg className="w-3 h-3 fill-current" viewBox="0 0 24 24">
+                    <path d="M12 3c-4.97 0-9 4.03-9 9 0 2.12.74 4.07 1.97 5.61L4.35 19.4c-.39.39-.39 1.02 0 1.41.39.39 1.02.39 1.41 0l1.9-1.9C9.07 19.64 10.47 20 12 20c4.97 0 9-4.03 9-9s-4.03-9-9-9zm0 15c-3.31 0-6-2.69-6-6s2.69-6 6-6 6 2.69 6 6-2.69 6-6 6z" />
+                  </svg>
+                  <span className="w-3.5 h-2 bg-foreground/75 rounded-xs inline-block" />
+                </div>
+              </div>
+
+              {/* App Navbar */}
+              <div className="px-4 py-2.5 flex items-center justify-between border-b border-border bg-white z-10">
+                <div className="flex items-center gap-1.5">
+                  <div className="grid h-6 w-6 place-items-center rounded-lg bg-gradient-primary text-white shadow-soft">
+                    <ShoppingBasket className="h-3.5 w-3.5" />
+                  </div>
+                  <span className="font-display text-sm font-extrabold text-primary">PasarCek</span>
+                </div>
+                <div className="flex items-center gap-1 text-[10px] font-semibold text-accent">
+                  <MapPin className="h-3.5 w-3.5" />
+                  <span>Pasar Santa</span>
+                </div>
+              </div>
+
+              {/* Scrollable Simulator App Content */}
+              <div className="flex-1 overflow-y-auto px-3.5 py-4 space-y-4 bg-secondary/35" style={{ scrollbarWidth: 'none' }}>
+                
+                {/* Search Bar */}
+                <div className="relative shadow-soft rounded-2xl">
+                  <Search className="absolute left-3.5 top-3 h-4 w-4 text-muted-foreground/60" />
+                  <input
+                    type="text"
+                    placeholder="Cari minyak, bawang merah..."
+                    disabled
+                    className="w-full rounded-2xl bg-white border border-border/80 pl-10 pr-3.5 py-2.5 text-xs text-muted-foreground placeholder:text-muted-foreground/50"
+                  />
+                </div>
+
+                {/* Categories Tab */}
+                <div className="flex gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
+                  {["Semua", "Minyak", "Bawang", "Beras", "Cabai"].map((cat, idx) => (
+                    <span
+                      key={cat}
+                      className={`px-3 py-1.5 rounded-full text-[10px] font-semibold whitespace-nowrap transition-colors border ${
+                        idx === 1 || idx === 2
+                          ? "bg-primary text-primary-foreground border-primary"
+                          : "bg-white text-muted-foreground border-border/80 shadow-xs"
+                      }`}
+                    >
+                      {cat}
+                    </span>
+                  ))}
+                </div>
+
+                {/* Section Title */}
+                <div className="flex items-center justify-between px-1">
+                  <span className="text-[10px] font-extrabold text-muted-foreground/80 uppercase tracking-wider">Harga Hari Ini</span>
+                  <span className="text-[9px] font-bold text-accent">Lihat Semua</span>
+                </div>
+
+                {/* Minyak Goreng Product Card */}
+                <div className="bg-white rounded-2xl border border-border/80 p-3.5 shadow-soft flex flex-col gap-3 hover:shadow-card transition-shadow">
+                  <div className="flex items-center gap-3">
+                    <div className="w-14 h-14 shrink-0 rounded-xl bg-slate-50 border border-border/60 flex items-center justify-center overflow-hidden">
+                      <img src={cookingOilImg} alt="Minyak Goreng" className="w-full h-full object-contain p-0.5" />
+                    </div>
+                    <div>
+                      <span className="inline-block px-1.5 py-0.5 rounded bg-accent/10 text-accent text-[8px] font-extrabold uppercase tracking-wider mb-1">
+                        Minyak Goreng
+                      </span>
+                      <h4 className="font-display font-bold text-xs text-foreground leading-tight">Minyak Goreng Premium 2L</h4>
+                    </div>
+                  </div>
+                  
+                  <div className="border-t border-border/60 pt-3 space-y-2">
+                    <div className="text-[9px] font-bold text-muted-foreground/60 uppercase tracking-wider">Bandingkan Pasar:</div>
+                    
+                    <div className="flex items-center justify-between text-xs py-1.5 px-2.5 rounded-xl bg-accent/5 border border-accent/10 text-foreground">
+                      <span className="font-medium text-foreground/80">Pasar Santa</span>
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-bold text-primary">Rp33.500</span>
+                        <span className="text-[8px] font-extrabold bg-accent text-white px-1.5 py-0.5 rounded uppercase tracking-wider">
+                          Termurah
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between text-xs py-1.5 px-2.5 rounded-xl bg-transparent text-foreground/80">
+                      <span>Pasar Kebayoran</span>
+                      <span className="font-bold text-foreground">Rp35.000</span>
+                    </div>
+
+                    <div className="flex items-center justify-between text-xs py-1.5 px-2.5 rounded-xl bg-transparent text-foreground/80">
+                      <span>Pasar Blok M</span>
+                      <span className="font-bold text-foreground">Rp36.200</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Bawang Merah Product Card */}
+                <div className="bg-white rounded-2xl border border-border/80 p-3.5 shadow-soft flex flex-col gap-3 hover:shadow-card transition-shadow">
+                  <div className="flex items-center gap-3">
+                    <div className="w-14 h-14 shrink-0 rounded-xl bg-slate-50 border border-border/60 flex items-center justify-center overflow-hidden">
+                      <img src={shallotsImg} alt="Bawang Merah" className="w-full h-full object-contain p-0.5" />
+                    </div>
+                    <div>
+                      <span className="inline-block px-1.5 py-0.5 rounded bg-accent/10 text-accent text-[8px] font-extrabold uppercase tracking-wider mb-1">
+                        Bumbu Dapur
+                      </span>
+                      <h4 className="font-display font-bold text-xs text-foreground leading-tight">Bawang Merah Brebes 1kg</h4>
+                    </div>
+                  </div>
+                  
+                  <div className="border-t border-border/60 pt-3 space-y-2">
+                    <div className="text-[9px] font-bold text-muted-foreground/60 uppercase tracking-wider">Bandingkan Pasar:</div>
+                    
+                    <div className="flex items-center justify-between text-xs py-1.5 px-2.5 rounded-xl bg-accent/5 border border-accent/10 text-foreground">
+                      <span className="font-medium text-foreground/80">Pasar Kebayoran</span>
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-bold text-primary">Rp38.000</span>
+                        <span className="text-[8px] font-extrabold bg-accent text-white px-1.5 py-0.5 rounded uppercase tracking-wider">
+                          Termurah
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between text-xs py-1.5 px-2.5 rounded-xl bg-transparent text-foreground/80">
+                      <span>Pasar Blok M</span>
+                      <span className="font-bold text-foreground">Rp39.500</span>
+                    </div>
+
+                    <div className="flex items-center justify-between text-xs py-1.5 px-2.5 rounded-xl bg-transparent text-foreground/80">
+                      <span>Pasar Santa</span>
+                      <span className="font-bold text-foreground">Rp40.000</span>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+
+              {/* Bottom Navigation Bar */}
+              <div className="px-6 py-2.5 border-t border-border bg-white flex justify-between items-center text-[9px] font-bold text-muted-foreground z-10">
+                <div className="flex flex-col items-center gap-0.5 text-primary">
+                  <ShoppingBasket className="h-4 w-4" />
+                  <span>Home</span>
+                </div>
+                <div className="flex flex-col items-center gap-0.5 hover:text-primary transition-colors">
+                  <MapPin className="h-4 w-4" />
+                  <span>Pasar</span>
+                </div>
+                <div className="flex flex-col items-center gap-0.5 hover:text-primary transition-colors">
+                  <ShoppingBag className="h-4 w-4" />
+                  <span>Keranjang</span>
+                </div>
+              </div>
+
+            </div>
           </div>
+          
           <div className="relative mt-8 flex flex-wrap justify-center gap-2">
             {screens.map(s => (
               <span key={s} className="rounded-full bg-white/70 backdrop-blur px-4 py-1.5 text-xs font-semibold text-primary border border-border">{s}</span>
