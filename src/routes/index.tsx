@@ -127,8 +127,9 @@ function Navbar() {
             </li>
           ))}
         </ul>
-        <div className="hidden md:block">
-          <CTAButton href="#cta">Download Gratis</CTAButton>
+        <div className="hidden md:flex items-center gap-3">
+          <a href="/auth" className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors">Masuk</a>
+          <CTAButton href="/dashboard">Buka Aplikasi</CTAButton>
         </div>
         <button onClick={() => setOpen(!open)} aria-label="Menu" className="md:hidden p-2 rounded-lg hover:bg-muted">
           {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
