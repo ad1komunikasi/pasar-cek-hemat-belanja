@@ -26,6 +26,6 @@ export default defineConfig({
     },
   },
   ssr: {
-    noExternal: ["tslib", /^@supabase\//],
+    noExternal: [/^@supabase\//],
   },
 });
