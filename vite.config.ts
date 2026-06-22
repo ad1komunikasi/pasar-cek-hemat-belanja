@@ -3,6 +3,7 @@ import react from "@vitejs/plugin-react";
 import { tanstackStart } from "@tanstack/react-start/plugin/vite";
 import tsConfigPaths from "vite-tsconfig-paths";
 import tailwindcss from "@tailwindcss/vite";
+import path from "path";
 
 export default defineConfig({
   plugins: [
@@ -15,7 +16,7 @@ export default defineConfig({
   ],
   resolve: {
     alias: {
-      "@": "/Users/mac/Documents/Github/PasarCekApp/pasar-cek-hemat-belanja/src",
+      "@": path.resolve(__dirname, "./src"),
     },
   },
 });
