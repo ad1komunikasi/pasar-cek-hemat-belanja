@@ -13,7 +13,11 @@ export default defineConfig({
     tanstackStart({
       server: { entry: "server" },
     }),
-    nitro(),
+    nitro({
+      externals: {
+        inline: ["tslib"],
+      },
+    }),
     react(),
   ],
   resolve: {
