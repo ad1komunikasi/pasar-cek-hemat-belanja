@@ -1,5 +1,4 @@
 import "./lib/error-capture";
-import * as tslib from "tslib/tslib.es6.mjs";
 
 import { consumeLastCapturedError } from "./lib/error-capture";
 import { renderErrorPage } from "./lib/error-page";
@@ -41,10 +40,6 @@ async function normalizeCatastrophicSsrResponse(response: Response): Promise<Res
 
 export default {
   async fetch(request: Request, env: unknown, ctx: unknown) {
-    // Force runtime reference to tslib so it is never tree-shaken
-    if (request.url.includes("/__force_tslib_trace__")) {
-      return new Response(JSON.stringify(tslib));
-    }
     try {
       const handler = await getServerEntry();
       const response = await handler.fetch(request, env, ctx);
