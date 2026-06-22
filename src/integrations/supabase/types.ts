@@ -624,10 +624,6 @@ export type Database = {
     }
     Functions: {
       generate_order_number: { Args: never; Returns: string }
-      log_auth_event: {
-        Args: { _event: string; _success: boolean }
-        Returns: undefined
-      }
     }
     Enums: {
       app_role: "customer" | "premium" | "admin" | "super_admin"
