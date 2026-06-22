@@ -14,9 +14,10 @@ export default defineConfig({
       server: { entry: "server" },
     }),
     nitro({
-      externals: {
-        inline: ["tslib"],
+      rollupConfig: {
+        external: [],
       },
+      inlineDynamicImports: true,
     }),
     react(),
   ],
@@ -24,5 +25,8 @@ export default defineConfig({
     alias: {
       "@": path.resolve(__dirname, "./src"),
     },
+  },
+  ssr: {
+    noExternal: ["tslib"],
   },
 });
