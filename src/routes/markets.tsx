@@ -30,8 +30,8 @@ function MarketsPage() {
   const mapInstance = useRef<any>(null);
 
   useEffect(() => {
-    const key = import.meta.env.VITE_LOVABLE_CONNECTOR_GOOGLE_MAPS_BROWSER_KEY;
-    const ch = import.meta.env.VITE_LOVABLE_CONNECTOR_GOOGLE_MAPS_TRACKING_ID;
+    const key = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+    const ch = import.meta.env.VITE_GOOGLE_MAPS_TRACKING_ID;
     if (!key) return;
     function init() {
       if (!mapRef.current || !window.google) return;

@@ -5,7 +5,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
-import { lovable } from "@/integrations/lovable/index";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
 import { z } from "zod";
@@ -67,7 +66,12 @@ function GoogleButton() {
   const [busy, setBusy] = useState(false);
   async function signIn() {
     setBusy(true);
-    const res = await lovable.auth.signInWithOAuth("google", { redirect_uri: window.location.origin + "/dashboard" });
+    const res = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: window.location.origin + "/dashboard",
+      },
+    });
     if (res.error) { toast.error("Gagal masuk dengan Google"); setBusy(false); }
   }
   return (

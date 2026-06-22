@@ -13,7 +13,6 @@ import { AuthProvider } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 
 import appCss from "../styles.css?url";
-import { reportLovableError } from "../lib/lovable-error-reporting";
 
 function NotFoundComponent() {
   return (
@@ -40,9 +39,6 @@ function NotFoundComponent() {
 function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   console.error(error);
   const router = useRouter();
-  useEffect(() => {
-    reportLovableError(error, { boundary: "tanstack_root_error_component" });
-  }, [error]);
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
@@ -92,8 +88,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "description", content: "PasarCek helps users find the cheapest groceries by comparing prices across nearby markets." },
       { property: "og:description", content: "PasarCek helps users find the cheapest groceries by comparing prices across nearby markets." },
       { name: "twitter:description", content: "PasarCek helps users find the cheapest groceries by comparing prices across nearby markets." },
-      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/a313c834-c1b6-438a-a2ae-ecb1e83221ec/id-preview-a847122b--bab4725f-ca56-4527-8ce4-effcc867eb6f.lovable.app-1781189599913.png" },
-      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/a313c834-c1b6-438a-a2ae-ecb1e83221ec/id-preview-a847122b--bab4725f-ca56-4527-8ce4-effcc867eb6f.lovable.app-1781189599913.png" },
+      { property: "og:image", content: "/og-image.jpg" },
+      { name: "twitter:image", content: "/twitter-image.jpg" },
     ],
     links: [
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
