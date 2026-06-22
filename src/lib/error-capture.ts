@@ -15,6 +15,30 @@ if (typeof globalThis.addEventListener === "function") {
   );
 }
 
+// Hook into console.error to capture any errors swallowed and logged by h3/Nitro/Vite
+const originalConsoleError = console.error;
+console.error = (...args) => {
+  originalConsoleError(...args);
+  const firstError = args.find(
+    (arg) => arg instanceof Error || (arg && typeof arg === "object" && "stack" in arg)
+  );
+  if (firstError) {
+    record(firstError);
+  } else {
+    const stringMessage = args
+      .map((arg) => (typeof arg === "object" ? JSON.stringify(arg) : String(arg)))
+      .join(" ");
+    if (
+      stringMessage.includes("Error") ||
+      stringMessage.includes("Missing") ||
+      stringMessage.includes("Failed") ||
+      stringMessage.includes("unhandled")
+    ) {
+      record(new Error(stringMessage));
+    }
+  }
+};
+
 export function consumeLastCapturedError(): unknown {
   if (!lastCapturedError) return undefined;
   if (Date.now() - lastCapturedError.at > TTL_MS) {

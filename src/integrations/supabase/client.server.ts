@@ -5,9 +5,14 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 
+const cleanEnvVar = (val?: string) => {
+  if (!val) return val;
+  return val.replace(/^["']|["']$/g, ''); // Remove leading and trailing double/single quotes
+};
+
 function createSupabaseAdminClient() {
-  const SUPABASE_URL = process.env.SUPABASE_URL;
-  const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const SUPABASE_URL = cleanEnvVar(process.env.SUPABASE_URL);
+  const SUPABASE_SERVICE_ROLE_KEY = cleanEnvVar(process.env.SUPABASE_SERVICE_ROLE_KEY);
 
   if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
     const missing = [
