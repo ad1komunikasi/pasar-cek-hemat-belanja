@@ -5,8 +5,38 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useEffect, useRef, useState } from "react";
 import { MapPin, Star, Clock } from "lucide-react";
-import L from "leaflet";
-import "leaflet/dist/leaflet.css";
+
+let scriptLoaded = false;
+let scriptLoadingPromise: Promise<void> | null = null;
+
+function loadGoogleMapsScript(apiKey: string): Promise<void> {
+  if (scriptLoaded) return Promise.resolve();
+  if (scriptLoadingPromise) return scriptLoadingPromise;
+
+  scriptLoadingPromise = new Promise((resolve, reject) => {
+    if (typeof window !== "undefined" && (window as any).google && (window as any).google.maps) {
+      scriptLoaded = true;
+      resolve();
+      return;
+    }
+
+    const script = document.createElement("script");
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}`;
+    script.async = true;
+    script.defer = true;
+    script.onload = () => {
+      scriptLoaded = true;
+      resolve();
+    };
+    script.onerror = (err) => {
+      scriptLoadingPromise = null;
+      reject(err);
+    };
+    document.head.appendChild(script);
+  });
+
+  return scriptLoadingPromise;
+}
 
 export const Route = createFileRoute("/markets")({
   head: () => ({
@@ -27,100 +57,120 @@ function MarketsPage() {
     queryFn: async () => (await supabase.from("markets").select("*").eq("is_active", true).order("name")).data ?? [],
   });
   const mapRef = useRef<HTMLDivElement>(null);
-  const mapInstance = useRef<L.Map | null>(null);
-  const markersGroupRef = useRef<L.LayerGroup | null>(null);
+  const mapInstance = useRef<google.maps.Map | null>(null);
+  const markersRef = useRef<google.maps.Marker[]>([]);
+  const [mapsLoaded, setMapsLoaded] = useState(false);
 
-  // Initialize map once on mount
+  // Load Google Maps Script
   useEffect(() => {
-    if (!mapRef.current) return;
-
-    if (!mapInstance.current) {
-      mapInstance.current = L.map(mapRef.current, {
-        center: [-6.21, 106.84],
-        zoom: 11,
-        zoomControl: false,
-      });
-
-      L.control.zoom({ position: "bottomright" }).addTo(mapInstance.current);
-
-      // Light themed modern map tiles (Voyager)
-      L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png", {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
-        subdomains: "abcd",
-        maxZoom: 20,
-      }).addTo(mapInstance.current);
-
-      markersGroupRef.current = L.layerGroup().addTo(mapInstance.current);
+    const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || import.meta.env.VITE_LOVABLE_CONNECTOR_GOOGLE_MAPS_BROWSER_KEY;
+    if (!apiKey) {
+      console.error("Google Maps API Key is missing");
+      return;
     }
+    loadGoogleMapsScript(apiKey)
+      .then(() => setMapsLoaded(true))
+      .catch((err) => console.error("Failed to load Google Maps script", err));
   }, []);
+
+  // Initialize Map
+  useEffect(() => {
+    if (!mapsLoaded || !mapRef.current || mapInstance.current) return;
+
+    mapInstance.current = new google.maps.Map(mapRef.current, {
+      center: { lat: -6.21, lng: 106.84 },
+      zoom: 11,
+      fullscreenControl: false,
+      streetViewControl: false,
+      mapTypeControl: false,
+      zoomControl: true,
+      zoomControlOptions: {
+        position: google.maps.ControlPosition.RIGHT_BOTTOM,
+      },
+    });
+  }, [mapsLoaded]);
 
   const filtered = (markets ?? []).filter((m: any) => !q || m.name.toLowerCase().includes(q.toLowerCase()) || m.city.toLowerCase().includes(q.toLowerCase()));
 
-  // Update markers and bounds when filtered list changes
+  // Update markers and bounds when filtered list or map instance changes
   useEffect(() => {
-    if (!mapInstance.current || !markersGroupRef.current) return;
+    if (!mapInstance.current || !mapsLoaded) return;
 
-    markersGroupRef.current.clearLayers();
+    // Clear old markers
+    markersRef.current.forEach((marker) => marker.setMap(null));
+    markersRef.current = [];
 
-    const customIcon = L.divIcon({
-      className: "custom-leaflet-icon",
-      html: `
-        <div class="flex items-center justify-center w-8 h-8 rounded-full bg-[#1e3a8a] text-white shadow-lg border-2 border-white transform transition-transform hover:scale-110 hover:bg-[#127a79]">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4 text-white">
-            <path fill-rule="evenodd" d="M11.54 22.351l.07.04.028.016a.76.76 0 00.723 0l.028-.015.071-.041a16.975 16.975 0 001.144-.742 19.58 19.58 0 002.683-2.282c1.944-1.99 3.963-4.98 3.963-8.827a8.25 8.25 0 00-16.5 0c0 3.846 2.02 6.837 3.963 8.827a19.58 19.58 0 002.682 2.282 16.975 16.975 0 001.145.742zM12 13.5a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd" />
-          </svg>
-        </div>
-      `,
-      iconSize: [32, 32],
-      iconAnchor: [16, 32],
-      popupAnchor: [0, -32],
-    });
-
-    const coords: [number, number][] = [];
+    const bounds = new google.maps.LatLngBounds();
+    let hasCoords = false;
 
     filtered.forEach((m: any) => {
       if (m.lat && m.lng) {
         const lat = Number(m.lat);
         const lng = Number(m.lng);
-        coords.push([lat, lng]);
+        const position = { lat, lng };
 
-        const marker = L.marker([lat, lng], { icon: customIcon });
+        bounds.extend(position);
+        hasCoords = true;
 
-        const popupContent = `
-          <div class="p-1 font-sans">
-            <h3 class="font-bold text-sm text-[#1e3a8a]">${m.name}</h3>
-            <p class="text-xs text-gray-600 mt-1">${m.address}, ${m.city}</p>
-            <div class="mt-2 flex items-center justify-between border-t border-gray-100 pt-2 gap-4">
-              <span class="text-[10px] text-gray-500 font-semibold">${m.hours || ""}</span>
-              <a href="/markets/${m.id}" class="text-xs text-[#127a79] font-bold hover:underline whitespace-nowrap">Lihat Detail &rarr;</a>
-            </div>
-          </div>
-        `;
-
-        marker.bindPopup(popupContent, {
-          maxWidth: 220,
-          className: "custom-leaflet-popup",
+        const marker = new google.maps.Marker({
+          position,
+          map: mapInstance.current!,
+          title: m.name,
+          icon: {
+            path: "M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z",
+            fillColor: "#1e3a8a",
+            fillOpacity: 1,
+            strokeColor: "#ffffff",
+            strokeWeight: 2,
+            scale: 1.5,
+            anchor: new google.maps.Point(12, 22),
+          },
         });
 
-        markersGroupRef.current?.addLayer(marker);
+        const infoWindow = new google.maps.InfoWindow({
+          content: `
+            <div style="padding: 4px; font-family: sans-serif; max-width: 200px;">
+              <h3 style="margin: 0 0 4px 0; font-size: 14px; font-weight: bold; color: #1e3a8a;">${m.name}</h3>
+              <p style="margin: 0 0 8px 0; font-size: 12px; color: #4b5563;">${m.address}, ${m.city}</p>
+              <div style="display: flex; align-items: center; justify-content: space-between; border-top: 1px solid #f3f4f6; padding-top: 8px; gap: 8px;">
+                <span style="font-size: 10px; color: #6b7280; font-weight: 600;">${m.hours || ""}</span>
+                <a href="/markets/${m.id}" style="font-size: 12px; color: #127a79; font-weight: bold; text-decoration: none; white-space: nowrap;">Lihat Detail &rarr;</a>
+              </div>
+            </div>
+          `,
+        });
+
+        marker.addListener("click", () => {
+          infoWindow.open(mapInstance.current, marker);
+        });
+
+        markersRef.current.push(marker);
       }
     });
 
-    if (coords.length > 0) {
-      const bounds = L.latLngBounds(coords);
-      mapInstance.current.fitBounds(bounds, { padding: [50, 50], maxZoom: 14 });
+    if (hasCoords) {
+      mapInstance.current.fitBounds(bounds);
+      // Avoid zooming too close if there is only 1 marker
+      if (filtered.length === 1) {
+        const listener = google.maps.event.addListener(mapInstance.current, "idle", () => {
+          if (mapInstance.current) {
+            mapInstance.current.setZoom(14);
+          }
+          google.maps.event.removeListener(listener);
+        });
+      }
     } else {
-      mapInstance.current.setView([-6.21, 106.84], 11);
+      mapInstance.current.setCenter({ lat: -6.21, lng: 106.84 });
+      mapInstance.current.setZoom(11);
     }
-  }, [filtered]);
+  }, [filtered, mapsLoaded]);
 
   // Clean up on unmount
   useEffect(() => {
     return () => {
-      if (mapInstance.current) {
-        mapInstance.current.remove();
-        mapInstance.current = null;
-      }
+      markersRef.current.forEach((marker) => marker.setMap(null));
+      markersRef.current = [];
+      mapInstance.current = null;
     };
   }, []);
 
