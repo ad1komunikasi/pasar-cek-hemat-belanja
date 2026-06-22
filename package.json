@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite dev",
-    "build": "vite build",
+    "build": "vite build && mkdir -p .vercel/output/functions/__server.func/node_modules/tslib && cp node_modules/tslib/tslib.es6.* .vercel/output/functions/__server.func/node_modules/tslib/",
     "build:dev": "vite build --mode development",
     "preview": "vite preview",
     "lint": "eslint .",

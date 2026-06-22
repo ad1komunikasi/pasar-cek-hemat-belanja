@@ -14,10 +14,9 @@ export default defineConfig({
       server: { entry: "server" },
     }),
     nitro({
-      rollupConfig: {
-        external: [],
+      externals: {
+        inline: ["tslib"],
       },
-      inlineDynamicImports: true,
     }),
     react(),
   ],
@@ -27,6 +26,6 @@ export default defineConfig({
     },
   },
   ssr: {
-    noExternal: ["tslib"],
+    noExternal: ["tslib", /^@supabase\//],
   },
 });
