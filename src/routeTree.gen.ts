@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as TrustRouteImport } from './routes/trust'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as PricingRouteImport } from './routes/pricing'
 import { Route as MarketsRouteImport } from './routes/markets'
@@ -42,6 +43,11 @@ import { Route as AuthenticatedAdminOrdersRouteImport } from './routes/_authenti
 import { Route as AuthenticatedAdminMarketsRouteImport } from './routes/_authenticated/admin.markets'
 import { Route as AuthenticatedAdminAuthMonitorRouteImport } from './routes/_authenticated/admin.auth-monitor'
 
+const TrustRoute = TrustRouteImport.update({
+  id: '/trust',
+  path: '/trust',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
   id: '/reset-password',
   path: '/reset-password',
@@ -219,6 +225,7 @@ export interface FileRoutesByFullPath {
   '/markets': typeof MarketsRouteWithChildren
   '/pricing': typeof PricingRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/trust': typeof TrustRoute
   '/admin': typeof AuthenticatedAdminRouteWithChildren
   '/cart': typeof AuthenticatedCartRoute
   '/checkout': typeof AuthenticatedCheckoutRoute
@@ -252,6 +259,7 @@ export interface FileRoutesByTo {
   '/markets': typeof MarketsRouteWithChildren
   '/pricing': typeof PricingRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/trust': typeof TrustRoute
   '/cart': typeof AuthenticatedCartRoute
   '/checkout': typeof AuthenticatedCheckoutRoute
   '/compare': typeof AuthenticatedCompareRoute
@@ -286,6 +294,7 @@ export interface FileRoutesById {
   '/markets': typeof MarketsRouteWithChildren
   '/pricing': typeof PricingRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/trust': typeof TrustRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRouteWithChildren
   '/_authenticated/cart': typeof AuthenticatedCartRoute
   '/_authenticated/checkout': typeof AuthenticatedCheckoutRoute
@@ -321,6 +330,7 @@ export interface FileRouteTypes {
     | '/markets'
     | '/pricing'
     | '/reset-password'
+    | '/trust'
     | '/admin'
     | '/cart'
     | '/checkout'
@@ -354,6 +364,7 @@ export interface FileRouteTypes {
     | '/markets'
     | '/pricing'
     | '/reset-password'
+    | '/trust'
     | '/cart'
     | '/checkout'
     | '/compare'
@@ -387,6 +398,7 @@ export interface FileRouteTypes {
     | '/markets'
     | '/pricing'
     | '/reset-password'
+    | '/trust'
     | '/_authenticated/admin'
     | '/_authenticated/cart'
     | '/_authenticated/checkout'
@@ -422,10 +434,18 @@ export interface RootRouteChildren {
   MarketsRoute: typeof MarketsRouteWithChildren
   PricingRoute: typeof PricingRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
+  TrustRoute: typeof TrustRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/trust': {
+      id: '/trust'
+      path: '/trust'
+      fullPath: '/trust'
+      preLoaderRoute: typeof TrustRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/reset-password': {
       id: '/reset-password'
       path: '/reset-password'
@@ -757,6 +777,7 @@ const rootRouteChildren: RootRouteChildren = {
   MarketsRoute: MarketsRouteWithChildren,
   PricingRoute: PricingRoute,
   ResetPasswordRoute: ResetPasswordRoute,
+  TrustRoute: TrustRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
