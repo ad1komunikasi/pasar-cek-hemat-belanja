@@ -10,6 +10,21 @@ if (typeof globalThis.addEventListener === "function") {
     (event) => record(event.reason)
   );
 }
+const originalConsoleError = console.error;
+console.error = (...args) => {
+  originalConsoleError(...args);
+  const firstError = args.find(
+    (arg) => arg instanceof Error || arg && typeof arg === "object" && "stack" in arg
+  );
+  if (firstError) {
+    record(firstError);
+  } else {
+    const stringMessage = args.map((arg) => typeof arg === "object" ? JSON.stringify(arg) : String(arg)).join(" ");
+    if (stringMessage.includes("Error") || stringMessage.includes("Missing") || stringMessage.includes("Failed") || stringMessage.includes("unhandled")) {
+      record(new Error(stringMessage));
+    }
+  }
+};
 function consumeLastCapturedError() {
   if (!lastCapturedError) return void 0;
   if (Date.now() - lastCapturedError.at > TTL_MS) {
@@ -66,7 +81,7 @@ function renderErrorPage(error) {
 let serverEntryPromise;
 async function getServerEntry() {
   if (!serverEntryPromise) {
-    serverEntryPromise = import("./server-C-KNVL4U.mjs").then((n) => n.s).then(
+    serverEntryPromise = import("./server-MMMIj9AC.mjs").then((n) => n.s).then(
       (m) => m.default ?? m
     );
   }
