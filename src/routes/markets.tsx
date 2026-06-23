@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useEffect, useRef, useState } from "react";
 import { MapPin, Star, Clock } from "lucide-react";
+import type L from "leaflet";
 
 let scriptLoaded = false;
 let scriptLoadingPromise: Promise<void> | null = null;
@@ -60,21 +61,59 @@ function MarketsPage() {
   const mapInstance = useRef<google.maps.Map | null>(null);
   const markersRef = useRef<google.maps.Marker[]>([]);
   const [mapsLoaded, setMapsLoaded] = useState(false);
+  const [useLeafletFallback, setUseLeafletFallback] = useState(false);
 
-  // Load Google Maps Script
+  // Leaflet references
+  const leafletMapInstance = useRef<L.Map | null>(null);
+  const leafletMarkersGroupRef = useRef<L.LayerGroup | null>(null);
+
+  // Load Google Maps Script & Setup Fallback Triggers
   useEffect(() => {
+    // Register global Google Maps authentication failure callback
+    (window as any).gm_authFailure = () => {
+      console.warn("Google Maps authentication failed (e.g. invalid key or domain restrictions). Falling back to Leaflet.");
+      setUseLeafletFallback(true);
+    };
+
     const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || import.meta.env.VITE_LOVABLE_CONNECTOR_GOOGLE_MAPS_BROWSER_KEY;
     if (!apiKey) {
-      console.error("Google Maps API Key is missing");
+      console.warn("Google Maps API Key is missing. Falling back to Leaflet.");
+      setUseLeafletFallback(true);
       return;
     }
-    loadGoogleMapsScript(apiKey)
-      .then(() => setMapsLoaded(true))
-      .catch((err) => console.error("Failed to load Google Maps script", err));
-  }, []);
 
-  // Initialize Map
+    loadGoogleMapsScript(apiKey)
+      .then(() => {
+        // Double check if we already triggered fallback due to auth failure while script was loading
+        if (!useLeafletFallback) {
+          setMapsLoaded(true);
+        }
+      })
+      .catch((err) => {
+        console.error("Failed to load Google Maps script", err);
+        setUseLeafletFallback(true);
+      });
+
+    return () => {
+      // Clean up global authentication failure callback
+      delete (window as any).gm_authFailure;
+    };
+  }, [useLeafletFallback]);
+
+  // Clean up Google Maps instance if we switch to Leaflet
   useEffect(() => {
+    if (useLeafletFallback) {
+      if (markersRef.current) {
+        markersRef.current.forEach((marker) => marker.setMap(null));
+        markersRef.current = [];
+      }
+      mapInstance.current = null;
+    }
+  }, [useLeafletFallback]);
+
+  // Initialize Google Map
+  useEffect(() => {
+    if (useLeafletFallback) return;
     if (!mapsLoaded || !mapRef.current || mapInstance.current) return;
 
     mapInstance.current = new google.maps.Map(mapRef.current, {
@@ -88,13 +127,13 @@ function MarketsPage() {
         position: google.maps.ControlPosition.RIGHT_BOTTOM,
       },
     });
-  }, [mapsLoaded]);
+  }, [mapsLoaded, useLeafletFallback]);
 
   const filtered = (markets ?? []).filter((m: any) => !q || m.name.toLowerCase().includes(q.toLowerCase()) || m.city.toLowerCase().includes(q.toLowerCase()));
 
-  // Update markers and bounds when filtered list or map instance changes
+  // Update Google Maps markers when filtered list or map instance changes
   useEffect(() => {
-    if (!mapInstance.current || !mapsLoaded) return;
+    if (useLeafletFallback || !mapInstance.current || !mapsLoaded) return;
 
     // Clear old markers
     markersRef.current.forEach((marker) => marker.setMap(null));
@@ -150,7 +189,6 @@ function MarketsPage() {
 
     if (hasCoords) {
       mapInstance.current.fitBounds(bounds);
-      // Avoid zooming too close if there is only 1 marker
       if (filtered.length === 1) {
         const listener = google.maps.event.addListener(mapInstance.current, "idle", () => {
           if (mapInstance.current) {
@@ -163,14 +201,107 @@ function MarketsPage() {
       mapInstance.current.setCenter({ lat: -6.21, lng: 106.84 });
       mapInstance.current.setZoom(11);
     }
-  }, [filtered, mapsLoaded]);
+  }, [filtered, mapsLoaded, useLeafletFallback]);
 
-  // Clean up on unmount
+  // Initialize and update Leaflet Map (Runs on fallback only, loads code dynamically to prevent SSR errors)
+  useEffect(() => {
+    if (!useLeafletFallback || !mapRef.current) return;
+
+    Promise.all([
+      import("leaflet"),
+      // @ts-ignore
+      import("leaflet/dist/leaflet.css")
+    ]).then(([leafletModule]) => {
+      const L = leafletModule.default || leafletModule;
+      if (!mapRef.current) return;
+
+      if (!leafletMapInstance.current) {
+        mapRef.current.innerHTML = ""; // Clear any broken Google Maps elements out of container
+
+        leafletMapInstance.current = L.map(mapRef.current, {
+          center: [-6.21, 106.84],
+          zoom: 11,
+          zoomControl: false,
+        });
+
+        L.control.zoom({ position: "bottomright" }).addTo(leafletMapInstance.current);
+
+        // Light themed clean Voyager tiles
+        L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png", {
+          attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+          subdomains: "abcd",
+          maxZoom: 20,
+        }).addTo(leafletMapInstance.current);
+
+        leafletMarkersGroupRef.current = L.layerGroup().addTo(leafletMapInstance.current);
+      }
+
+      if (leafletMarkersGroupRef.current) {
+        leafletMarkersGroupRef.current.clearLayers();
+      }
+
+      const customIcon = L.divIcon({
+        className: "custom-leaflet-icon",
+        html: `
+          <div class="flex items-center justify-center w-8 h-8 rounded-full bg-[#1e3a8a] text-white shadow-lg border-2 border-white transform transition-transform hover:scale-110 hover:bg-[#127a79]">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4 text-white">
+              <path fill-rule="evenodd" d="M11.54 22.351l.07.04.028.016a.76.76 0 00.723 0l.028-.015.071-.041a16.975 16.975 0 001.144-.742 19.58 19.58 0 002.683-2.282c1.944-1.99 3.963-4.98 3.963-8.827a8.25 8.25 0 00-16.5 0c0 3.846 2.02 6.837 3.963 8.827a19.58 19.58 0 002.682 2.282 16.975 16.975 0 001.145.742zM12 13.5a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd" />
+            </svg>
+          </div>
+        `,
+        iconSize: [32, 32],
+        iconAnchor: [16, 32],
+        popupAnchor: [0, -32],
+      });
+
+      const coords: [number, number][] = [];
+
+      filtered.forEach((m: any) => {
+        if (m.lat && m.lng) {
+          const lat = Number(m.lat);
+          const lng = Number(m.lng);
+          coords.push([lat, lng]);
+
+          const marker = L.marker([lat, lng], { icon: customIcon });
+
+          const popupContent = `
+            <div class="p-1 font-sans">
+              <h3 class="font-bold text-sm text-[#1e3a8a]">${m.name}</h3>
+              <p class="text-xs text-gray-600 mt-1">${m.address}, ${m.city}</p>
+              <div class="mt-2 flex items-center justify-between border-t border-gray-100 pt-2 gap-4">
+                <span class="text-[10px] text-gray-500 font-semibold">${m.hours || ""}</span>
+                <a href="/markets/${m.id}" class="text-xs text-[#127a79] font-bold hover:underline whitespace-nowrap">Lihat Detail &rarr;</a>
+              </div>
+            </div>
+          `;
+
+          marker.bindPopup(popupContent, {
+            maxWidth: 220,
+            className: "custom-leaflet-popup",
+          });
+
+          leafletMarkersGroupRef.current?.addLayer(marker);
+        }
+      });
+
+      if (coords.length > 0 && leafletMapInstance.current) {
+        const bounds = L.latLngBounds(coords);
+        leafletMapInstance.current.fitBounds(bounds, { padding: [50, 50], maxZoom: 14 });
+      } else if (leafletMapInstance.current) {
+        leafletMapInstance.current.setView([-6.21, 106.84], 11);
+      }
+    }).catch(err => {
+      console.error("Failed to load leaflet modules dynamically", err);
+    });
+  }, [useLeafletFallback, filtered]);
+
+  // Clean up Leaflet on unmount
   useEffect(() => {
     return () => {
-      markersRef.current.forEach((marker) => marker.setMap(null));
-      markersRef.current = [];
-      mapInstance.current = null;
+      if (leafletMapInstance.current) {
+        leafletMapInstance.current.remove();
+        leafletMapInstance.current = null;
+      }
     };
   }, []);
 
