@@ -4,12 +4,12 @@ import { dirname } from 'path';
 const require = createRequire(import.meta.url);
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
-import {
-  renderErrorPage,
-  server
-} from "./chunk-XKIFAQ5K.mjs";
 import "./chunk-G2MDZA75.mjs";
+
+// dist/server/assets/empty-plugin-adapters-BFgPZ6_d.js
+var pluginSerializationAdapters = [];
+var hasPluginAdapters = false;
 export {
-  server as default,
-  renderErrorPage as r
+  hasPluginAdapters,
+  pluginSerializationAdapters
 };
