@@ -79,6 +79,21 @@ function MarketsPage() {
       setUseLeafletFallback(true);
     };
 
+    const isLocalhost = typeof window !== "undefined" && 
+      (window.location.hostname === "localhost" || 
+       window.location.hostname === "127.0.0.1" || 
+       window.location.hostname.includes("192.168."));
+
+    const hasCustomKey = !!import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+
+    // If on production Vercel and NO custom key is provided:
+    // We immediately fallback to Leaflet to prevent loading the restricted Lovable key
+    if (!isLocalhost && !hasCustomKey) {
+      console.info("Production Vercel environment detected without custom Google Maps key. Defaulting to Leaflet.");
+      setUseLeafletFallback(true);
+      return;
+    }
+
     const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || import.meta.env.VITE_LOVABLE_CONNECTOR_GOOGLE_MAPS_BROWSER_KEY;
     if (!apiKey) {
       console.warn("Google Maps API Key is missing. Falling back to Leaflet.");
