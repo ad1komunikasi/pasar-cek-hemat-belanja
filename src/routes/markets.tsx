@@ -57,7 +57,11 @@ function MarketsPage() {
     queryKey: ["markets-public"],
     queryFn: async () => (await supabase.from("markets").select("*").eq("is_active", true).order("name")).data ?? [],
   });
-  const mapRef = useRef<HTMLDivElement>(null);
+
+  // Separate refs for different map instances
+  const googleMapRef = useRef<HTMLDivElement>(null);
+  const leafletMapRef = useRef<HTMLDivElement>(null);
+
   const mapInstance = useRef<google.maps.Map | null>(null);
   const markersRef = useRef<google.maps.Marker[]>([]);
   const [mapsLoaded, setMapsLoaded] = useState(false);
@@ -84,7 +88,6 @@ function MarketsPage() {
 
     loadGoogleMapsScript(apiKey)
       .then(() => {
-        // Double check if we already triggered fallback due to auth failure while script was loading
         if (!useLeafletFallback) {
           setMapsLoaded(true);
         }
@@ -95,7 +98,6 @@ function MarketsPage() {
       });
 
     return () => {
-      // Clean up global authentication failure callback
       delete (window as any).gm_authFailure;
     };
   }, [useLeafletFallback]);
@@ -114,9 +116,9 @@ function MarketsPage() {
   // Initialize Google Map
   useEffect(() => {
     if (useLeafletFallback) return;
-    if (!mapsLoaded || !mapRef.current || mapInstance.current) return;
+    if (!mapsLoaded || !googleMapRef.current || mapInstance.current) return;
 
-    mapInstance.current = new google.maps.Map(mapRef.current, {
+    mapInstance.current = new google.maps.Map(googleMapRef.current, {
       center: { lat: -6.21, lng: 106.84 },
       zoom: 11,
       fullscreenControl: false,
@@ -205,7 +207,7 @@ function MarketsPage() {
 
   // Initialize and update Leaflet Map (Runs on fallback only, loads code dynamically to prevent SSR errors)
   useEffect(() => {
-    if (!useLeafletFallback || !mapRef.current) return;
+    if (!useLeafletFallback || !leafletMapRef.current) return;
 
     Promise.all([
       import("leaflet"),
@@ -213,12 +215,10 @@ function MarketsPage() {
       import("leaflet/dist/leaflet.css")
     ]).then(([leafletModule]) => {
       const L = leafletModule.default || leafletModule;
-      if (!mapRef.current) return;
+      if (!leafletMapRef.current) return;
 
       if (!leafletMapInstance.current) {
-        mapRef.current.innerHTML = ""; // Clear any broken Google Maps elements out of container
-
-        leafletMapInstance.current = L.map(mapRef.current, {
+        leafletMapInstance.current = L.map(leafletMapRef.current, {
           center: [-6.21, 106.84],
           zoom: 11,
           zoomControl: false,
@@ -326,7 +326,19 @@ function MarketsPage() {
           Lihat lokasi, alamat, dan jam operasional pasar di sekitar Anda.
         </p>
         <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_400px]">
-          <div ref={mapRef} className="relative z-0 h-[500px] overflow-hidden rounded-lg border border-[var(--color-gray-100)] bg-white shadow-sm" />
+          {useLeafletFallback ? (
+            <div
+              key="leaflet-container"
+              ref={leafletMapRef}
+              className="relative z-0 h-[500px] overflow-hidden rounded-lg border border-[var(--color-gray-100)] bg-white shadow-sm"
+            />
+          ) : (
+            <div
+              key="google-container"
+              ref={googleMapRef}
+              className="relative z-0 h-[500px] overflow-hidden rounded-lg border border-[var(--color-gray-100)] bg-white shadow-sm"
+            />
+          )}
           <div>
             <Input placeholder="Cari pasar / kota..." value={q} onChange={(e) => setQ(e.target.value)} />
             <div className="mt-4 max-h-[440px] space-y-3 overflow-y-auto pr-2">
