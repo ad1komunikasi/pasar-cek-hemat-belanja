@@ -131,6 +131,43 @@ function MarketsPage() {
     });
   }, [mapsLoaded, useLeafletFallback]);
 
+  // Check for Google Maps rendering errors in the container (Double safety fallback)
+  useEffect(() => {
+    if (useLeafletFallback || !googleMapRef.current || !mapsLoaded) return;
+
+    const checkForGmapsError = () => {
+      if (googleMapRef.current) {
+        const hasErrorClass = googleMapRef.current.querySelector(".gm-err-container") || 
+                              googleMapRef.current.querySelector(".gm-err-content") ||
+                              googleMapRef.current.innerHTML.includes("Oops!") ||
+                              googleMapRef.current.innerHTML.includes("Something went wrong");
+        
+        if (hasErrorClass) {
+          console.warn("Google Maps error UI detected inside container. Triggering Leaflet fallback.");
+          setUseLeafletFallback(true);
+          return true;
+        }
+      }
+      return false;
+    };
+
+    // Run check immediately and then periodically for 5 seconds
+    const interval = setInterval(() => {
+      if (checkForGmapsError()) {
+        clearInterval(interval);
+      }
+    }, 500);
+
+    const timeout = setTimeout(() => {
+      clearInterval(interval);
+    }, 5000);
+
+    return () => {
+      clearInterval(interval);
+      clearTimeout(timeout);
+    };
+  }, [mapsLoaded, useLeafletFallback]);
+
   const filtered = (markets ?? []).filter((m: any) => !q || m.name.toLowerCase().includes(q.toLowerCase()) || m.city.toLowerCase().includes(q.toLowerCase()));
 
   // Update Google Maps markers when filtered list or map instance changes
