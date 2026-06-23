@@ -169,14 +169,24 @@ function MarketsPage() {
 
     const checkForGmapsError = () => {
       if (googleMapRef.current) {
-        // Look for Google Maps error UI classes or texts, including inside Shadow DOM
-        const hasErrorElement = findInShadowDOM(googleMapRef.current, ".gm-err-container") || 
-                              findInShadowDOM(googleMapRef.current, ".gm-err-content") ||
-                              findTextInShadowDOM(googleMapRef.current, "Oops!") ||
-                              findTextInShadowDOM(googleMapRef.current, "Something went wrong");
+        // 1. Check for the error documentation link (language-independent and cannot be obfuscated!)
+        const hasErrorLink = findInShadowDOM(googleMapRef.current, 'a[href*="error-messages"]') ||
+                             findInShadowDOM(googleMapRef.current, 'a[href*="staticmaperror"]') ||
+                             findInShadowDOM(googleMapRef.current, 'a[href*="developers.google.com/maps"]');
+
+        // 2. Check for localized error texts (English and Indonesian)
+        const hasErrorText = findTextInShadowDOM(googleMapRef.current, "Oops!") ||
+                             findTextInShadowDOM(googleMapRef.current, "Something went wrong") ||
+                             findTextInShadowDOM(googleMapRef.current, "Maaf!") ||
+                             findTextInShadowDOM(googleMapRef.current, "Terjadi kesalahan") ||
+                             findTextInShadowDOM(googleMapRef.current, "tidak memuat Google Maps dengan benar");
+
+        // 3. Check for typical class names
+        const hasErrorClass = findInShadowDOM(googleMapRef.current, ".gm-err-container") || 
+                              findInShadowDOM(googleMapRef.current, ".gm-err-content");
         
-        if (hasErrorElement) {
-          console.warn("Google Maps error UI detected inside container (Shadow DOM). Triggering Leaflet fallback.");
+        if (hasErrorLink || hasErrorText || hasErrorClass) {
+          console.warn("Google Maps error detected via DOM/Shadow DOM scanning. Triggering Leaflet fallback.");
           setUseLeafletFallback(true);
           return true;
         }
