@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useState } from "react";
 import { idr } from "@/lib/format";
+import { getDeterministicBenchmarkPrices } from "@/lib/benchmark";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Trophy } from "lucide-react";
 
@@ -49,7 +50,22 @@ function ComparePage() {
         .eq("recorded_at", dateToUse)
         .eq("product_id", productId);
       const { data } = await query;
-      let out = (data ?? []).map((r: any) => ({ price: Number(r.price), market: r.market }));
+      
+      let dbPrices = data ?? [];
+
+      if (dbPrices.length === 0) {
+        const { data: products } = await supabase.from("products").select("id,name,category,unit").order("name");
+        const { data: markets } = await supabase.from("markets").select("id,name,city,address").order("name");
+        if (products && markets) {
+          const benchmarkPrices = getDeterministicBenchmarkPrices(products as any[], markets as any[], dateToUse);
+          dbPrices = benchmarkPrices.filter((p: any) => p.product_id === productId).map((p: any) => ({
+            price: p.price,
+            market: p.market
+          }));
+        }
+      }
+
+      let out = dbPrices.map((r: any) => ({ price: Number(r.price), market: r.market }));
       if (city !== "all") out = out.filter((r) => r.market?.city === city);
       out.sort((a, b) => a.price - b.price);
       return out;

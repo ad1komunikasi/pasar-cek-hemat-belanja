@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { idr } from "@/lib/format";
+import { getDeterministicBenchmarkPrices } from "@/lib/benchmark";
 import { ArrowLeft, MapPin, Clock, ExternalLink } from "lucide-react";
 
 export const Route = createFileRoute("/markets/$id")({
@@ -35,7 +36,26 @@ function MarketDetail() {
       
       const dateToUse = latestDateRow?.recorded_at || today;
 
-      return (await supabase.from("product_prices").select("price, product:products(id,name,unit,category)").eq("market_id", id).eq("recorded_at", dateToUse)).data ?? [];
+      const { data } = await supabase.from("product_prices")
+        .select("price, product:products(id,name,unit,category)")
+        .eq("market_id", id)
+        .eq("recorded_at", dateToUse);
+      
+      let dbPrices = data ?? [];
+
+      if (dbPrices.length === 0) {
+        const { data: products } = await supabase.from("products").select("id,name,category,unit").order("name");
+        const { data: markets } = await supabase.from("markets").select("id,name,city").order("name");
+        if (products && markets) {
+          const benchmarkPrices = getDeterministicBenchmarkPrices(products as any[], markets as any[], dateToUse);
+          dbPrices = benchmarkPrices.filter((p: any) => p.market_id === id).map((p: any) => ({
+            price: p.price,
+            product: p.product
+          }));
+        }
+      }
+
+      return dbPrices;
     },
   });
 

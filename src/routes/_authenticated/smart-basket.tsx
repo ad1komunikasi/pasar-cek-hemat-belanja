@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { idr } from "@/lib/format";
+import { getDeterministicBenchmarkPrices } from "@/lib/benchmark";
 import { Plus, Trash2, Trophy, Share2, TrendingDown, Store, Split, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 
@@ -62,7 +63,23 @@ function SmartBasketPage() {
         .select("price,product_id,market:markets(id,name,city)")
         .eq("recorded_at", dateToUse)
         .in("product_id", productIds);
-      return data ?? [];
+      
+      let dbPrices = data ?? [];
+
+      if (dbPrices.length === 0) {
+        const { data: products } = await supabase.from("products").select("id,name,category,unit").order("name");
+        const { data: markets } = await supabase.from("markets").select("id,name,city").order("name");
+        if (products && markets) {
+          const benchmarkPrices = getDeterministicBenchmarkPrices(products as any[], markets as any[], dateToUse);
+          dbPrices = benchmarkPrices.filter((p: any) => productIds.includes(p.product_id)).map((p: any) => ({
+            price: p.price,
+            product_id: p.product_id,
+            market: p.market
+          }));
+        }
+      }
+
+      return dbPrices;
     },
   });
 
