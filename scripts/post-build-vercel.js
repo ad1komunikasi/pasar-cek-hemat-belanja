@@ -90,6 +90,14 @@ try {
     sourcemap: false,
     // Resolve dari root node_modules
     nodePaths: [join(root, "node_modules")],
+    banner: {
+      js: `import { createRequire } from 'module';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+const require = createRequire(import.meta.url);
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);`,
+    },
   });
 
   bundleSuccess = true;
