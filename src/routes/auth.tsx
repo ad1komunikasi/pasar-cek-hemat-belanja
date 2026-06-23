@@ -10,6 +10,9 @@ import { useAuth } from "@/hooks/use-auth";
 import { z } from "zod";
 
 export const Route = createFileRoute("/auth")({
+  validateSearch: (s: Record<string, unknown>) => ({
+    tab: (s.tab as string) ?? "login",
+  }),
   head: () => ({
     meta: [
       { title: "Masuk / Daftar — PasarCek" },
@@ -25,6 +28,15 @@ const passSchema = z.string().min(6, "Password minimal 6 karakter").max(72);
 function AuthPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
+  const search = Route.useSearch();
+  const navigate = useNavigate();
+
+  const activeTab = search.tab === "register" || search.tab === "forgot" ? search.tab : "login";
+
+  function handleTabChange(value: string) {
+    navigate({ search: { tab: value } });
+  }
+
   useEffect(() => { if (!loading && user) router.navigate({ to: "/dashboard" }); }, [user, loading, router]);
 
   return (
@@ -46,7 +58,7 @@ function AuthPage() {
             <span className="inline-flex h-7 w-7 items-center justify-center rounded bg-[var(--color-brand-blue)] text-xs font-black text-white">PC</span>
             PasarCek
           </Link>
-          <Tabs defaultValue="login">
+          <Tabs value={activeTab} onValueChange={handleTabChange}>
             <TabsList className="mb-6 grid w-full grid-cols-3">
               <TabsTrigger value="login">Masuk</TabsTrigger>
               <TabsTrigger value="register">Daftar</TabsTrigger>

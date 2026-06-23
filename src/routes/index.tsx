@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
+import { useAuth } from "@/hooks/use-auth";
 import {
   ShoppingBasket, MapPin, BarChart3, Bell, Heart, ListChecks,
   Check, Sparkles, TrendingDown, Clock, Wallet, Brain,
@@ -80,15 +81,15 @@ function Logo() {
 }
 
 function CTAButton({
-  children, variant = "primary", href = "#cta", className = "",
-}: { children: React.ReactNode; variant?: "primary" | "secondary" | "white"; href?: string; className?: string }) {
+  children, variant = "primary", href = "#cta", className = "", onClick,
+}: { children: React.ReactNode; variant?: "primary" | "secondary" | "white"; href?: string; className?: string; onClick?: () => void }) {
   const base = "inline-flex items-center justify-center gap-2 rounded-2xl px-6 py-3 text-sm font-semibold transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0";
   const styles = {
     primary: "bg-gradient-primary text-primary-foreground shadow-card hover:shadow-elevated",
     secondary: "bg-surface text-primary border border-border hover:border-accent hover:text-accent",
     white: "bg-white text-primary shadow-card hover:shadow-elevated",
   } as const;
-  return <a href={href} className={`${base} ${styles[variant]} ${className}`}>{children}</a>;
+  return <a href={href} onClick={onClick} className={`${base} ${styles[variant]} ${className}`}>{children}</a>;
 }
 
 function SectionTitle({ eyebrow, title, subtitle, center = true }: { eyebrow?: string; title: string; subtitle?: string; center?: boolean }) {
@@ -108,6 +109,7 @@ function SectionTitle({ eyebrow, title, subtitle, center = true }: { eyebrow?: s
 /* ---------------- Navbar ---------------- */
 
 function Navbar() {
+  const { user, loading } = useAuth();
   const [open, setOpen] = useState(false);
   const links = [
     { href: "#beranda", label: "Beranda" },
@@ -127,20 +129,88 @@ function Navbar() {
             </li>
           ))}
         </ul>
+
+        {/* Desktop Auth Actions */}
         <div className="hidden md:flex items-center gap-3">
-          <a href="/auth" className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors">Masuk</a>
-          <CTAButton href="/dashboard">Buka Aplikasi</CTAButton>
+          {!loading && (
+            user ? (
+              <CTAButton href="/dashboard">Buka Aplikasi</CTAButton>
+            ) : (
+              <>
+                <a href="/auth?tab=login" className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors">Masuk</a>
+                <CTAButton href="/auth?tab=register">Daftar</CTAButton>
+              </>
+            )
+          )}
         </div>
-        <button onClick={() => setOpen(!open)} aria-label="Menu" className="md:hidden p-2 rounded-lg hover:bg-muted">
-          {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-        </button>
+
+        {/* Mobile Header Buttons */}
+        <div className="flex items-center gap-2 md:hidden">
+          {!loading && (
+            user ? (
+              <a
+                href="/dashboard"
+                className="text-xs font-semibold text-white bg-gradient-primary px-3 py-2 rounded-xl shadow-soft hover:shadow-elevated transition-all"
+              >
+                Dashboard
+              </a>
+            ) : (
+              <>
+                <a
+                  href="/auth?tab=login"
+                  className="text-xs font-semibold text-muted-foreground hover:text-primary px-3 py-2 rounded-xl border border-border hover:bg-muted/50 transition-all"
+                >
+                  Masuk
+                </a>
+                <a
+                  href="/auth?tab=register"
+                  className="text-xs font-semibold text-white bg-gradient-primary px-3 py-2 rounded-xl shadow-soft hover:shadow-elevated transition-all"
+                >
+                  Daftar
+                </a>
+              </>
+            )
+          )}
+          <button onClick={() => setOpen(!open)} aria-label="Menu" className="p-2 rounded-lg hover:bg-muted">
+            {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          </button>
+        </div>
       </nav>
+
+      {/* Mobile Menu Dropdown */}
       {open && (
-        <div className="md:hidden border-t border-border bg-white px-4 py-4 space-y-3">
-          {links.map(l => (
-            <a key={l.href} href={l.href} onClick={() => setOpen(false)} className="block text-sm font-medium text-foreground py-2">{l.label}</a>
-          ))}
-          <CTAButton href="#cta" className="w-full">Download Gratis</CTAButton>
+        <div className="md:hidden border-t border-border bg-white px-4 py-6 space-y-6">
+          <div className="space-y-1">
+            {links.map(l => (
+              <a key={l.href} href={l.href} onClick={() => setOpen(false)} className="block text-base font-semibold text-foreground py-2.5 px-3 rounded-xl hover:bg-muted/50 transition-colors">{l.label}</a>
+            ))}
+          </div>
+          <div className="pt-6 border-t border-border flex flex-col gap-3">
+            {!loading && (
+              user ? (
+                <CTAButton href="/dashboard" className="w-full" onClick={() => setOpen(false)}>
+                  Buka Dashboard
+                </CTAButton>
+              ) : (
+                <>
+                  <a
+                    href="/auth?tab=login"
+                    onClick={() => setOpen(false)}
+                    className="flex w-full items-center justify-center rounded-2xl border border-border px-6 py-3 text-sm font-semibold text-foreground hover:bg-muted/50 transition-all duration-200"
+                  >
+                    Masuk
+                  </a>
+                  <CTAButton
+                    href="/auth?tab=register"
+                    className="w-full"
+                    onClick={() => setOpen(false)}
+                  >
+                    Daftar Akun Baru
+                  </CTAButton>
+                </>
+              )
+            )}
+          </div>
         </div>
       )}
     </header>
