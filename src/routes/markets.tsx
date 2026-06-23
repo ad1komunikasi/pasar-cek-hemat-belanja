@@ -135,15 +135,48 @@ function MarketsPage() {
   useEffect(() => {
     if (useLeafletFallback || !googleMapRef.current || !mapsLoaded) return;
 
+    // Helper to find elements inside Shadow DOM recursively
+    const findInShadowDOM = (root: Element | ShadowRoot, selector: string): Element | null => {
+      const found = root.querySelector(selector);
+      if (found) return found;
+
+      const elements = root.querySelectorAll("*");
+      for (const el of Array.from(elements)) {
+        if (el.shadowRoot) {
+          const res = findInShadowDOM(el.shadowRoot, selector);
+          if (res) return res;
+        }
+      }
+      return null;
+    };
+
+    // Helper to find text content inside Shadow DOM recursively
+    const findTextInShadowDOM = (root: Element | ShadowRoot, text: string): boolean => {
+      if (root.textContent && root.textContent.includes(text)) {
+        return true;
+      }
+
+      const elements = root.querySelectorAll("*");
+      for (const el of Array.from(elements)) {
+        if (el.shadowRoot) {
+          if (findTextInShadowDOM(el.shadowRoot, text)) {
+            return true;
+          }
+        }
+      }
+      return false;
+    };
+
     const checkForGmapsError = () => {
       if (googleMapRef.current) {
-        const hasErrorClass = googleMapRef.current.querySelector(".gm-err-container") || 
-                              googleMapRef.current.querySelector(".gm-err-content") ||
-                              googleMapRef.current.innerHTML.includes("Oops!") ||
-                              googleMapRef.current.innerHTML.includes("Something went wrong");
+        // Look for Google Maps error UI classes or texts, including inside Shadow DOM
+        const hasErrorElement = findInShadowDOM(googleMapRef.current, ".gm-err-container") || 
+                              findInShadowDOM(googleMapRef.current, ".gm-err-content") ||
+                              findTextInShadowDOM(googleMapRef.current, "Oops!") ||
+                              findTextInShadowDOM(googleMapRef.current, "Something went wrong");
         
-        if (hasErrorClass) {
-          console.warn("Google Maps error UI detected inside container. Triggering Leaflet fallback.");
+        if (hasErrorElement) {
+          console.warn("Google Maps error UI detected inside container (Shadow DOM). Triggering Leaflet fallback.");
           setUseLeafletFallback(true);
           return true;
         }
@@ -151,7 +184,7 @@ function MarketsPage() {
       return false;
     };
 
-    // Run check immediately and then periodically for 5 seconds
+    // Run check immediately and then periodically for 6 seconds
     const interval = setInterval(() => {
       if (checkForGmapsError()) {
         clearInterval(interval);
@@ -160,7 +193,7 @@ function MarketsPage() {
 
     const timeout = setTimeout(() => {
       clearInterval(interval);
-    }, 5000);
+    }, 6000);
 
     return () => {
       clearInterval(interval);
