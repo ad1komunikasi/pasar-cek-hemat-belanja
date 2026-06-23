@@ -1,0 +1,1 @@
+import{j as e,L as n}from"./index-CQs7lM76.js";const a=()=>e.jsx("div",{className:"p-10 text-center",children:e.jsxs("p",{children:["Keranjang belanja menggunakan ",e.jsx(n,{to:"/smart-basket",className:"font-bold text-[var(--color-brand-blue)] underline",children:"Smart Basket"}),"."]})});export{a as component};
