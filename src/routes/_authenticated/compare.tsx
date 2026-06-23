@@ -34,9 +34,19 @@ function ComparePage() {
     enabled: !!productId,
     queryFn: async () => {
       const today = new Date().toISOString().slice(0, 10);
+      
+      const { data: latestDateRow } = await supabase
+        .from("product_prices")
+        .select("recorded_at")
+        .order("recorded_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      
+      const dateToUse = latestDateRow?.recorded_at || today;
+
       let query = supabase.from("product_prices")
         .select("price,market:markets(id,name,city,address)")
-        .eq("recorded_at", today)
+        .eq("recorded_at", dateToUse)
         .eq("product_id", productId);
       const { data } = await query;
       let out = (data ?? []).map((r: any) => ({ price: Number(r.price), market: r.market }));

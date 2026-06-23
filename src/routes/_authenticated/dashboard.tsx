@@ -19,8 +19,18 @@ function DashboardPage() {
     queryKey: ["dashboard-stats", user?.id],
     queryFn: async () => {
       const today = new Date().toISOString().slice(0, 10);
+      
+      const { data: latestDateRow } = await supabase
+        .from("product_prices")
+        .select("recorded_at")
+        .order("recorded_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      
+      const dateToUse = latestDateRow?.recorded_at || today;
+
       const [prices, markets, unread, baskets] = await Promise.all([
-        supabase.from("product_prices").select("id", { count: "exact", head: true }).eq("recorded_at", today),
+        supabase.from("product_prices").select("id", { count: "exact", head: true }).eq("recorded_at", dateToUse),
         supabase.from("markets").select("id", { count: "exact", head: true }).eq("is_active", true),
         supabase.from("notifications").select("id", { count: "exact", head: true }).is("read_at", null).eq("user_id", user!.id),
         supabase.from("smart_baskets").select("id", { count: "exact", head: true }).eq("user_id", user!.id),

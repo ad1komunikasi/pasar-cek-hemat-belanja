@@ -28,10 +28,21 @@ function PricesPage() {
     queryKey: ["prices-today", marketId, category],
     queryFn: async () => {
       const today = new Date().toISOString().slice(0, 10);
-      const ydaystr = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+      
+      const { data: latestDateRow } = await supabase
+        .from("product_prices")
+        .select("recorded_at")
+        .order("recorded_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      
+      const dateToUse = latestDateRow?.recorded_at || today;
+      const dateToUseMs = new Date(dateToUse).getTime();
+      const ydaystr = new Date(dateToUseMs - 86400000).toISOString().slice(0, 10);
+
       let query = supabase.from("product_prices")
         .select("id, price, recorded_at, product:products(id,name,category,unit), market:markets(id,name,city)")
-        .eq("recorded_at", today);
+        .eq("recorded_at", dateToUse);
       if (marketId !== "all") query = query.eq("market_id", marketId);
       const { data } = await query;
       // yesterday

@@ -25,7 +25,17 @@ function MarketDetail() {
     queryKey: ["market-prices", id],
     queryFn: async () => {
       const today = new Date().toISOString().slice(0, 10);
-      return (await supabase.from("product_prices").select("price, product:products(id,name,unit,category)").eq("market_id", id).eq("recorded_at", today)).data ?? [];
+      
+      const { data: latestDateRow } = await supabase
+        .from("product_prices")
+        .select("recorded_at")
+        .order("recorded_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      
+      const dateToUse = latestDateRow?.recorded_at || today;
+
+      return (await supabase.from("product_prices").select("price, product:products(id,name,unit,category)").eq("market_id", id).eq("recorded_at", dateToUse)).data ?? [];
     },
   });
 

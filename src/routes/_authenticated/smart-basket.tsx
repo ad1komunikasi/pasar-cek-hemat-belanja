@@ -47,9 +47,20 @@ function SmartBasketPage() {
     queryFn: async () => {
       const today = new Date().toISOString().slice(0, 10);
       const productIds = items!.map((i: any) => i.product_id);
+      
+      // Get the latest date with prices in the database to fallback on
+      const { data: latestDateRow } = await supabase
+        .from("product_prices")
+        .select("recorded_at")
+        .order("recorded_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      
+      const dateToUse = latestDateRow?.recorded_at || today;
+
       const { data } = await supabase.from("product_prices")
         .select("price,product_id,market:markets(id,name,city)")
-        .eq("recorded_at", today)
+        .eq("recorded_at", dateToUse)
         .in("product_id", productIds);
       return data ?? [];
     },
