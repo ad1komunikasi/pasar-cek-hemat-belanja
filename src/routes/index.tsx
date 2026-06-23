@@ -109,7 +109,7 @@ function SectionTitle({ eyebrow, title, subtitle, center = true }: { eyebrow?: s
 /* ---------------- Navbar ---------------- */
 
 function Navbar() {
-  const { user, loading } = useAuth();
+  const { user } = useAuth();
   const [open, setOpen] = useState(false);
   const links = [
     { href: "#beranda", label: "Beranda" },
@@ -132,44 +132,40 @@ function Navbar() {
 
         {/* Desktop Auth Actions */}
         <div className="hidden md:flex items-center gap-3">
-          {!loading && (
-            user ? (
+          {user ? (
+            <CTAButton href="/dashboard">Buka Aplikasi</CTAButton>
+          ) : (
+            <>
+              <a href="/auth?tab=login" className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors">Masuk</a>
               <CTAButton href="/dashboard">Buka Aplikasi</CTAButton>
-            ) : (
-              <>
-                <a href="/auth?tab=login" className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors">Masuk</a>
-                <CTAButton href="/auth?tab=register">Daftar</CTAButton>
-              </>
-            )
+            </>
           )}
         </div>
 
         {/* Mobile Header Buttons */}
         <div className="flex items-center gap-2 md:hidden">
-          {!loading && (
-            user ? (
+          {user ? (
+            <a
+              href="/dashboard"
+              className="text-xs font-semibold text-white bg-gradient-primary px-3 py-2 rounded-xl shadow-soft hover:shadow-elevated transition-all"
+            >
+              Dashboard
+            </a>
+          ) : (
+            <>
+              <a
+                href="/auth?tab=login"
+                className="text-xs font-semibold text-muted-foreground hover:text-primary px-3 py-2 rounded-xl border border-border hover:bg-muted/50 transition-all"
+              >
+                Masuk
+              </a>
               <a
                 href="/dashboard"
                 className="text-xs font-semibold text-white bg-gradient-primary px-3 py-2 rounded-xl shadow-soft hover:shadow-elevated transition-all"
               >
-                Dashboard
+                Buka Aplikasi
               </a>
-            ) : (
-              <>
-                <a
-                  href="/auth?tab=login"
-                  className="text-xs font-semibold text-muted-foreground hover:text-primary px-3 py-2 rounded-xl border border-border hover:bg-muted/50 transition-all"
-                >
-                  Masuk
-                </a>
-                <a
-                  href="/auth?tab=register"
-                  className="text-xs font-semibold text-white bg-gradient-primary px-3 py-2 rounded-xl shadow-soft hover:shadow-elevated transition-all"
-                >
-                  Daftar
-                </a>
-              </>
-            )
+            </>
           )}
           <button onClick={() => setOpen(!open)} aria-label="Menu" className="p-2 rounded-lg hover:bg-muted">
             {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
@@ -186,29 +182,27 @@ function Navbar() {
             ))}
           </div>
           <div className="pt-6 border-t border-border flex flex-col gap-3">
-            {!loading && (
-              user ? (
-                <CTAButton href="/dashboard" className="w-full" onClick={() => setOpen(false)}>
-                  Buka Dashboard
+            {user ? (
+              <CTAButton href="/dashboard" className="w-full" onClick={() => setOpen(false)}>
+                Buka Dashboard
+              </CTAButton>
+            ) : (
+              <>
+                <a
+                  href="/auth?tab=login"
+                  onClick={() => setOpen(false)}
+                  className="flex w-full items-center justify-center rounded-2xl border border-border px-6 py-3 text-sm font-semibold text-foreground hover:bg-muted/50 transition-all duration-200"
+                >
+                  Masuk
+                </a>
+                <CTAButton
+                  href="/dashboard"
+                  className="w-full"
+                  onClick={() => setOpen(false)}
+                >
+                  Buka Aplikasi
                 </CTAButton>
-              ) : (
-                <>
-                  <a
-                    href="/auth?tab=login"
-                    onClick={() => setOpen(false)}
-                    className="flex w-full items-center justify-center rounded-2xl border border-border px-6 py-3 text-sm font-semibold text-foreground hover:bg-muted/50 transition-all duration-200"
-                  >
-                    Masuk
-                  </a>
-                  <CTAButton
-                    href="/auth?tab=register"
-                    className="w-full"
-                    onClick={() => setOpen(false)}
-                  >
-                    Daftar Akun Baru
-                  </CTAButton>
-                </>
-              )
+              </>
             )}
           </div>
         </div>
