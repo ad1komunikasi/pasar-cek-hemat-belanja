@@ -8,10 +8,11 @@ const cleanEnvVar = (val?: string) => {
 };
 
 function createSupabaseClient() {
-  // Use import.meta.env for client-side (Vite build-time replacement)
-  // Fall back to process.env for SSR (server-side rendering)
-  const SUPABASE_URL = cleanEnvVar(import.meta.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL) || "https://nqbpykmvvjrytnwljkir.supabase.co";
-  const SUPABASE_PUBLISHABLE_KEY = cleanEnvVar(import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || process.env.SUPABASE_PUBLISHABLE_KEY) || "sb_publishable_ZftPqa-FN2fEFn6RofNDYg_cK46QKO7";
+  const rawUrl = import.meta.env.VITE_SUPABASE_URL || (typeof process !== "undefined" ? process.env?.SUPABASE_URL : undefined);
+  const rawKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || (typeof process !== "undefined" ? process.env?.SUPABASE_PUBLISHABLE_KEY : undefined);
+  
+  const SUPABASE_URL = cleanEnvVar(rawUrl) || "https://nqbpykmvvjrytnwljkir.supabase.co";
+  const SUPABASE_PUBLISHABLE_KEY = cleanEnvVar(rawKey) || "sb_publishable_ZftPqa-FN2fEFn6RofNDYg_cK46QKO7";
 
   if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
     const missing = [

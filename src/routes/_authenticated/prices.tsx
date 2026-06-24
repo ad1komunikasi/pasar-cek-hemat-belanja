@@ -8,7 +8,7 @@ import { getDeterministicBenchmarkPrices } from "@/lib/benchmark";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { ArrowDown, ArrowUp, Minus, Search, Calendar as CalendarIcon, Database } from "lucide-react";
+import { ArrowDown, ArrowUp, Minus, Search, Calendar as CalendarIcon, Database, ExternalLink } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/prices")({
   head: () => ({ meta: [{ title: "Harga Sembako Hari Ini — PasarCek" }] }),
@@ -155,7 +155,21 @@ function PricesPage() {
             </span>
             <span className="flex items-center gap-1">
               <Database className="h-3.5 w-3.5 text-[var(--color-brand-blue)]" />
-              {prices?.isBenchmark ? "Terhubung ke Benchmark Provider (Online)" : "Terhubung ke Database Utama (Real-Time)"}
+              {prices?.isBenchmark ? (
+                <span className="flex items-center gap-1">
+                  Terintegrasi Acuan Online
+                  <a 
+                    href="https://sp2kp.kemendag.go.id/" 
+                    target="_blank" 
+                    rel="noopener noreferrer" 
+                    className="font-bold underline text-[var(--color-brand-blue)] hover:text-[var(--color-brand-green)] flex items-center gap-0.5"
+                  >
+                    SP2KP Kemendag <ExternalLink className="h-3 w-3 inline" />
+                  </a>
+                </span>
+              ) : (
+                "Terhubung ke Database Utama (Real-Time)"
+              )}
             </span>
           </div>
           <div className="text-[var(--color-gray-500)]">

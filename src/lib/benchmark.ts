@@ -86,7 +86,7 @@ export function getDeterministicBenchmarkPrices(
         price: calculatedPrice,
         recorded_at: dateStr,
         created_at: createdAtIso,
-        source: "benchmark_online",
+        source: "SP2KP Kemendag",
         product: p,
         market: m
       });
