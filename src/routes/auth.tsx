@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate, useRouter } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate, useRouter, redirect } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,6 +13,12 @@ export const Route = createFileRoute("/auth")({
   validateSearch: (s: Record<string, unknown>) => ({
     tab: (s.tab as string) ?? "login",
   }),
+  beforeLoad: async () => {
+    const { data } = await supabase.auth.getUser();
+    if (data.user) {
+      throw redirect({ to: "/dashboard", replace: true });
+    }
+  },
   head: () => ({
     meta: [
       { title: "Masuk / Daftar — PasarCek" },
@@ -37,7 +43,7 @@ function AuthPage() {
     navigate({ search: { tab: value } });
   }
 
-  useEffect(() => { if (!loading && user) router.navigate({ to: "/dashboard" }); }, [user, loading, router]);
+  useEffect(() => { if (!loading && user) router.navigate({ to: "/dashboard", replace: true }); }, [user, loading, router]);
 
   return (
     <div className="grid min-h-screen lg:grid-cols-2">
@@ -105,7 +111,7 @@ function LoginForm() {
     setBusy(false);
     if (error) return toast.error(error.message);
     toast.success("Selamat datang kembali!");
-    navigate({ to: "/dashboard" });
+    navigate({ to: "/dashboard", replace: true });
   }
   return (
     <form onSubmit={submit} className="space-y-4">
@@ -134,7 +140,7 @@ function RegisterForm() {
     setBusy(false);
     if (error) return toast.error(error.message);
     toast.success("Pendaftaran berhasil! Silakan cek email Anda.");
-    navigate({ to: "/dashboard" });
+    navigate({ to: "/dashboard", replace: true });
   }
   return (
     <form onSubmit={submit} className="space-y-4">
