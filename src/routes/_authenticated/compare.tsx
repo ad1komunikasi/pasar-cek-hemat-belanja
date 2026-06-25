@@ -34,16 +34,20 @@ function ComparePage() {
     queryKey: ["compare", productId, city],
     enabled: !!productId,
     queryFn: async () => {
-      const today = new Date().toISOString().slice(0, 10);
+      const today = new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10);
       
       const { data: latestDateRow } = await supabase
         .from("product_prices")
         .select("recorded_at")
+        .lte("recorded_at", today)
         .order("recorded_at", { ascending: false })
         .limit(1)
         .maybeSingle();
       
-      const dateToUse = latestDateRow?.recorded_at || today;
+      let dateToUse = latestDateRow?.recorded_at || today;
+      if (dateToUse > today) {
+        dateToUse = today;
+      }
 
       let query = supabase.from("product_prices")
         .select("price,market:markets(id,name,city,address)")

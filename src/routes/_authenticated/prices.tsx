@@ -21,6 +21,8 @@ function PricesPage() {
   const [category, setCategory] = useState<string>("all");
   const [selectedDate, setSelectedDate] = useState<string>("");
 
+  const today = new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+
   const { data: markets } = useQuery({
     queryKey: ["markets-list"],
     queryFn: async () => (await supabase.from("markets").select("id,name,city").order("name")).data ?? [],
@@ -29,18 +31,21 @@ function PricesPage() {
   const { data: prices, isLoading } = useQuery({
     queryKey: ["prices-today", marketId, category, selectedDate],
     queryFn: async () => {
-      const today = new Date().toISOString().slice(0, 10);
-      
       let dateToUse = selectedDate;
       if (!dateToUse) {
         const { data: latestDateRow } = await supabase
           .from("product_prices")
           .select("recorded_at")
+          .lte("recorded_at", today)
           .order("recorded_at", { ascending: false })
           .limit(1)
           .maybeSingle();
         
         dateToUse = latestDateRow?.recorded_at || today;
+      }
+
+      if (dateToUse > today) {
+        dateToUse = today;
       }
       
       const dateToUseMs = new Date(dateToUse).getTime();
@@ -131,7 +136,15 @@ function PricesPage() {
             type="date" 
             className="pl-9 h-10 cursor-pointer" 
             value={activeDate} 
-            onChange={(e) => setSelectedDate(e.target.value)} 
+            max={today}
+            onChange={(e) => {
+              const val = e.target.value;
+              if (val > today) {
+                setSelectedDate(today);
+              } else {
+                setSelectedDate(val);
+              }
+            }} 
           />
         </div>
         <Select value={marketId} onValueChange={setMarketId}>

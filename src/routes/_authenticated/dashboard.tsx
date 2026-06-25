@@ -18,16 +18,20 @@ function DashboardPage() {
   const { data } = useQuery({
     queryKey: ["dashboard-stats", user?.id],
     queryFn: async () => {
-      const today = new Date().toISOString().slice(0, 10);
+      const today = new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10);
       
       const { data: latestDateRow } = await supabase
         .from("product_prices")
         .select("recorded_at")
+        .lte("recorded_at", today)
         .order("recorded_at", { ascending: false })
         .limit(1)
         .maybeSingle();
       
-      const dateToUse = latestDateRow?.recorded_at || today;
+      let dateToUse = latestDateRow?.recorded_at || today;
+      if (dateToUse > today) {
+        dateToUse = today;
+      }
 
       const [prices, markets, unread, baskets] = await Promise.all([
         supabase.from("product_prices").select("id", { count: "exact", head: true }).eq("recorded_at", dateToUse),
