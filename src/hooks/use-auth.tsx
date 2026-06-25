@@ -26,11 +26,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [roles, setRoles] = useState<Role[]>([]);
   const [loading, setLoading] = useState(true);
 
-  async function loadExtras(uid: string) {
-    const [{ data: p }, { data: r }] = await Promise.all([
+  async function loadExtras(uid: string, uemail?: string, umeta?: any) {
+    let [{ data: p }, { data: r }] = await Promise.all([
       supabase.from("profiles").select("*").eq("id", uid).maybeSingle(),
       supabase.from("user_roles").select("role").eq("user_id", uid),
     ]);
+    if (!p && uid) {
+      const newProfile = {
+        id: uid,
+        email: uemail || null,
+        full_name: umeta?.full_name || umeta?.name || null,
+        avatar_url: umeta?.avatar_url || umeta?.picture || null,
+      };
+      const { data } = await supabase.from("profiles").upsert(newProfile).select().maybeSingle();
+      if (data) p = data;
+    }
     setProfile((p as Profile) ?? null);
     setRoles(((r as { role: Role }[]) ?? []).map((x) => x.role));
   }
@@ -39,7 +49,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const { data } = await supabase.auth.getSession();
     setSession(data.session);
     setUser(data.session?.user ?? null);
-    if (data.session?.user) await loadExtras(data.session.user.id);
+    if (data.session?.user) await loadExtras(data.session.user.id, data.session.user.email, data.session.user.user_metadata);
     else { setProfile(null); setRoles([]); }
   }
 
@@ -49,7 +59,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (!mounted) return;
       setSession(data.session);
       setUser(data.session?.user ?? null);
-      if (data.session?.user) loadExtras(data.session.user.id).finally(() => setLoading(false));
+      if (data.session?.user) loadExtras(data.session.user.id, data.session.user.email, data.session.user.user_metadata).finally(() => setLoading(false));
       else setLoading(false);
     });
     const { data: sub } = supabase.auth.onAuthStateChange((event, sess) => {
@@ -57,7 +67,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setSession(sess);
       setUser(sess?.user ?? null);
       if (sess?.user) {
-        setTimeout(() => loadExtras(sess.user.id), 0);
+        setTimeout(() => loadExtras(sess.user.id, sess.user.email, sess.user.user_metadata), 0);
       } else {
         setProfile(null);
         setRoles([]);

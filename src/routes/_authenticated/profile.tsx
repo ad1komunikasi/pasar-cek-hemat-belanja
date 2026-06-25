@@ -9,13 +9,24 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/profile")({
+  validateSearch: (s: Record<string, unknown>) => ({
+    complete: (s.complete as string) ?? "",
+  }),
   head: () => ({ meta: [{ title: "Profil — PasarCek" }] }),
   component: ProfilePage,
 });
 
 function ProfilePage() {
   const { user, profile, refresh } = useAuth();
+  const { complete } = Route.useSearch();
   const [fullName, setFullName] = useState(""); const [phone, setPhone] = useState(""); const [city, setCity] = useState("");
+
+  useEffect(() => {
+    if (complete === "true") {
+      toast.info("Silakan lengkapi profil Anda terlebih dahulu.");
+    }
+  }, [complete]);
+
   useEffect(() => { if (profile) { setFullName(profile.full_name ?? ""); setPhone(profile.phone ?? ""); setCity(profile.city ?? ""); } }, [profile]);
 
   async function save() {

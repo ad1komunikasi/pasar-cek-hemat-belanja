@@ -80,14 +80,14 @@ function AuthPage() {
   );
 }
 
-function GoogleButton() {
+function GoogleButton({ flow }: { flow: "login" | "register" }) {
   const [busy, setBusy] = useState(false);
   async function signIn() {
     setBusy(true);
     const res = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: window.location.origin + "/dashboard",
+        redirectTo: `${window.location.origin}/dashboard?flow=${flow}`,
       },
     });
     if (res.error) { toast.error("Gagal masuk dengan Google"); setBusy(false); }
@@ -116,7 +116,7 @@ function LoginForm() {
   return (
     <form onSubmit={submit} className="space-y-4">
       <h2 className="text-2xl font-black">Masuk ke akun Anda</h2>
-      <GoogleButton />
+      <GoogleButton flow="login" />
       <div className="relative my-4 text-center text-xs text-[var(--color-gray-500)]"><span className="bg-[var(--color-gray-50)] px-2">atau email</span><div className="absolute inset-x-0 top-1/2 -z-10 h-px bg-[var(--color-gray-100)]" /></div>
       <div><Label>Email</Label><Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required /></div>
       <div><Label>Password</Label><Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required /></div>
@@ -145,7 +145,7 @@ function RegisterForm() {
   return (
     <form onSubmit={submit} className="space-y-4">
       <h2 className="text-2xl font-black">Buat akun gratis</h2>
-      <GoogleButton />
+      <GoogleButton flow="register" />
       <div className="relative my-4 text-center text-xs text-[var(--color-gray-500)]"><span className="bg-[var(--color-gray-50)] px-2">atau email</span><div className="absolute inset-x-0 top-1/2 -z-10 h-px bg-[var(--color-gray-100)]" /></div>
       <div><Label>Nama lengkap</Label><Input value={fullName} onChange={(e) => setFullName(e.target.value)} required maxLength={100} /></div>
       <div><Label>Email</Label><Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required /></div>

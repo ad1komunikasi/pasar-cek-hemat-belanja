@@ -23,6 +23,15 @@ export const Route = createFileRoute("/_authenticated")({
 
     const { data, error } = await supabase.auth.getUser();
     if (error || !data.user) throw redirect({ to: "/auth" });
+
+    if (typeof window !== "undefined") {
+      const searchParams = new URLSearchParams(window.location.search);
+      const flow = searchParams.get("flow");
+      if (flow === "register" && !window.location.pathname.startsWith("/profile")) {
+        throw redirect({ to: "/profile", search: { complete: "true" }, replace: true });
+      }
+    }
+
     return { user: data.user };
   },
   component: () => <Outlet />,
