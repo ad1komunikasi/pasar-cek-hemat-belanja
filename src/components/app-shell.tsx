@@ -37,9 +37,11 @@ export function AppShell({ children }: { children: ReactNode }) {
     <div className="app-shell min-h-screen bg-[var(--color-gray-50)]">
       {/* Mobile topbar */}
       <header className="sticky top-0 z-40 flex h-14 items-center justify-between border-b border-[var(--color-gray-100)] bg-white px-4 lg:hidden">
-        <Link to="/dashboard" className="flex items-center gap-2 font-bold tracking-tight">
-          <span className="inline-flex h-7 w-7 items-center justify-center rounded bg-[var(--color-brand-blue)] text-xs font-black text-white">PC</span>
-          PasarCek
+        <Link to="/dashboard" className="flex items-center gap-2 font-bold tracking-tight group">
+          <div className="grid h-8 w-8 place-items-center rounded-lg bg-gradient-primary text-white shadow-soft group-hover:scale-105 transition-transform duration-200">
+            <ShoppingBasket className="h-4.5 w-4.5" />
+          </div>
+          <span className="font-display text-lg font-bold text-primary">PasarCek</span>
         </Link>
         <button onClick={() => setOpen((v) => !v)} aria-label="Menu" className="rounded p-2 hover:bg-[var(--color-gray-50)]">
           {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
@@ -55,8 +57,10 @@ export function AppShell({ children }: { children: ReactNode }) {
           )}
         >
           <div className="hidden h-14 items-center gap-2 border-b border-[var(--color-gray-100)] px-5 font-bold tracking-tight lg:flex">
-            <span className="inline-flex h-7 w-7 items-center justify-center rounded bg-[var(--color-brand-blue)] text-xs font-black text-white">PC</span>
-            PasarCek
+            <div className="grid h-8 w-8 place-items-center rounded-lg bg-gradient-primary text-white shadow-soft">
+              <ShoppingBasket className="h-4.5 w-4.5" />
+            </div>
+            <span className="font-display text-lg font-bold text-primary">PasarCek</span>
           </div>
           <nav className="flex flex-col gap-1 p-3">
             {nav.map((n) => {
@@ -67,8 +71,8 @@ export function AppShell({ children }: { children: ReactNode }) {
                   to={n.to}
                   onClick={() => setOpen(false)}
                   className={cn(
-                    "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
-                    active ? "bg-[var(--color-brand-blue)] text-white" : "text-[var(--color-gray-700)] hover:bg-[var(--color-gray-50)]",
+                    "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-all duration-200",
+                    active ? "bg-gradient-primary text-white shadow-soft" : "text-[var(--color-gray-700)] hover:bg-[var(--color-gray-50)]",
                   )}
                 >
                   <n.icon className="h-4 w-4" />

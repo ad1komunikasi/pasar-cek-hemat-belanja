@@ -27,8 +27,13 @@ function FeaturesPage() {
     <div className="min-h-screen bg-[var(--color-gray-50)]">
       <header className="border-b border-[var(--color-gray-100)] bg-white">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4">
-          <Link to="/" className="flex items-center gap-2 font-bold"><span className="inline-flex h-7 w-7 items-center justify-center rounded bg-[var(--color-brand-blue)] text-xs font-black text-white">PC</span>PasarCek</Link>
-          <Link to="/auth" className="text-sm font-semibold text-[var(--color-brand-blue)]">Masuk</Link>
+          <Link to="/" className="flex items-center gap-2 font-bold group">
+            <div className="grid h-8 w-8 place-items-center rounded-lg bg-gradient-primary text-white shadow-soft group-hover:scale-105 transition-transform duration-200">
+              <ShoppingBasket className="h-4.5 w-4.5" />
+            </div>
+            <span className="font-display text-lg font-bold text-primary">PasarCek</span>
+          </Link>
+          <Link to="/auth" className="text-sm font-semibold text-primary hover:text-accent transition-colors">Masuk</Link>
         </div>
       </header>
       <main className="mx-auto max-w-6xl px-4 py-16">

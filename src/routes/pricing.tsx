@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { idr } from "@/lib/format";
-import { Check, Crown } from "lucide-react";
+import { Check, Crown, ShoppingBasket } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 
 export const Route = createFileRoute("/pricing")({
@@ -31,7 +31,12 @@ function PricingPage() {
     <div className="min-h-screen bg-[var(--color-gray-50)]">
       <header className="border-b border-[var(--color-gray-100)] bg-white">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4">
-          <Link to="/" className="flex items-center gap-2 font-bold"><span className="inline-flex h-7 w-7 items-center justify-center rounded bg-[var(--color-brand-blue)] text-xs font-black text-white">PC</span>PasarCek</Link>
+          <Link to="/" className="flex items-center gap-2 font-bold group">
+            <div className="grid h-8 w-8 place-items-center rounded-lg bg-gradient-primary text-white shadow-soft group-hover:scale-105 transition-transform duration-200">
+              <ShoppingBasket className="h-4.5 w-4.5" />
+            </div>
+            <span className="font-display text-lg font-bold text-primary">PasarCek</span>
+          </Link>
           <Button asChild variant="outline">
             <Link to={user ? "/dashboard" : "/auth"}>
               {user ? "Dashboard" : "Masuk"}

@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Shield, Lock, Database, UserCheck, FileText, Mail } from "lucide-react";
+import { Shield, Lock, Database, UserCheck, FileText, Mail, ShoppingBasket } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 
 export const Route = createFileRoute("/trust")({
@@ -22,7 +22,12 @@ function TrustPage() {
     <div className="min-h-screen bg-white text-[var(--color-ink)]">
       <header className="border-b border-[var(--color-gray-100)]">
         <div className="mx-auto flex max-w-[1100px] items-center justify-between px-6 py-4">
-          <Link to="/" className="font-black tracking-tight">PasarCek</Link>
+          <Link to="/" className="flex items-center gap-2 font-bold tracking-tight group">
+            <div className="grid h-8 w-8 place-items-center rounded-lg bg-gradient-primary text-white shadow-soft group-hover:scale-105 transition-transform duration-200">
+              <ShoppingBasket className="h-4.5 w-4.5" />
+            </div>
+            <span className="font-display text-lg font-bold text-primary">PasarCek</span>
+          </Link>
           <nav className="flex gap-5 text-sm">
             <Link to="/features">Fitur</Link>
             <Link to="/pricing">Paket</Link>

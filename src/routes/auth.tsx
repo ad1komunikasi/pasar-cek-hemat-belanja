@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
 import { z } from "zod";
+import { ShoppingBasket, MapPin, TrendingDown, PiggyBank, Sparkles } from "lucide-react";
 
 export const Route = createFileRoute("/auth")({
   validateSearch: (s: Record<string, unknown>) => ({
@@ -47,22 +48,118 @@ function AuthPage() {
 
   return (
     <div className="grid min-h-screen lg:grid-cols-2">
-      <div className="hidden bg-[var(--color-brand-blue)] p-12 text-white lg:flex lg:flex-col lg:justify-between">
-        <Link to="/" className="flex items-center gap-2 text-lg font-bold">
-          <span className="inline-flex h-8 w-8 items-center justify-center rounded bg-white text-sm font-black text-[var(--color-brand-blue)]">PC</span>
-          PasarCek
+      <div className="hidden bg-gradient-navy p-12 text-white lg:flex lg:flex-col lg:justify-between relative overflow-hidden">
+        {/* Glow effects */}
+        <div className="absolute -top-20 -left-20 h-96 w-96 rounded-full bg-primary/20 blur-3xl pointer-events-none" />
+        <div className="absolute -bottom-20 -right-20 h-96 w-96 rounded-full bg-accent/20 blur-3xl pointer-events-none" />
+        
+        {/* Header Logo */}
+        <Link to="/" className="flex items-center gap-2 text-lg font-bold group relative z-10">
+          <div className="grid h-9 w-9 place-items-center rounded-xl bg-gradient-primary text-white shadow-soft group-hover:scale-105 transition-transform duration-200">
+            <ShoppingBasket className="h-5 w-5" />
+          </div>
+          <span className="font-display text-xl font-bold text-white tracking-tight">PasarCek</span>
         </Link>
-        <div>
-          <h1 className="text-5xl font-black leading-tight">Cek Harga Dulu,<br />Belanja Lebih Hemat.</h1>
-          <p className="mt-6 max-w-md text-white/80">Pantau harga sembako terbaru, bandingkan antar pasar terdekat, dan temukan keranjang belanja paling hemat hari ini.</p>
+
+        {/* Content & Animation */}
+        <div className="relative z-10 my-auto flex flex-col items-center">
+          <div className="text-left w-full max-w-md">
+            <h1 className="text-5xl font-black leading-tight text-white">
+              Cek Harga Dulu,<br />Belanja Lebih Hemat.
+            </h1>
+            <p className="mt-6 text-white/80 text-base leading-relaxed">
+              Pantau harga sembako terbaru, bandingkan antar pasar terdekat, dan temukan keranjang belanja paling hemat hari ini.
+            </p>
+          </div>
+
+          {/* Interactive Animated Graphic */}
+          <div className="relative mt-16 w-full max-w-sm h-64 flex items-center justify-center">
+            {/* Background glowing circle */}
+            <div className="absolute inset-0 m-auto h-48 w-48 rounded-full bg-gradient-primary opacity-20 blur-2xl animate-pulse" />
+
+            {/* Smart Basket Card Mockup */}
+            <div className="relative w-72 bg-white/10 backdrop-blur-md border border-white/15 rounded-2xl p-5 shadow-elevated animate-float z-10">
+              <div className="flex items-center justify-between mb-4 border-b border-white/10 pb-2">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-accent-soft">Simulasi Keranjang</span>
+                <span className="text-[10px] font-medium bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full">-12% Lebih Hemat</span>
+              </div>
+              
+              <div className="space-y-3">
+                <div className="flex items-center justify-between text-xs">
+                  <div className="flex items-center gap-2">
+                    <div className="w-2.5 h-2.5 rounded-full bg-amber-400" />
+                    <span className="font-medium text-white/90">Minyak Goreng 2L</span>
+                  </div>
+                  <span className="font-bold text-white">Rp28.500 <span className="text-white/40 line-through text-[10px]">Rp32.000</span></span>
+                </div>
+
+                <div className="flex items-center justify-between text-xs">
+                  <div className="flex items-center gap-2">
+                    <div className="w-2.5 h-2.5 rounded-full bg-emerald-400" />
+                    <span className="font-medium text-white/90">Beras Premium 5kg</span>
+                  </div>
+                  <span className="font-bold text-white">Rp64.000 <span className="text-white/40 line-through text-[10px]">Rp69.000</span></span>
+                </div>
+
+                <div className="flex items-center justify-between text-xs">
+                  <div className="flex items-center gap-2">
+                    <div className="w-2.5 h-2.5 rounded-full bg-sky-400" />
+                    <span className="font-medium text-white/90">Telur Ayam 1kg</span>
+                  </div>
+                  <span className="font-bold text-white">Rp26.000 <span className="text-white/40 line-through text-[10px]">Rp29.000</span></span>
+                </div>
+              </div>
+
+              <div className="mt-4 pt-3 border-t border-white/10 flex items-center justify-between">
+                <span className="text-[11px] font-semibold text-white/70">Total Penghematan</span>
+                <span className="text-xs font-black text-emerald-400 bg-emerald-500/10 px-2 py-1 rounded-lg">Hemat Rp11.500</span>
+              </div>
+            </div>
+
+            {/* Floating Icons */}
+            {/* MapPin Icon */}
+            <div 
+              className="absolute -top-4 right-12 z-20 bg-white/10 backdrop-blur-md border border-white/15 p-3 rounded-full text-accent shadow-card animate-float"
+              style={{ animationDelay: "1s", animationDuration: "5s" }}
+            >
+              <MapPin className="h-5 w-5" />
+            </div>
+
+            {/* TrendingDown Icon */}
+            <div 
+              className="absolute -bottom-6 left-12 z-20 bg-white/10 backdrop-blur-md border border-white/15 p-3 rounded-full text-emerald-400 shadow-card animate-float"
+              style={{ animationDelay: "2s", animationDuration: "7s" }}
+            >
+              <TrendingDown className="h-5 w-5" />
+            </div>
+
+            {/* PiggyBank Icon */}
+            <div 
+              className="absolute top-16 -left-4 z-20 bg-white/10 backdrop-blur-md border border-white/15 p-3 rounded-full text-white shadow-card animate-float"
+              style={{ animationDelay: "0.5s", animationDuration: "6s" }}
+            >
+              <PiggyBank className="h-5 w-5" />
+            </div>
+
+            {/* Sparkles Icon */}
+            <div 
+              className="absolute bottom-12 -right-4 z-20 bg-white/10 backdrop-blur-md border border-white/15 p-3 rounded-full text-amber-300 shadow-card animate-float"
+              style={{ animationDelay: "3s", animationDuration: "8s" }}
+            >
+              <Sparkles className="h-5 w-5" />
+            </div>
+          </div>
         </div>
-        <p className="text-sm text-white/60">© {new Date().getFullYear()} PasarCek</p>
+
+        <p className="text-sm text-white/50 relative z-10">© {new Date().getFullYear()} PasarCek</p>
       </div>
       <div className="flex items-center justify-center bg-[var(--color-gray-50)] p-6">
         <div className="w-full max-w-sm">
-          <Link to="/" className="mb-8 inline-flex items-center gap-2 text-sm font-semibold lg:hidden">
-            <span className="inline-flex h-7 w-7 items-center justify-center rounded bg-[var(--color-brand-blue)] text-xs font-black text-white">PC</span>
-            PasarCek
+          <Link to="/" className="mb-8 inline-flex items-center gap-2 text-sm font-bold lg:hidden group">
+            <div className="grid h-8 w-8 place-items-center rounded-lg bg-gradient-primary text-white shadow-soft group-hover:scale-105 transition-transform duration-200">
+              <ShoppingBasket className="h-4.5 w-4.5" />
+            </div>
+            <span className="font-display text-lg font-bold text-primary">PasarCek</span>
           </Link>
           <Tabs value={activeTab} onValueChange={handleTabChange}>
             <TabsList className="mb-6 grid w-full grid-cols-3">
