@@ -118,49 +118,62 @@ Gunakan selalu nada bicara konsultan profesional ("kami" / "tim kami"), berikan 
       });
     }
 
-    try {
-      const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${apiKey}`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            contents,
-            generationConfig: {
-              temperature: 0.7,
-              maxOutputTokens: 3000,
-            },
-          }),
-        }
-      );
+    const models = ["gemini-3.5-flash", "gemini-2.0-flash", "gemini-1.5-flash"];
+    let lastError: any = null;
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error("Gemini API Error:", errorText);
-        throw new Error(`Gemini API error: ${response.statusText} (${errorText})`);
-      }
-
-      const resJson = await response.json();
-      const textResponse = resJson.candidates?.[0]?.content?.parts?.[0]?.text;
-
-      if (!textResponse) {
-        throw new Error("Invalid response from Gemini API.");
-      }
-
-      return {
-        text: textResponse,
-        updatedHistory: [
-          ...contents,
+    for (const model of models) {
+      try {
+        const response = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
           {
-            role: "model",
-            parts: [{ text: textResponse }],
-          },
-        ],
-      };
-    } catch (error: any) {
-      console.error("Failed to generate AI analysis:", error);
-      throw new Error(error.message || "Failed to contact AI service.");
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              contents,
+              generationConfig: {
+                temperature: 0.7,
+                maxOutputTokens: 3000,
+              },
+            }),
+          }
+        );
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.warn(`Model ${model} failed with status ${response.status}:`, errorText);
+          lastError = new Error(`Gemini API error (${model}): ${response.statusText} (${errorText})`);
+          continue; // Try next model
+        }
+
+        const resJson = await response.json();
+        const textResponse = resJson.candidates?.[0]?.content?.parts?.[0]?.text;
+
+        if (!textResponse) {
+          console.warn(`Model ${model} returned empty response.`);
+          lastError = new Error(`Empty response from model ${model}`);
+          continue; // Try next model
+        }
+
+        // Successfully got a response!
+        return {
+          text: textResponse,
+          updatedHistory: [
+            ...contents,
+            {
+              role: "model",
+              parts: [{ text: textResponse }],
+            },
+          ],
+        };
+      } catch (error: any) {
+        console.warn(`Failed call with model ${model}:`, error);
+        lastError = error;
+        // Continue to next model
+      }
     }
+
+    // If all models failed:
+    throw new Error(`Gagal menghubungi AI. Layanan sedang padat atau kunci API tidak valid. Detail: ${lastError?.message || "Tidak diketahui"}`);
   });
