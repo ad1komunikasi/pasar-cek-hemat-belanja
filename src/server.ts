@@ -1,4 +1,19 @@
 import "./lib/error-capture";
+import WebSocket from "ws";
+
+// Polyfill global WebSocket for Node.js environments (like Vercel Node 20)
+if (typeof globalThis.WebSocket !== "function") {
+  try {
+    Object.defineProperty(globalThis, "WebSocket", {
+      value: WebSocket,
+      writable: true,
+      configurable: true,
+      enumerable: true,
+    });
+  } catch (e) {
+    console.error("Failed to polyfill globalThis.WebSocket:", e);
+  }
+}
 
 import { consumeLastCapturedError } from "./lib/error-capture";
 import { renderErrorPage } from "./lib/error-page";

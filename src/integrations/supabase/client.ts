@@ -27,23 +27,13 @@ function createSupabaseClient() {
     throw new Error(message);
   }
 
-  const options: any = {
+  return createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
     auth: {
       storage: typeof window !== 'undefined' ? localStorage : undefined,
       persistSession: true,
       autoRefreshToken: true,
     }
-  };
-
-  // Provide a dummy WebSocket class for the serverless SSR environment
-  // to prevent Node 20 native WebSocket check errors
-  if (typeof window === 'undefined') {
-    options.realtime = {
-      transport: class DummyWebSocket {}
-    };
-  }
-
-  return createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, options);
+  });
 }
 
 let _supabase: ReturnType<typeof createSupabaseClient> | undefined;
