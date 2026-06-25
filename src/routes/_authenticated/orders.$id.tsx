@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { Copy, Upload, Clock, AlertTriangle, AlertCircle, CheckCircle2, ShieldAlert } from "lucide-react";
+import { Copy, Upload, Clock, AlertTriangle, AlertCircle, CheckCircle2, ShieldAlert, Check } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/orders/$id")({
   head: () => ({ meta: [{ title: "Detail Pesanan — PasarCek" }] }),
@@ -21,6 +21,7 @@ function OrderDetailPage() {
   const qc = useQueryClient();
   const [uploading, setUploading] = useState(false);
   const [timeLeft, setTimeLeft] = useState<number | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   const { data: order } = useQuery({
     queryKey: ["order", id],
@@ -58,14 +59,25 @@ function OrderDetailPage() {
     return () => clearInterval(timer);
   }, [order, id, qc]);
 
-  async function handleUpload(e: React.ChangeEvent<HTMLInputElement>) {
+  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
-    if (!file || !order) return;
-    if (file.size > 5 * 1024 * 1024) return toast.error("Maks 5MB");
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("File terlalu besar. Ukuran maksimal adalah 5MB.");
+      return;
+    }
+    setSelectedFile(file);
+  }
+
+  async function handleSubmitProof() {
+    if (!selectedFile || !order) return;
     setUploading(true);
-    const path = `${user!.id}/${order.id}-${Date.now()}-${file.name}`;
-    const { error: upErr } = await supabase.storage.from("payment-proofs").upload(path, file, { upsert: true });
-    if (upErr) { setUploading(false); return toast.error(upErr.message); }
+    const path = `${user!.id}/${order.id}-${Date.now()}-${selectedFile.name}`;
+    const { error: upErr } = await supabase.storage.from("payment-proofs").upload(path, selectedFile, { upsert: true });
+    if (upErr) { 
+      setUploading(false); 
+      return toast.error(`Gagal mengunggah: ${upErr.message}`); 
+    }
     const { error } = await supabase.from("orders").update({ proof_url: path, status: "proof_uploaded" }).eq("id", order.id);
     setUploading(false);
     if (error) return toast.error(error.message);
@@ -78,7 +90,8 @@ function OrderDetailPage() {
       body: `Bukti transfer Anda untuk pesanan ${order.order_number} telah diteruskan ke Admin untuk diverifikasi. Silakan tunggu proses peninjauan.`,
     });
 
-    toast.success("Bukti transfer berhasil diunggah! Status pembayaran telah diinfokan ke Admin.");
+    toast.success("Bukti transfer berhasil dikirim! Status pembayaran telah diinfokan ke Admin.");
+    setSelectedFile(null);
     qc.invalidateQueries({ queryKey: ["order", id] });
   }
 
@@ -272,13 +285,50 @@ function OrderDetailPage() {
           {(order.status === "pending_payment" || order.status === "rejected") && !isExpired && (
             <div className="rounded-lg border border-[var(--color-gray-100)] bg-white p-6 shadow-sm">
               <h3 className="mb-3 text-lg font-bold">Upload Bukti Transfer</h3>
-              <p className="mb-4 text-xs text-[var(--color-gray-500)]">Unggah file bukti pembayaran Anda di bawah ini agar admin dapat memverifikasi transaksi.</p>
-              <label className="flex cursor-pointer flex-col items-center gap-2 rounded-lg border-2 border-dashed border-[var(--color-gray-300)] bg-[var(--color-gray-50)] p-8 hover:bg-white transition-colors duration-200">
-                <Upload className="h-6 w-6 text-[var(--color-gray-500)]" />
-                <span className="text-sm font-semibold">{uploading ? "Mengunggah..." : "Klik untuk pilih file"}</span>
-                <span className="text-xs text-[var(--color-gray-500)]">JPG, PNG, atau PDF — maks 5MB</span>
-                <input type="file" accept="image/*,application/pdf" className="hidden" onChange={handleUpload} disabled={uploading} />
-              </label>
+              <p className="mb-4 text-xs text-[var(--color-gray-500)]">Pilih file bukti pembayaran Anda di bawah ini, lalu klik tombol kirim bukti transfer.</p>
+              
+              {!selectedFile ? (
+                <label className="flex cursor-pointer flex-col items-center gap-2 rounded-lg border-2 border-dashed border-[var(--color-gray-300)] bg-[var(--color-gray-50)] p-8 hover:bg-white transition-colors duration-200">
+                  <Upload className="h-6 w-6 text-[var(--color-gray-500)]" />
+                  <span className="text-sm font-semibold">Pilih File Bukti Pembayaran</span>
+                  <span className="text-xs text-[var(--color-gray-500)]">JPG, PNG, atau PDF — maks 5MB</span>
+                  <input type="file" accept="image/*,application/pdf" className="hidden" onChange={handleFileChange} />
+                </label>
+              ) : (
+                <div className="space-y-4">
+                  <div className="rounded-md border border-[var(--color-gray-100)] bg-[var(--color-gray-50)] p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="font-semibold text-sm truncate text-[var(--color-ink)]">{selectedFile.name}</p>
+                      <p className="text-xs text-[var(--color-gray-500)]">{(selectedFile.size / (1024 * 1024)).toFixed(2)} MB</p>
+                    </div>
+                    <Button type="button" variant="outline" size="sm" onClick={() => setSelectedFile(null)} disabled={uploading}>
+                      Pilih Ulang
+                    </Button>
+                  </div>
+
+                  {selectedFile.type.startsWith("image/") && (
+                    <div className="mt-3 overflow-hidden rounded-md border border-[var(--color-gray-100)] bg-[var(--color-gray-50)] max-h-[220px] flex justify-center p-2">
+                      <img src={URL.createObjectURL(selectedFile)} alt="Preview Bukti Transfer" className="max-h-[200px] object-contain rounded shadow-xs" />
+                    </div>
+                  )}
+
+                  <Button 
+                    type="button" 
+                    className="w-full bg-[var(--color-primary)] text-white hover:bg-[oklch(0.48_0.18_268)] flex items-center justify-center gap-2 py-5"
+                    onClick={handleSubmitProof} 
+                    disabled={uploading}
+                  >
+                    {uploading ? (
+                      <span>Mengunggah...</span>
+                    ) : (
+                      <>
+                        <Check className="h-4.5 w-4.5" />
+                        <span>Kirim Bukti Pembayaran</span>
+                      </>
+                    )}
+                  </Button>
+                </div>
+              )}
             </div>
           )}
 
