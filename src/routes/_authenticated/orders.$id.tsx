@@ -26,6 +26,13 @@ function OrderDetailPage() {
   const { data: order } = useQuery({
     queryKey: ["order", id],
     queryFn: async () => (await supabase.from("orders").select("*, package:packages(*), payment_method:payment_methods(*)").eq("id", id).maybeSingle()).data,
+    refetchInterval: (query) => {
+      const status = query.state.data?.status;
+      if (status === "proof_uploaded" || status === "verifying") {
+        return 4000; // Auto-refresh every 4 seconds while verifying
+      }
+      return false;
+    },
   });
 
   // Calculate and tick countdown
