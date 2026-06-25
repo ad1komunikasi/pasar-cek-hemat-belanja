@@ -19,6 +19,7 @@ function DashboardPage() {
   const { data } = useQuery({
     queryKey: ["dashboard-stats", user?.id],
     queryFn: async () => {
+      if (!user?.id) return { priceUpdates: 0, markets: 0, unread: 0, baskets: 0 };
       const today = new Date().toLocaleDateString('en-CA');
       
       const { data: latestDateRow } = await supabase
@@ -37,8 +38,8 @@ function DashboardPage() {
       const [prices, markets, unread, baskets] = await Promise.all([
         supabase.from("product_prices").select("id", { count: "exact", head: true }).eq("recorded_at", dateToUse),
         supabase.from("markets").select("id", { count: "exact", head: true }).eq("is_active", true),
-        supabase.from("notifications").select("id", { count: "exact", head: true }).is("read_at", null).eq("user_id", user!.id),
-        supabase.from("smart_baskets").select("id", { count: "exact", head: true }).eq("user_id", user!.id),
+        supabase.from("notifications").select("id", { count: "exact", head: true }).is("read_at", null).eq("user_id", user.id),
+        supabase.from("smart_baskets").select("id", { count: "exact", head: true }).eq("user_id", user.id),
       ]);
       return {
         priceUpdates: prices.count ?? 0,
@@ -47,6 +48,7 @@ function DashboardPage() {
         baskets: baskets.count ?? 0,
       };
     },
+    enabled: !!user?.id,
   });
 
   return (

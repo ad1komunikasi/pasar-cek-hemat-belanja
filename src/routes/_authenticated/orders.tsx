@@ -25,7 +25,11 @@ function OrdersPage() {
   const { user } = useAuth();
   const { data: orders } = useQuery({
     queryKey: ["orders", user?.id],
-    queryFn: async () => (await supabase.from("orders").select("*, package:packages(name)").eq("user_id", user!.id).order("created_at", { ascending: false })).data ?? [],
+    queryFn: async () => {
+      if (!user?.id) return [];
+      return (await supabase.from("orders").select("*, package:packages(name)").eq("user_id", user.id).order("created_at", { ascending: false })).data ?? [];
+    },
+    enabled: !!user?.id,
   });
   return (
     <AppShell>
