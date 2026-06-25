@@ -11,8 +11,11 @@ function createSupabaseClient() {
   const rawUrl = import.meta.env.VITE_SUPABASE_URL || (typeof process !== "undefined" ? process.env?.SUPABASE_URL : undefined);
   const rawKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || (typeof process !== "undefined" ? process.env?.SUPABASE_PUBLISHABLE_KEY : undefined);
   
-  const SUPABASE_URL = cleanEnvVar(rawUrl) || "https://nqbpykmvvjrytnwljkir.supabase.co";
-  const SUPABASE_PUBLISHABLE_KEY = cleanEnvVar(rawKey) || "sb_publishable_ZftPqa-FN2fEFn6RofNDYg_cK46QKO7";
+  const cleanUrl = cleanEnvVar(rawUrl);
+  const cleanKey = cleanEnvVar(rawKey);
+
+  const SUPABASE_URL = (cleanUrl && cleanUrl !== "undefined" && cleanUrl !== "null") ? cleanUrl : "https://nqbpykmvvjrytnwljkir.supabase.co";
+  const SUPABASE_PUBLISHABLE_KEY = (cleanKey && cleanKey !== "undefined" && cleanKey !== "null") ? cleanKey : "sb_publishable_ZftPqa-FN2fEFn6RofNDYg_cK46QKO7";
 
   if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
     const missing = [

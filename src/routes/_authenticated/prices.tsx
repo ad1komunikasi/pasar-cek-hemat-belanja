@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { AppShell, PageHeader, EmptyState } from "@/components/app-shell";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { idr, deltaPct, fmtDate, fmtDateTime } from "@/lib/format";
 import { getDeterministicBenchmarkPrices } from "@/lib/benchmark";
 import { Input } from "@/components/ui/input";
@@ -108,9 +108,13 @@ function PricesPage() {
     (!q || p.product.name.toLowerCase().includes(q.toLowerCase())),
   );
 
-  const lastUpdatedTimestamp = pricesList.length 
-    ? new Date(Math.max(...pricesList.map((p: any) => new Date(p.created_at).getTime()))) 
-    : null;
+  const lastUpdatedTimestamp = useMemo(() => {
+    if (!pricesList.length) return null;
+    const times = pricesList
+      .map((p: any) => p.created_at ? new Date(p.created_at).getTime() : 0)
+      .filter((t: number) => !isNaN(t) && t > 0);
+    return times.length ? new Date(Math.max(...times)) : null;
+  }, [pricesList]);
 
   return (
     <AppShell>
