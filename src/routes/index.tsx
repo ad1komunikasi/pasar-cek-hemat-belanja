@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
+import { toast } from "sonner";
 import {
   ShoppingBasket, MapPin, BarChart3, Bell, Heart, ListChecks,
   Check, Sparkles, TrendingDown, Clock, Wallet, Brain,
@@ -214,6 +215,7 @@ function Navbar() {
 /* ---------------- Hero ---------------- */
 
 function Hero() {
+  const { user } = useAuth();
   return (
     <section id="beranda" className="relative overflow-hidden bg-gradient-hero">
       <div className="absolute -top-24 -right-24 h-96 w-96 rounded-full bg-accent/15 blur-3xl" />
@@ -231,7 +233,7 @@ function Hero() {
             sehingga pengeluaran rumah tangga lebih hemat.
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
-            <CTAButton href="#cta">Coba Gratis</CTAButton>
+            <CTAButton href={user ? "/dashboard" : "/auth?tab=register"}>Coba Gratis</CTAButton>
             <CTAButton href="#cara-kerja" variant="secondary">Lihat Cara Kerja</CTAButton>
           </div>
           <ul className="mt-8 flex flex-wrap gap-x-6 gap-y-3">
@@ -358,6 +360,7 @@ function Why() {
 /* ---------------- Features ---------------- */
 
 function Features() {
+  const { user } = useAuth();
   const features = [
     { icon: BarChart3, tag: "Harga Hari Ini", title: "Harga Sembako Selalu Terbaru", desc: "Lihat harga beras, cabai, telur, ayam, minyak, gula, bawang, dan kebutuhan pokok lainnya — diperbarui harian." },
     { icon: MapIcon, tag: "Lokasi", title: "Temukan Pasar Terdekat", desc: "Berbasis lokasi Anda, lihat pasar tradisional terdekat lengkap dengan jam buka dan rating." },
@@ -388,7 +391,7 @@ function Features() {
           ))}
         </div>
         <div className="mt-12 text-center">
-          <CTAButton href="#cta">Coba Semua Fitur Gratis</CTAButton>
+          <CTAButton href={user ? "/dashboard" : "/auth?tab=register"}>Coba Semua Fitur Gratis</CTAButton>
         </div>
       </div>
     </section>
@@ -620,6 +623,7 @@ function AppPreview() {
 /* ---------------- Smart Basket ---------------- */
 
 function SmartBasket() {
+  const { user } = useAuth();
   const markets = [
     { name: "Pasar A", price: "Rp205.000", best: false },
     { name: "Pasar B", price: "Rp195.000", best: true },
@@ -641,7 +645,7 @@ function SmartBasket() {
             Masukkan daftar belanja Anda dan PasarCek akan menghitung pasar mana yang memberikan total biaya paling murah.
           </p>
           <div className="mt-8">
-            <CTAButton href="#cta" variant="white">Coba Smart Basket</CTAButton>
+            <CTAButton href={user ? "/smart-basket" : "/auth?tab=register"} variant="white">Coba Smart Basket</CTAButton>
           </div>
         </div>
         <div className="rounded-3xl bg-white/10 backdrop-blur-xl border border-white/20 p-6 md:p-8 shadow-elevated">
@@ -750,6 +754,7 @@ function Benefits() {
 /* ---------------- Pricing ---------------- */
 
 function Pricing() {
+  const { user } = useAuth();
   return (
     <section id="harga" className="py-20">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -768,7 +773,7 @@ function Pricing() {
                 </li>
               ))}
             </ul>
-            <CTAButton href="#cta" variant="secondary" className="w-full mt-8">Mulai Gratis</CTAButton>
+            <CTAButton href={user ? "/dashboard" : "/auth?tab=register"} variant="secondary" className="w-full mt-8">Mulai Gratis</CTAButton>
           </div>
           <div className="relative rounded-3xl bg-gradient-navy text-white p-8 shadow-elevated">
             <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-warning px-4 py-1 text-xs font-bold text-warning-foreground shadow-card">
@@ -787,7 +792,7 @@ function Pricing() {
                 </li>
               ))}
             </ul>
-            <CTAButton href="#cta" variant="white" className="w-full mt-8">Upgrade Premium</CTAButton>
+            <CTAButton href={user ? "/checkout?package=premium" : "/auth?tab=register"} variant="white" className="w-full mt-8">Upgrade Premium</CTAButton>
           </div>
         </div>
       </div>
@@ -835,6 +840,20 @@ function FAQ() {
 /* ---------------- Final CTA ---------------- */
 
 function FinalCTA() {
+  const { user } = useAuth();
+
+  const handleWaitlist = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (user) {
+      toast.success("Terima kasih! Anda sudah terdaftar dalam antrean prioritas rilis aplikasi mobile kami.");
+    } else {
+      toast.success("Terima kasih! Menghubungkan ke pendaftaran akun untuk prioritas waitlist...");
+      setTimeout(() => {
+        window.location.href = "/auth?tab=register";
+      }, 1500);
+    }
+  };
+
   return (
     <section id="cta" className="py-20 bg-gradient-navy text-white relative overflow-hidden">
       <div className="absolute top-0 left-1/2 -translate-x-1/2 h-96 w-[120%] rounded-full bg-accent/15 blur-3xl" />
@@ -847,8 +866,8 @@ function FinalCTA() {
             Ribuan keluarga sudah menggunakan PasarCek untuk membuat keputusan belanja yang lebih cerdas.
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
-            <CTAButton href="#" variant="white">Download Gratis</CTAButton>
-            <a href="#" className="inline-flex items-center justify-center gap-2 rounded-2xl px-6 py-3 text-sm font-semibold border border-white/30 text-white hover:bg-white/10 transition-all">
+            <CTAButton href={user ? "/dashboard" : "/auth?tab=register"} variant="white">Download Gratis</CTAButton>
+            <a href="#" onClick={handleWaitlist} className="inline-flex items-center justify-center gap-2 rounded-2xl px-6 py-3 text-sm font-semibold border border-white/30 text-white hover:bg-white/10 transition-all">
               Gabung Waitlist
             </a>
           </div>
@@ -864,11 +883,37 @@ function FinalCTA() {
 /* ---------------- Footer ---------------- */
 
 function Footer() {
+  const handleUnderDev = (name: string) => (e: React.MouseEvent) => {
+    e.preventDefault();
+    toast.info(`Fitur/Halaman ${name} sedang dalam pengembangan. Hubungi kami via email jika ada pertanyaan!`);
+  };
+
   const cols = [
-    { title: "Produk", links: ["Fitur", "Harga", "FAQ"] },
-    { title: "Perusahaan", links: ["Tentang Kami", "Kontak", "Blog"] },
-    { title: "Legal", links: ["Privacy Policy", "Terms of Service"] },
+    {
+      title: "Produk",
+      links: [
+        { label: "Fitur", href: "#fitur" },
+        { label: "Harga", href: "#harga" },
+        { label: "FAQ", href: "#faq" },
+      ],
+    },
+    {
+      title: "Perusahaan",
+      links: [
+        { label: "Tentang Kami", href: "/trust" },
+        { label: "Kontak", href: "#", onClick: handleUnderDev("Kontak") },
+        { label: "Blog", href: "#", onClick: handleUnderDev("Blog") },
+      ],
+    },
+    {
+      title: "Legal",
+      links: [
+        { label: "Privacy Policy", href: "/trust" },
+        { label: "Terms of Service", href: "/trust" },
+      ],
+    },
   ];
+
   return (
     <footer className="bg-white border-t border-border py-14">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 grid sm:grid-cols-2 lg:grid-cols-4 gap-8">
@@ -883,7 +928,15 @@ function Footer() {
             <div className="font-display font-semibold text-foreground mb-3">{c.title}</div>
             <ul className="space-y-2">
               {c.links.map(l => (
-                <li key={l}><a href="#" className="text-sm text-muted-foreground hover:text-primary transition-colors">{l}</a></li>
+                <li key={l.label}>
+                  <a
+                    href={l.href}
+                    onClick={l.onClick}
+                    className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                  >
+                    {l.label}
+                  </a>
+                </li>
               ))}
             </ul>
           </div>

@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Shield, Lock, Database, UserCheck, FileText, Mail } from "lucide-react";
+import { useAuth } from "@/hooks/use-auth";
 
 export const Route = createFileRoute("/trust")({
   head: () => ({
@@ -16,6 +17,7 @@ export const Route = createFileRoute("/trust")({
 });
 
 function TrustPage() {
+  const { user } = useAuth();
   return (
     <div className="min-h-screen bg-white text-[var(--color-ink)]">
       <header className="border-b border-[var(--color-gray-100)]">
@@ -24,7 +26,9 @@ function TrustPage() {
           <nav className="flex gap-5 text-sm">
             <Link to="/features">Fitur</Link>
             <Link to="/pricing">Paket</Link>
-            <Link to="/auth">Masuk</Link>
+            <Link to={user ? "/dashboard" : "/auth"}>
+              {user ? "Dashboard" : "Masuk"}
+            </Link>
           </nav>
         </div>
       </header>

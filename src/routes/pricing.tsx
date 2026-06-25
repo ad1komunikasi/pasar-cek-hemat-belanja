@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { idr } from "@/lib/format";
 import { Check, Crown } from "lucide-react";
+import { useAuth } from "@/hooks/use-auth";
 
 export const Route = createFileRoute("/pricing")({
   head: () => ({
@@ -20,6 +21,7 @@ export const Route = createFileRoute("/pricing")({
 
 function PricingPage() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const { data: packages } = useQuery({
     queryKey: ["packages"],
     queryFn: async () => (await supabase.from("packages").select("*").eq("is_active", true).order("sort_order")).data ?? [],
@@ -30,7 +32,11 @@ function PricingPage() {
       <header className="border-b border-[var(--color-gray-100)] bg-white">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4">
           <Link to="/" className="flex items-center gap-2 font-bold"><span className="inline-flex h-7 w-7 items-center justify-center rounded bg-[var(--color-brand-blue)] text-xs font-black text-white">PC</span>PasarCek</Link>
-          <Button asChild variant="outline"><Link to="/auth">Masuk</Link></Button>
+          <Button asChild variant="outline">
+            <Link to={user ? "/dashboard" : "/auth"}>
+              {user ? "Dashboard" : "Masuk"}
+            </Link>
+          </Button>
         </div>
       </header>
       <main className="mx-auto max-w-6xl px-4 py-16">
@@ -59,7 +65,13 @@ function PricingPage() {
                 <Button
                   className="mt-6 w-full"
                   variant={featured ? "default" : "outline"}
-                  onClick={() => navigate({ to: "/checkout", search: { package: p.slug } as any })}
+                  onClick={() => {
+                    if (user) {
+                      navigate({ to: "/checkout", search: { package: p.slug } as any });
+                    } else {
+                      navigate({ to: "/auth", search: { tab: "register" } as any });
+                    }
+                  }}
                   disabled={p.price === 0}
                 >
                   {p.price === 0 ? "Paket aktif" : "Pilih Paket"}
