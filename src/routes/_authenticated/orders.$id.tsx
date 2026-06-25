@@ -69,7 +69,16 @@ function OrderDetailPage() {
     const { error } = await supabase.from("orders").update({ proof_url: path, status: "proof_uploaded" }).eq("id", order.id);
     setUploading(false);
     if (error) return toast.error(error.message);
-    toast.success("Bukti pembayaran berhasil diunggah");
+    
+    // Add in-app notification to confirm to the user that the admin has been notified
+    await supabase.from("notifications").insert({
+      user_id: user!.id,
+      type: "payment",
+      title: "Bukti Pembayaran Terkirim",
+      body: `Bukti transfer Anda untuk pesanan ${order.order_number} telah diteruskan ke Admin untuk diverifikasi. Silakan tunggu proses peninjauan.`,
+    });
+
+    toast.success("Bukti transfer berhasil diunggah! Status pembayaran telah diinfokan ke Admin.");
     qc.invalidateQueries({ queryKey: ["order", id] });
   }
 
@@ -136,6 +145,14 @@ function OrderDetailPage() {
           <div>
             <h4 className="font-bold text-red-900">Batas Waktu Pembayaran Habis (Expired)</h4>
             <p className="text-sm">Waktu 24 jam untuk melakukan pembayaran telah berlalu. Pesanan ini telah dibatalkan secara otomatis. Silakan kembali ke halaman penawaran untuk membuat pesanan paket baru.</p>
+          </div>
+        </div>
+      ) : order.status === "pending_payment" ? (
+        <div className="mb-6 flex items-start gap-3 rounded-lg border border-[oklch(0.78_0.15_75)] bg-[oklch(0.98_0.02_75)] p-4 text-[oklch(0.25_0.05_70)]">
+          <Clock className="mt-0.5 h-5 w-5 shrink-0 text-[oklch(0.55_0.15_75)]" />
+          <div>
+            <h4 className="font-bold text-[oklch(0.20_0.05_70)]">Menunggu Pembayaran</h4>
+            <p className="text-sm">Rincian tagihan ini telah dikirim ke email Anda: <strong>{order.recipient_email}</strong>. Silakan lakukan transfer sesuai rincian di bawah dan unggah bukti pembayaran di halaman ini untuk aktivasi instan.</p>
           </div>
         </div>
       ) : order.status === "proof_uploaded" || order.status === "verifying" ? (

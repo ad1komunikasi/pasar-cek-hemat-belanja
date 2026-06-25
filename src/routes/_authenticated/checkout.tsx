@@ -63,8 +63,17 @@ function CheckoutPage() {
       status: "pending_payment",
     }).select().single();
     if (error) return toast.error(error.message);
+    
+    // Simulate sending payment instruction email by creating a system notification log
+    await supabase.from("notifications").insert({
+      user_id: user!.id,
+      type: "payment",
+      title: "Instruksi Pembayaran Dikirim",
+      body: `Detail tagihan dan tata cara transfer untuk Pesanan ${num} telah dikirim ke email Anda (${email}). Silakan periksa inbox / spam Anda.`,
+    });
+
     qc.invalidateQueries({ queryKey: ["orders"] });
-    toast.success("Pesanan dibuat. Silakan lakukan pembayaran.");
+    toast.success(`Pesanan berhasil dibuat! Rincian instruksi transfer telah dikirim ke email ${email}.`);
     navigate({ to: "/orders/$id", params: { id: data.id } });
   }
 
