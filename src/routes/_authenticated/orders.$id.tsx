@@ -72,6 +72,17 @@ function OrderDetailPage() {
   async function handleSubmitProof() {
     if (!selectedFile || !order) return;
     setUploading(true);
+
+    // Fallback: Attempt to dynamically create the bucket in case client key permissions allow it
+    try {
+      await supabase.storage.createBucket("payment-proofs", {
+        public: false,
+        fileSizeLimit: 5 * 1024 * 1024,
+      });
+    } catch (bucketErr) {
+      console.warn("Could not dynamically create bucket (normal for public keys):", bucketErr);
+    }
+
     const path = `${user!.id}/${order.id}-${Date.now()}-${selectedFile.name}`;
     const { error: upErr } = await supabase.storage.from("payment-proofs").upload(path, selectedFile, { upsert: true });
     if (upErr) { 
