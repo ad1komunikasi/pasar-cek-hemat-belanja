@@ -3,7 +3,8 @@ import { AppShell, PageHeader, StatCard, Section, EmptyState } from "@/component
 import { useAuth } from "@/hooks/use-auth";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { TrendingUp, MapPin, ShoppingBasket, Bell, Scale, Search, Crown, PiggyBank } from "lucide-react";
+import { TrendingUp, MapPin, ShoppingBasket, Bell, Scale, Search, Crown } from "lucide-react";
+import celenganAyam from "@/assets/celengan-ayam.png";
 import { Button } from "@/components/ui/button";
 import { idr } from "@/lib/format";
 
@@ -75,13 +76,25 @@ function DashboardPage() {
       </Section>
 
       <div className="grid gap-6 lg:grid-cols-3">
-        <div className="rounded-lg border border-[var(--color-gray-100)] bg-gradient-to-br from-[var(--color-brand-blue)] to-[var(--color-brand-green)] p-6 text-white lg:col-span-2">
-          <PiggyBank className="mb-3 h-8 w-8" />
-          <h3 className="text-2xl font-black">Belanja Lebih Cerdas Bersama PasarCek</h3>
-          <p className="mt-2 text-white/85">Mulai simulasi belanja dengan Smart Basket dan temukan pasar termurah berdasarkan keranjang Anda.</p>
-          <Button asChild className="mt-4 bg-white text-[var(--color-brand-blue)] hover:bg-white/90">
-            <Link to="/smart-basket">Mulai Simulasi Belanja</Link>
-          </Button>
+        <div className="group relative overflow-hidden rounded-lg border border-[var(--color-gray-100)] bg-gradient-to-br from-[var(--color-brand-blue)] to-[var(--color-brand-green)] p-6 text-white lg:col-span-2 flex flex-col justify-between md:flex-row md:items-center gap-6">
+          <div className="flex-1 z-10">
+            <div className="mb-4 flex items-center gap-3">
+              <div className="h-10 w-10 overflow-hidden rounded-full border border-white/20 bg-[#1e3a8a] shadow-inner transition-transform duration-300 group-hover:scale-110">
+                <img src={celenganAyam} alt="Celengan Ayam" className="h-full w-full object-cover" />
+              </div>
+              <span className="text-xs font-bold uppercase tracking-wider text-white/70">Tips Hemat</span>
+            </div>
+            <h3 className="text-2xl font-black leading-tight">Belanja Lebih Cerdas Bersama PasarCek</h3>
+            <p className="mt-2 text-sm text-white/85 max-w-xl">Mulai simulasi belanja dengan Smart Basket dan temukan pasar termurah berdasarkan keranjang Anda.</p>
+            <Button asChild className="mt-4 bg-white text-[var(--color-brand-blue)] hover:bg-white/90 shadow-md">
+              <Link to="/smart-basket">Mulai Simulasi Belanja</Link>
+            </Button>
+          </div>
+          <div className="hidden sm:block flex-shrink-0 self-center md:self-auto z-10">
+            <div className="w-24 h-24 md:w-28 md:h-28 rounded-2xl overflow-hidden border border-white/10 shadow-lg bg-[#1e3a8a] transition-all duration-300 group-hover:scale-105 group-hover:rotate-2">
+              <img src={celenganAyam} alt="Celengan Ayam" className="w-full h-full object-cover" />
+            </div>
+          </div>
         </div>
         <div className="rounded-lg border border-[var(--color-gray-100)] bg-white p-6">
           <h3 className="text-lg font-bold">Penghematan Bulan Ini</h3>
