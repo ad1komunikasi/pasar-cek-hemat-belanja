@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { idr, fmtDateTime } from "@/lib/format";
+import { EmailService } from "@/lib/email";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { FileText, CheckCircle, XCircle, Clock, Eye, AlertCircle } from "lucide-react";
@@ -50,6 +51,22 @@ function AdminOrders() {
     if (error) return toast.error(error.message);
     await supabase.from("subscriptions").insert({ user_id: o.user_id, package_id: o.package_id, order_id: o.id, started_at: new Date().toISOString(), expires_at: expires.toISOString(), status: "active" });
     await supabase.from("notifications").insert({ user_id: o.user_id, type: "subscription", title: "Paket aktif", body: `Paket ${o.package?.name} berhasil diaktifkan.` });
+    
+    // Send actual email notification
+    try {
+      const emailOrder = {
+        id: o.id,
+        order_number: o.order_number,
+        amount: Number(o.amount),
+        recipient_name: o.recipient_name || o.profile?.full_name || "Pelanggan",
+        recipient_email: o.recipient_email || o.profile?.email || "",
+        created_at: o.created_at,
+      };
+      await EmailService.sendOrderApprovedEmail(emailOrder, o.package?.name || "Premium");
+    } catch (emailErr) {
+      console.error("Failed to send approval email:", emailErr);
+    }
+
     toast.success("Paket diaktifkan");
     qc.invalidateQueries({ queryKey: ["admin-orders"] });
     setSelected(null);
@@ -59,6 +76,22 @@ function AdminOrders() {
     if (!note.trim()) return toast.error("Tulis alasan penolakan");
     await supabase.from("orders").update({ status: "rejected", admin_note: note }).eq("id", o.id);
     await supabase.from("notifications").insert({ user_id: o.user_id, type: "payment", title: "Pembayaran ditolak", body: note });
+
+    // Send actual email notification
+    try {
+      const emailOrder = {
+        id: o.id,
+        order_number: o.order_number,
+        amount: Number(o.amount),
+        recipient_name: o.recipient_name || o.profile?.full_name || "Pelanggan",
+        recipient_email: o.recipient_email || o.profile?.email || "",
+        created_at: o.created_at,
+      };
+      await EmailService.sendOrderRejectedEmail(emailOrder, note);
+    } catch (emailErr) {
+      console.error("Failed to send rejection email:", emailErr);
+    }
+
     toast.success("Pesanan ditolak");
     qc.invalidateQueries({ queryKey: ["admin-orders"] });
     setSelected(null);

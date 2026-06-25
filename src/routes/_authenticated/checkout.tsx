@@ -3,6 +3,7 @@ import { AppShell, PageHeader } from "@/components/app-shell";
 import { useAuth } from "@/hooks/use-auth";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { EmailService } from "@/lib/email";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -63,6 +64,22 @@ function CheckoutPage() {
       status: "pending_payment",
     }).select().single();
     if (error) return toast.error(error.message);
+
+    // Send actual email notification
+    try {
+      const orderWithMethod = {
+        ...data,
+        payment_method: {
+          name: method.name,
+          account_number: method.account_number,
+          account_name: method.account_name,
+          instructions: method.instructions,
+        }
+      };
+      await EmailService.sendOrderCreatedEmail(orderWithMethod, pkg.name);
+    } catch (emailErr) {
+      console.error("Failed to send checkout email:", emailErr);
+    }
     
     // Simulate sending payment instruction email by creating a system notification log
     await supabase.from("notifications").insert({

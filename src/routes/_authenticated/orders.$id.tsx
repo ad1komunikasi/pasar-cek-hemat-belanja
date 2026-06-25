@@ -4,6 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { idr, fmtDateTime } from "@/lib/format";
+import { EmailService } from "@/lib/email";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useEffect, useState } from "react";
@@ -99,6 +100,27 @@ function OrderDetailPage() {
     const { error } = await supabase.from("orders").update({ proof_url: path, status: "proof_uploaded" }).eq("id", order.id);
     setUploading(false);
     if (error) return toast.error(error.message);
+
+    // Send actual email notification
+    try {
+      const emailOrder = {
+        id: order.id,
+        order_number: order.order_number,
+        amount: Number(order.amount),
+        recipient_name: order.recipient_name,
+        recipient_email: order.recipient_email,
+        created_at: order.created_at,
+        payment_method: order.payment_method ? {
+          name: (order.payment_method as any).name,
+          account_number: (order.payment_method as any).account_number,
+          account_name: (order.payment_method as any).account_name,
+          instructions: (order.payment_method as any).instructions,
+        } : null,
+      };
+      await EmailService.sendPaymentUploadedEmail(emailOrder);
+    } catch (emailErr) {
+      console.error("Failed to send payment uploaded email:", emailErr);
+    }
     
     // Add in-app notification to confirm to the user that the admin has been notified
     await supabase.from("notifications").insert({
