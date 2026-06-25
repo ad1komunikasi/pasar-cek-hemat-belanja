@@ -21,7 +21,7 @@ function PricesPage() {
   const [category, setCategory] = useState<string>("all");
   const [selectedDate, setSelectedDate] = useState<string>("");
 
-  const today = new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+  const today = new Date().toLocaleDateString('en-CA');
 
   const { data: markets } = useQuery({
     queryKey: ["markets-list"],

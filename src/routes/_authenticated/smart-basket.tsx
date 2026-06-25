@@ -46,7 +46,7 @@ function SmartBasketPage() {
     queryKey: ["basket-prices", items?.map((i: any) => i.product_id).sort().join(",")],
     enabled: !!items && items.length > 0,
     queryFn: async () => {
-      const today = new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+      const today = new Date().toLocaleDateString('en-CA');
       const productIds = items!.map((i: any) => i.product_id);
       
       // Get the latest date with prices in the database to fallback on

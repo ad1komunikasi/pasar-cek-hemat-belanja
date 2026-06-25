@@ -25,7 +25,7 @@ function MarketDetail() {
   const { data: prices } = useQuery({
     queryKey: ["market-prices", id],
     queryFn: async () => {
-      const today = new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+      const today = new Date().toLocaleDateString('en-CA');
       
       const { data: latestDateRow } = await supabase
         .from("product_prices")
