@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { idr, fmtDateTime } from "@/lib/format";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { FileText, CheckCircle, XCircle, Clock, Eye, AlertCircle } from "lucide-react";
 
@@ -20,6 +20,28 @@ function AdminOrders() {
   const [selected, setSelected] = useState<any>(null);
   const [note, setNote] = useState("");
   const [filter, setFilter] = useState("all");
+  const [proofUrl, setProofUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!selected?.proof_url) {
+      setProofUrl(null);
+      return;
+    }
+
+    async function loadSignedUrl() {
+      const { data, error } = await supabase.storage
+        .from("payment-proofs")
+        .createSignedUrl(selected.proof_url, 3600); // 1 hour expiry
+      if (data) {
+        setProofUrl(data.signedUrl);
+      } else {
+        console.error("Error creating signed URL:", error);
+        setProofUrl(null);
+      }
+    }
+
+    loadSignedUrl();
+  }, [selected]);
 
   async function approve(o: any) {
     const expires = new Date();
@@ -70,10 +92,6 @@ function AdminOrders() {
     }
   };
 
-  // Generate public URL for the payment proof if it exists
-  const proofPublicUrl = selected?.proof_url
-    ? supabase.storage.from("payment-proofs").getPublicUrl(selected.proof_url).data.publicUrl
-    : null;
   const isPDF = selected?.proof_url?.toLowerCase().endsWith(".pdf");
 
   return (
@@ -188,7 +206,7 @@ function AdminOrders() {
                 <span className="text-xs font-bold uppercase tracking-wider text-[var(--color-gray-500)]">Bukti Pembayaran:</span>
                 {isPDF ? (
                   <a
-                    href={proofPublicUrl || undefined}
+                    href={proofUrl || undefined}
                     target="_blank"
                     rel="noreferrer"
                     className="flex items-center gap-2.5 rounded-md border border-[var(--color-gray-200)] bg-[oklch(0.95_0.02_195)] p-3.5 text-sm text-[oklch(0.35_0.08_195)] hover:bg-[oklch(0.90_0.04_195)] transition-colors"
@@ -199,10 +217,10 @@ function AdminOrders() {
                 ) : (
                   <div className="overflow-hidden rounded-md border border-[var(--color-gray-100)] bg-[var(--color-gray-50)]">
                     <img
-                      src={proofPublicUrl || undefined}
+                      src={proofUrl || undefined}
                       alt="Bukti Transfer"
                       className="max-h-[250px] w-full object-contain cursor-zoom-in hover:opacity-90 transition-opacity"
-                      onClick={() => window.open(proofPublicUrl || undefined, "_blank")}
+                      onClick={() => window.open(proofUrl || undefined, "_blank")}
                     />
                     <div className="bg-white p-2 text-center text-2xs text-[var(--color-gray-500)] border-t border-[var(--color-gray-100)]">
                       Klik gambar untuk melihat dalam ukuran penuh (tab baru)
