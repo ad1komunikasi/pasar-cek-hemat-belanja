@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useState } from "react";
 import { toast } from "sonner";
-import { Trash2, Sparkles, Check } from "lucide-react";
+import { Trash2, Sparkles, Check, Pencil } from "lucide-react";
 import { getAiMarketSuggestions } from "@/lib/api/ai.functions";
 
 export const Route = createFileRoute("/_authenticated/admin/markets")({ component: AdminMarkets });
@@ -28,6 +28,7 @@ function AdminMarkets() {
   const [lat, setLat] = useState("");
   const [lng, setLng] = useState("");
   const [googleMapsUrl, setGoogleMapsUrl] = useState("");
+  const [editingId, setEditingId] = useState<string | null>(null);
 
   // AI Assistant state variables
   const [aiQuery, setAiQuery] = useState("");
@@ -37,7 +38,7 @@ function AdminMarkets() {
   async function create() {
     if (!name || !address || !city || !province) return toast.error("Lengkapi data");
     const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, "-");
-    const { error } = await supabase.from("markets").insert({
+    const marketData = {
       name,
       slug,
       address,
@@ -48,9 +49,22 @@ function AdminMarkets() {
       lat: lat ? Number(lat) : null,
       lng: lng ? Number(lng) : null,
       google_maps_url: googleMapsUrl || null,
-    });
-    if (error) return toast.error(error.message);
-    toast.success("Pasar ditambahkan");
+    };
+
+    if (editingId) {
+      const { error } = await supabase
+        .from("markets")
+        .update(marketData)
+        .eq("id", editingId);
+      if (error) return toast.error(error.message);
+      toast.success("Pasar diperbarui");
+      setEditingId(null);
+    } else {
+      const { error } = await supabase.from("markets").insert(marketData);
+      if (error) return toast.error(error.message);
+      toast.success("Pasar ditambahkan");
+    }
+
     setName("");
     setAddress("");
     setCity("");
@@ -145,9 +159,30 @@ function AdminMarkets() {
                   <td className="px-4 py-3 capitalize">{m.type}</td>
                   <td className="px-4 py-3">{m.hours ?? "—"}</td>
                   <td className="px-4 py-3 text-right">
-                    <Button size="icon" variant="ghost" onClick={() => remove(m.id)}>
-                      <Trash2 className="h-4 w-4 text-[var(--color-destructive)]" />
-                    </Button>
+                    <div className="flex justify-end gap-1">
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        onClick={() => {
+                          setEditingId(m.id);
+                          setName(m.name);
+                          setAddress(m.address);
+                          setCity(m.city);
+                          setProvince(m.province || "DKI Jakarta");
+                          setType(m.type);
+                          setHours(m.hours || "");
+                          setLat(m.lat ? String(m.lat) : "");
+                          setLng(m.lng ? String(m.lng) : "");
+                          setGoogleMapsUrl(m.google_maps_url || "");
+                          toast.info(`Mengedit pasar: ${m.name}`);
+                        }}
+                      >
+                        <Pencil className="h-4 w-4 text-gray-500" />
+                      </Button>
+                      <Button size="icon" variant="ghost" onClick={() => remove(m.id)}>
+                        <Trash2 className="h-4 w-4 text-[var(--color-destructive)]" />
+                      </Button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -159,7 +194,7 @@ function AdminMarkets() {
         <div className="space-y-6">
           {/* Add Market Form */}
           <div className="space-y-3 rounded-lg border border-[var(--color-gray-100)] bg-white p-4">
-            <h3 className="text-lg font-bold">Tambah Pasar</h3>
+            <h3 className="text-lg font-bold">{editingId ? "Edit Pasar" : "Tambah Pasar"}</h3>
             <div>
               <Label>Nama</Label>
               <Input value={name} onChange={(e) => setName(e.target.value)} />
@@ -208,8 +243,28 @@ function AdminMarkets() {
               <Input value={googleMapsUrl} onChange={(e) => setGoogleMapsUrl(e.target.value)} placeholder="https://google.com/maps/..." />
             </div>
             <Button onClick={create} className="w-full">
-              Simpan
+              {editingId ? "Simpan Perubahan" : "Simpan"}
             </Button>
+            {editingId && (
+              <Button
+                variant="ghost"
+                onClick={() => {
+                  setEditingId(null);
+                  setName("");
+                  setAddress("");
+                  setCity("");
+                  setProvince("DKI Jakarta");
+                  setType("tradisional");
+                  setHours("");
+                  setLat("");
+                  setLng("");
+                  setGoogleMapsUrl("");
+                }}
+                className="w-full text-xs"
+              >
+                Batal Edit
+              </Button>
+            )}
           </div>
 
           {/* AI Market Search & Autocomplete Assistant */}
