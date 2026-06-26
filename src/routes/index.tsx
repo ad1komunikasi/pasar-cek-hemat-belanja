@@ -6,7 +6,7 @@ import {
   ShoppingBasket, MapPin, BarChart3, Bell, Heart, ListChecks,
   Check, Sparkles, TrendingDown, Clock, Wallet, Brain,
   Menu, X, ChevronDown, Store, Users, Database, PiggyBank,
-  Frown, Search, Map as MapIcon, ShoppingBag,
+  Frown, Search, Map as MapIcon, Package,
 } from "lucide-react";
 import heroImg from "@/assets/hero-illustration.png";
 import problemImg from "@/assets/problem-illustration.png";
@@ -601,8 +601,8 @@ function AppPreview() {
                   <span>Pasar</span>
                 </div>
                 <div className="flex flex-col items-center gap-0.5 hover:text-primary transition-colors">
-                  <ShoppingBag className="h-4 w-4" />
-                  <span>Keranjang</span>
+                  <Package className="h-4 w-4" />
+                  <span>Produk</span>
                 </div>
               </div>
 
