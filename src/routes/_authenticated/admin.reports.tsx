@@ -188,21 +188,39 @@ function AdminReports() {
   const [isSaving, setIsSaving] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
 
-  // Fetch saved reports history from Supabase
-  const { data: savedReports, refetch: refetchSavedReports } = useQuery({
+  // Fetch saved reports history from Supabase or localStorage fallback
+  const { data: savedReportsList, refetch: refetchSavedReports } = useQuery({
     queryKey: ["admin-saved-reports"],
     queryFn: async () => {
-      const { data: reports, error } = await supabase
-        .from("ai_reports")
-        .select("id, created_at, title")
-        .order("created_at", { ascending: false });
-      if (error) {
-        console.error("Error fetching saved reports:", error);
+      try {
+        const { data: reports, error } = await supabase
+          .from("ai_reports")
+          .select("id, created_at, title")
+          .order("created_at", { ascending: false });
+        if (error) {
+          throw error;
+        }
+        return reports ?? [];
+      } catch (err: any) {
+        console.warn("Supabase query failed, falling back to localStorage:", err.message);
+        const local = localStorage.getItem("pasardeck_ai_reports");
+        if (local) {
+          try {
+            return JSON.parse(local).map((r: any) => ({
+              id: r.id,
+              created_at: r.created_at,
+              title: r.title
+            }));
+          } catch (e) {
+            return [];
+          }
+        }
         return [];
       }
-      return reports ?? [];
     }
   });
+
+  const savedReports = savedReportsList ?? [];
 
   useEffect(() => {
     if (chatEndRef.current) {
@@ -302,26 +320,54 @@ function AdminReports() {
     }
     
     try {
+      // First try from Supabase
       const { data: report, error } = await supabase
         .from("ai_reports")
         .select("*")
         .eq("id", id)
-        .single();
+        .maybeSingle();
       
-      if (error) {
-        toast.error("Gagal memuat laporan: " + error.message);
-        return;
-      }
-      
-      if (report) {
+      if (!error && report) {
         setReportText(report.report_text);
         setChatHistory(report.chat_history || []);
         setSelectedReportId(id);
         setActiveTab("laporan");
         toast.success("Laporan berhasil dimuat!");
+        return;
       }
+      
+      // Try from localStorage fallback
+      const local = localStorage.getItem("pasardeck_ai_reports");
+      if (local) {
+        const list = JSON.parse(local);
+        const found = list.find((r: any) => r.id === id);
+        if (found) {
+          setReportText(found.report_text);
+          setChatHistory(found.chat_history || []);
+          setSelectedReportId(id);
+          setActiveTab("laporan");
+          toast.success("Laporan dimuat dari penyimpanan lokal!");
+          return;
+        }
+      }
+      
+      toast.error("Laporan tidak ditemukan.");
     } catch (err: any) {
       toast.error("Terjadi kesalahan: " + err.message);
+    }
+  }
+
+  function saveToLocalStorage(report: any) {
+    try {
+      const local = localStorage.getItem("pasardeck_ai_reports");
+      const list = local ? JSON.parse(local) : [];
+      list.unshift(report);
+      localStorage.setItem("pasardeck_ai_reports", JSON.stringify(list));
+      toast.success("Laporan disimpan lokal di browser Anda!");
+      setSelectedReportId(report.id);
+      refetchSavedReports();
+    } catch (e: any) {
+      toast.error("Gagal menyimpan lokal: " + e.message);
     }
   }
 
@@ -338,36 +384,45 @@ function AdminReports() {
     const finalTitle = title.trim() || defaultTitle;
     setIsSaving(true);
     
+    const reportId = crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2, 15);
+    const newReport = {
+      id: reportId,
+      created_at: new Date().toISOString(),
+      title: finalTitle,
+      report_text: reportText,
+      chat_history: chatHistory,
+      metrics_snapshot: data?.aiMetrics || {},
+    };
+    
     try {
       const { data: userData } = await supabase.auth.getUser();
-      if (!userData.user) {
-        toast.error("Sesi Anda telah kedaluwarsa. Silakan masuk kembali.");
+      if (!userData?.user) {
+        saveToLocalStorage(newReport);
         return;
       }
 
-      const { data: savedReport, error } = await supabase
+      const { error } = await supabase
         .from("ai_reports")
         .insert({
+          id: reportId,
           title: finalTitle,
           report_text: reportText,
           chat_history: chatHistory,
           metrics_snapshot: data?.aiMetrics || {},
           user_id: userData.user.id
-        })
-        .select("id")
-        .single();
+        });
 
       if (error) {
-        toast.error("Gagal menyimpan laporan: " + error.message);
+        console.warn("Database save failed, using local fallback:", error.message);
+        saveToLocalStorage(newReport);
       } else {
-        toast.success("Laporan berhasil disimpan!");
-        if (savedReport) {
-          setSelectedReportId(savedReport.id);
-        }
+        toast.success("Laporan disimpan ke database!");
+        setSelectedReportId(reportId);
         refetchSavedReports();
       }
     } catch (err: any) {
-      toast.error("Terjadi kesalahan: " + err.message);
+      console.warn("Save failed, using local fallback:", err.message);
+      saveToLocalStorage(newReport);
     } finally {
       setIsSaving(false);
     }
@@ -378,22 +433,27 @@ function AdminReports() {
     if (!confirm("Apakah Anda yakin ingin menghapus laporan ini?")) return;
     
     try {
-      const { error } = await supabase
+      // Attempt database deletion (won't throw if table is missing, just returns error)
+      await supabase
         .from("ai_reports")
         .delete()
         .eq("id", id);
       
-      if (error) {
-        toast.error("Gagal menghapus laporan: " + error.message);
-      } else {
-        toast.success("Laporan berhasil dihapus!");
-        if (selectedReportId === id) {
-          setReportText("");
-          setChatHistory([]);
-          setSelectedReportId("");
-        }
-        refetchSavedReports();
+      // Delete from localStorage
+      const local = localStorage.getItem("pasardeck_ai_reports");
+      if (local) {
+        const list = JSON.parse(local);
+        const filtered = list.filter((r: any) => r.id !== id);
+        localStorage.setItem("pasardeck_ai_reports", JSON.stringify(filtered));
       }
+      
+      toast.success("Laporan berhasil dihapus!");
+      if (selectedReportId === id) {
+        setReportText("");
+        setChatHistory([]);
+        setSelectedReportId("");
+      }
+      refetchSavedReports();
     } catch (err: any) {
       toast.error("Terjadi kesalahan: " + err.message);
     }

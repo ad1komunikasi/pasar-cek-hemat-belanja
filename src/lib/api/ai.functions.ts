@@ -134,7 +134,7 @@ Gunakan selalu nada bicara konsultan profesional ("kami" / "tim kami"), berikan 
               contents,
               generationConfig: {
                 temperature: 0.7,
-                maxOutputTokens: 3000,
+                maxOutputTokens: 8192,
               },
             }),
           }
