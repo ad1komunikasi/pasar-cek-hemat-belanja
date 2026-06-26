@@ -9,8 +9,54 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { idr } from "@/lib/format";
 import { getDeterministicBenchmarkPrices } from "@/lib/benchmark";
-import { Plus, Trash2, Trophy, Share2, TrendingDown, Store, Split, AlertCircle } from "lucide-react";
+import { Plus, Trash2, Trophy, Share2, TrendingDown, Store, Split, AlertCircle, Wheat, Flame, Beef, Egg, Droplets, ShoppingBasket } from "lucide-react";
 import { toast } from "sonner";
+import cookingOilImg from "@/assets/cooking-oil.png";
+import shallotsImg from "@/assets/shallots.png";
+
+// Helper to match category/product name with mockup image
+function getProductImage(categoryName: string, productName: string) {
+  const cat = (categoryName || "").toLowerCase();
+  const name = (productName || "").toLowerCase();
+  if (cat.includes("minyak") || name.includes("minyak")) {
+    return cookingOilImg;
+  }
+  if (cat.includes("bawang") || name.includes("bawang") || cat.includes("bumbu") || name.includes("bumbu")) {
+    return shallotsImg;
+  }
+  return null;
+}
+
+// Fallback icon component for missing product images
+function ProductIconFallback({ categoryName, productName }: { categoryName: string, productName: string }) {
+  const cat = (categoryName || "").toLowerCase();
+  const name = (productName || "").toLowerCase();
+  let IconComponent = ShoppingBasket;
+  let colorClass = "text-slate-400 bg-slate-100";
+  
+  if (cat.includes("beras") || name.includes("beras") || cat.includes("padi") || name.includes("padi")) {
+    IconComponent = Wheat;
+    colorClass = "text-amber-600 bg-amber-50";
+  } else if (cat.includes("cabai") || name.includes("cabai") || name.includes("pedas") || cat.includes("sayur") || name.includes("sayur")) {
+    IconComponent = Flame;
+    colorClass = "text-red-600 bg-red-50";
+  } else if (cat.includes("daging") || name.includes("daging") || cat.includes("sapi") || name.includes("sapi") || cat.includes("ayam") || name.includes("ayam")) {
+    IconComponent = Beef;
+    colorClass = "text-rose-700 bg-rose-50";
+  } else if (cat.includes("telur") || name.includes("telur")) {
+    IconComponent = Egg;
+    colorClass = "text-amber-500 bg-amber-50/50";
+  } else if (cat.includes("minyak") || name.includes("minyak") || cat.includes("cair") || name.includes("cair")) {
+    IconComponent = Droplets;
+    colorClass = "text-blue-600 bg-blue-50";
+  }
+  
+  return (
+    <div className={`w-full h-full flex items-center justify-center rounded-xl border border-border/60 ${colorClass}`}>
+      <IconComponent className="h-6 w-6 stroke-[1.5]" />
+    </div>
+  );
+}
 
 export const Route = createFileRoute("/_authenticated/smart-basket")({
   head: () => ({ meta: [{ title: "Smart Basket — PasarCek" }] }),
@@ -201,79 +247,150 @@ function SmartBasketPage() {
           {(!items || items.length === 0) ? (
             <EmptyState title="Belum ada produk di keranjang" description="Tambahkan produk untuk mulai menghitung penghematan." />
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead className="bg-[var(--color-gray-50)] text-left text-xs uppercase text-[var(--color-gray-500)]">
-                  <tr>
-                    <th className="px-4 py-2.5">Produk</th>
-                    <th className="px-4 py-2.5 text-right">Harga Satuan (Terendah)</th>
-                    <th className="px-4 py-2.5 text-center">Jumlah</th>
-                    <th className="px-4 py-2.5 text-right">Subtotal</th>
-                    <th className="px-4 py-2.5 text-center" />
-                  </tr>
-                </thead>
-                <tbody>
-                  {items.map((it: any) => {
-                    const cheapestInfo = productCheapestPrices[it.product_id];
-                    const price = cheapestInfo?.price;
-                    const marketName = cheapestInfo?.marketName;
-                    const subtotal = price ? price * it.quantity : 0;
+            <div className="p-4 space-y-4">
+              <div className="grid gap-4 grid-cols-1 xl:grid-cols-2">
+                {items.map((it: any) => {
+                  const cheapestInfo = productCheapestPrices[it.product_id];
+                  const price = cheapestInfo?.price;
+                  const productImg = getProductImage(it.product.category, it.product.name);
+                  
+                  const productPrices = (pricesByMarket ?? [])
+                    .filter((row: any) => row.product_id === it.product_id)
+                    .sort((a: any, b: any) => Number(a.price) - Number(b.price));
 
-                    return (
-                      <tr key={it.id} className="border-t border-[var(--color-gray-100)] hover:bg-[var(--color-gray-50)]/50 transition-colors">
-                        <td className="px-4 py-3 font-semibold">
-                          <div>{it.product.name}</div>
-                          <div className="text-[10px] text-[var(--color-gray-500)] font-normal">{it.product.category || "Umum"}</div>
-                        </td>
-                        <td className="px-4 py-3 text-right">
-                          {price ? (
-                            <>
-                              <div className="font-semibold text-[var(--color-brand-blue)]">{idr(price)}</div>
-                              <div className="text-[10px] text-[var(--color-brand-green)] font-medium truncate max-w-[150px] ml-auto">
-                                di {marketName}
-                              </div>
-                            </>
-                          ) : (
-                            <span className="text-xs text-[var(--color-gray-500)]">—</span>
-                          )}
-                        </td>
-                        <td className="px-4 py-3 text-center">
-                          <div className="flex items-center justify-center gap-1.5">
-                            <Input
+                  return (
+                    <div key={it.id} className="bg-white rounded-2xl border border-[var(--color-gray-100)] p-4 shadow-soft flex flex-col gap-3.5 hover:shadow-card transition-shadow">
+                      {/* Product Header */}
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex items-center gap-3">
+                          <div className="w-14 h-14 shrink-0 rounded-xl bg-slate-50 border border-border/60 flex items-center justify-center overflow-hidden">
+                            {productImg ? (
+                              <img src={productImg} alt={it.product.name} className="w-full h-full object-contain p-0.5" />
+                            ) : (
+                              <ProductIconFallback categoryName={it.product.category} productName={it.product.name} />
+                            )}
+                          </div>
+                          <div>
+                            <span className="inline-block px-1.5 py-0.5 rounded bg-accent/10 text-accent text-[8px] font-extrabold uppercase tracking-wider mb-1">
+                              {it.product.category || "Umum"}
+                            </span>
+                            <h4 className="font-display font-bold text-xs sm:text-sm text-foreground leading-tight">{it.product.name}</h4>
+                          </div>
+                        </div>
+                        
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="h-8 w-8 hover:bg-red-50 hover:text-red-600 transition-colors rounded-full"
+                          onClick={() => removeItem(it.id)}
+                        >
+                          <Trash2 className="h-4 w-4 text-[var(--color-destructive)]" />
+                        </Button>
+                      </div>
+
+                      {/* Quantity & Subtotal Row */}
+                      <div className="flex items-center justify-between gap-2 bg-[var(--color-gray-50)] p-2.5 rounded-xl border border-[var(--color-gray-100)]">
+                        <div className="flex items-center gap-2">
+                          <span className="text-[10px] font-extrabold text-[var(--color-gray-500)] uppercase tracking-wider">Jumlah:</span>
+                          <div className="flex items-center gap-1.5">
+                            <button
+                              type="button"
+                              className="w-7 h-7 flex items-center justify-center rounded-md border border-[var(--color-gray-300)] bg-white hover:bg-[var(--color-gray-50)] text-xs font-bold transition-colors disabled:opacity-50"
+                              disabled={it.quantity <= 0.1}
+                              onClick={() => updateQty(it.id, Math.max(0.1, Number((it.quantity - 0.1).toFixed(1))))}
+                            >
+                              -
+                            </button>
+                            <input
+                              key={it.quantity}
                               type="number"
                               min="0.1"
                               step="0.1"
                               defaultValue={it.quantity}
                               onBlur={(e) => updateQty(it.id, Number(e.target.value))}
-                              className="w-16 h-8 text-center text-xs font-semibold rounded-md border border-[var(--color-gray-300)]"
+                              className="w-12 h-7 text-center text-xs font-semibold rounded-md border border-[var(--color-gray-300)] bg-white"
                             />
-                            <span className="text-xs text-[var(--color-gray-500)]">{it.unit}</span>
+                            <button
+                              type="button"
+                              className="w-7 h-7 flex items-center justify-center rounded-md border border-[var(--color-gray-300)] bg-white hover:bg-[var(--color-gray-50)] text-xs font-bold transition-colors"
+                              onClick={() => updateQty(it.id, Number((it.quantity + 0.1).toFixed(1)))}
+                            >
+                              +
+                            </button>
+                            <span className="text-xs text-[var(--color-gray-500)] font-medium">{it.unit}</span>
                           </div>
-                        </td>
-                        <td className="px-4 py-3 text-right font-bold text-[var(--color-ink)]">
-                          {price ? idr(subtotal) : "—"}
-                        </td>
-                        <td className="px-4 py-3 text-center">
-                          <Button size="icon" variant="ghost" className="h-8 w-8 hover:bg-red-50 hover:text-red-600 transition-colors" onClick={() => removeItem(it.id)}>
-                            <Trash2 className="h-4 w-4 text-[var(--color-destructive)]" />
-                          </Button>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-                <tfoot>
-                  <tr className="border-t-2 border-[var(--color-gray-300)] bg-[var(--color-gray-50)]/50 font-bold">
-                    <td colSpan={3} className="px-4 py-3 text-left font-semibold text-[var(--color-gray-700)]">
-                      Total Belanja Terendah (Campuran Pasar)
-                    </td>
-                    <td className="px-4 py-3 text-right text-base font-black text-[var(--color-brand-blue)]">
-                      {idr(crossMarketTotal)}
-                    </td>
-                    <td />
-                  </tr>
-                </tfoot>
-              </table>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-[8px] font-bold text-[var(--color-gray-500)] uppercase tracking-wider">Subtotal:</div>
+                          <div className="font-extrabold text-sm text-[var(--color-ink)]">
+                            {price ? idr(price * it.quantity) : "—"}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Price Comparison */}
+                      <div className="border-t border-border/60 pt-3 space-y-2">
+                        <div className="text-[9px] font-bold text-[var(--color-gray-500)] uppercase tracking-wider">Bandingkan Pasar:</div>
+                        
+                        {productPrices.length === 0 ? (
+                          <div className="text-[10px] text-[var(--color-gray-500)] italic py-1">Tidak ada data harga hari ini</div>
+                        ) : (
+                          productPrices.map((row: any, idx: number) => {
+                            const isCheapest = idx === 0;
+                            const totalMarketPrice = Number(row.price) * it.quantity;
+                            
+                            if (isCheapest) {
+                              return (
+                                <div key={row.market.id} className="flex items-center justify-between text-xs py-1.5 px-2.5 rounded-xl bg-accent/5 border border-accent/10 text-foreground">
+                                  <div className="flex flex-col">
+                                    <span className="font-medium text-foreground/80">{row.market.name}</span>
+                                    <span className="text-[8px] text-[var(--color-gray-500)]">{row.market.city}</span>
+                                  </div>
+                                  <div className="flex items-center gap-1.5">
+                                    <div className="flex flex-col items-end">
+                                      <span className="font-bold text-primary">{idr(Number(row.price))}</span>
+                                      <span className="text-[9px] text-[var(--color-gray-500)] font-medium">Total: {idr(totalMarketPrice)}</span>
+                                    </div>
+                                    <span className="text-[8px] font-extrabold bg-accent text-white px-1.5 py-0.5 rounded uppercase tracking-wider">
+                                      Termurah
+                                    </span>
+                                  </div>
+                                </div>
+                              );
+                            }
+                            
+                            return (
+                              <div key={row.market.id} className="flex items-center justify-between text-xs py-1.5 px-2.5 rounded-xl bg-transparent text-foreground/80">
+                                <div className="flex flex-col">
+                                  <span>{row.market.name}</span>
+                                  <span className="text-[8px] text-[var(--color-gray-400)]">{row.market.city}</span>
+                                </div>
+                                <div className="flex flex-col items-end">
+                                  <span className="font-bold text-foreground">{idr(Number(row.price))}</span>
+                                  <span className="text-[9px] text-[var(--color-gray-400)] font-medium">Total: {idr(totalMarketPrice)}</span>
+                                </div>
+                              </div>
+                            );
+                          })
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Total Belanja Terendah Box */}
+              <div className="mt-4 flex flex-col sm:flex-row items-center justify-between gap-4 rounded-xl bg-[var(--color-gray-50)] p-4 border-2 border-dashed border-[var(--color-gray-200)]">
+                <div>
+                  <h4 className="font-bold text-sm text-[var(--color-gray-700)]">Total Belanja Terendah (Campuran Pasar)</h4>
+                  <p className="text-[10px] text-[var(--color-gray-500)]">Kombinasi harga termurah untuk setiap produk dari berbagai pasar.</p>
+                </div>
+                <div className="text-right">
+                  <span className="text-xl font-black text-[var(--color-brand-blue)]">
+                    {idr(crossMarketTotal)}
+                  </span>
+                </div>
+              </div>
             </div>
           )}
         </div>
