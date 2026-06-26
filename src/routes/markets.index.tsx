@@ -432,9 +432,9 @@ function MarketsPage() {
                   className="block rounded-lg border border-[var(--color-gray-100)] bg-white p-4 transition-colors hover:border-[var(--color-brand-blue)]"
                 >
                   <p className="font-bold">{m.name}</p>
-                  <p className="mt-1 flex items-center gap-1 text-xs text-[var(--color-gray-500)]">
-                    <MapPin className="h-3 w-3" />
-                    {m.address}, {m.city}
+                  <p className="mt-1 flex items-start gap-1 text-xs text-[var(--color-gray-500)]">
+                    <MapPin className="h-3 w-3 shrink-0 mt-0.5" />
+                    <span>{m.address}, {m.city}</span>
                   </p>
                   <div className="mt-2 flex items-center gap-3 text-xs text-[var(--color-gray-500)]">
                     {m.hours && (

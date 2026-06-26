@@ -38,6 +38,22 @@ function AdminMarkets() {
   async function create() {
     if (!name || !address || !city || !province) return toast.error("Lengkapi data");
     const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+    let sanitizedMapsUrl = googleMapsUrl.trim();
+    // Normalize or auto-generate link to match pattern: https://www.google.com/maps?q=Nama+Pasar,++Nama+Kota
+    if (!sanitizedMapsUrl || sanitizedMapsUrl.includes("/place/") || sanitizedMapsUrl.includes("/search/")) {
+      const queryName = encodeURIComponent(name).replace(/%20/g, "+");
+      const queryCity = city ? `,++${encodeURIComponent(city).replace(/%20/g, "+")}` : "";
+      sanitizedMapsUrl = `https://www.google.com/maps?q=${queryName}${queryCity}`;
+    } else {
+      if (sanitizedMapsUrl.startsWith("ttps://")) {
+        sanitizedMapsUrl = "h" + sanitizedMapsUrl;
+      } else if (sanitizedMapsUrl.startsWith("ttp://")) {
+        sanitizedMapsUrl = "h" + sanitizedMapsUrl;
+      } else if (!/^https?:\/\//i.test(sanitizedMapsUrl)) {
+        sanitizedMapsUrl = "https://" + sanitizedMapsUrl;
+      }
+    }
+
     const marketData = {
       name,
       slug,
@@ -48,7 +64,7 @@ function AdminMarkets() {
       hours,
       lat: lat ? Number(lat) : null,
       lng: lng ? Number(lng) : null,
-      google_maps_url: googleMapsUrl || null,
+      google_maps_url: sanitizedMapsUrl || null,
     };
 
     if (editingId) {

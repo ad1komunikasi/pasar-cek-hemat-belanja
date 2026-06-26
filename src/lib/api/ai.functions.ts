@@ -338,7 +338,7 @@ Tugas Anda:
    - similarity: Jika statusnya "Sudah Tersedia", sebutkan nama pasar di database kami yang mirip tersebut. Jika "Belum Tersedia", kosongkan atau null.
    - lat: Angka desimal latitude koordinat pasar tersebut (contoh: -6.175392). Berikan nilai numeric (number), bukan string.
    - lng: Angka desimal longitude koordinat pasar tersebut (contoh: 106.827153). Berikan nilai numeric (number), bukan string.
-   - google_maps_url: Tautan Google Maps untuk lokasi pasar tersebut (contoh: https://www.google.com/maps/search/?api=1&query=-6.175392,106.827153 atau link Google Maps resmi yang valid jika Anda ketahui).
+   - google_maps_url: Tautan Google Maps dalam format pencarian sederhana dengan pola: https://www.google.com/maps?q=Nama+Pasar,++Nama+Kota dengan mengganti spasi dengan tanda tambah (+). Contoh: https://www.google.com/maps?q=Pasar+Tomang+Barat,++Jakarta+Barat.
 
 Kembalikan respon hanya dalam format JSON array yang valid. Jangan sertakan format markdown lain seperti \`\`\`json. Pastikan output Anda berupa raw JSON array yang valid dengan format berikut:
 [
@@ -353,7 +353,7 @@ Kembalikan respon hanya dalam format JSON array yang valid. Jangan sertakan form
     "similarity": "Nama pasar mirip",
     "lat": -6.175392,
     "lng": 106.827153,
-    "google_maps_url": "https://www.google.com/maps/search/?api=1&query=-6.175392,106.827153"
+    "google_maps_url": "https://www.google.com/maps?q=Nama+Pasar,++Nama+Kota"
   }
 ]`;
 

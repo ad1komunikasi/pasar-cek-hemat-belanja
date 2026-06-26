@@ -211,9 +211,9 @@ function MarketDetail() {
                   {market.type}
                 </span>
               </div>
-              <p className="flex items-center gap-1.5 text-gray-600 text-sm">
-                <MapPin className="h-4 w-4 text-gray-400 shrink-0" />
-                {market.address}, {market.city}, {market.province || "DKI Jakarta"}
+              <p className="flex items-start gap-1.5 text-gray-600 text-sm">
+                <MapPin className="h-4 w-4 text-gray-400 shrink-0 mt-0.5" />
+                <span>{market.address}, {market.city}, {market.province || "DKI Jakarta"}</span>
               </p>
               {market.rating && <div className="pt-1">{renderStars(market.rating)}</div>}
             </div>
