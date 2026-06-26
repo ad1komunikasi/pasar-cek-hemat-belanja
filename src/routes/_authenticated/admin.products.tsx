@@ -57,9 +57,11 @@ function AdminProducts() {
       const localKey = localStorage.getItem("pasardeck_gemini_api_key") || undefined;
 
       const results = await getAiProductSuggestions({
-        query: aiQuery,
-        existingProducts: existing,
-        apiKey: localKey,
+        data: {
+          query: aiQuery,
+          existingProducts: existing,
+          apiKey: localKey,
+        }
       });
 
       if (Array.isArray(results)) {
@@ -133,23 +135,23 @@ function AdminProducts() {
           </div>
 
           {/* Asisten AI Pencarian & Auto-Kategori */}
-          <div className="space-y-4 rounded-lg border border-purple-100 bg-purple-50/50 p-4 shadow-sm">
-            <div className="flex items-center gap-2 border-b border-purple-100 pb-2">
-              <Sparkles className="h-5 w-5 text-purple-600 animate-pulse" />
+          <div className="space-y-4 rounded-lg border border-[#127a79]/20 bg-[#127a79]/5 p-4 shadow-sm">
+            <div className="flex items-center gap-2 border-b border-[#127a79]/10 pb-2">
+              <Sparkles className="h-5 w-5 text-[#127a79] animate-pulse" />
               <div>
-                <h3 className="text-sm font-semibold text-purple-950">Asisten AI PasarCek</h3>
-                <p className="text-[10px] text-purple-600">Pencarian & auto-kategori produk baru</p>
+                <h3 className="text-sm font-semibold text-gray-900">Asisten AI PasarCek</h3>
+                <p className="text-[10px] text-[#127a79] font-medium">Pencarian & auto-kategori produk baru</p>
               </div>
             </div>
 
             <div className="space-y-2">
-              <Label className="text-xs font-semibold text-purple-900">Cari Produk Belum Tersedia</Label>
+              <Label className="text-xs font-semibold text-gray-800">Cari Produk Belum Tersedia</Label>
               <div className="flex gap-2">
                 <Input
                   placeholder="e.g., Susu Oat, Telur Puyuh..."
                   value={aiQuery}
                   onChange={(e) => setAiQuery(e.target.value)}
-                  className="h-9 text-xs border-purple-200 bg-white focus-visible:ring-purple-500"
+                  className="h-9 text-xs border-[#127a79]/25 bg-white focus-visible:ring-[#127a79]"
                   onKeyDown={(e) => {
                     if (e.key === "Enter") handleAiSearch();
                   }}
@@ -158,7 +160,7 @@ function AdminProducts() {
                   onClick={handleAiSearch}
                   disabled={isAiSearching}
                   size="sm"
-                  className="bg-purple-600 hover:bg-purple-700 text-white text-xs font-medium px-3"
+                  className="bg-[#127a79] hover:bg-[#127a79]/90 text-white text-xs font-medium px-3"
                 >
                   {isAiSearching ? "Mencari..." : "Cari"}
                 </Button>
@@ -168,10 +170,10 @@ function AdminProducts() {
             {/* Hasil Pencarian AI */}
             {aiResults.length > 0 && (
               <div className="space-y-2 max-h-[320px] overflow-y-auto pr-1">
-                <p className="text-[10px] font-bold text-purple-900 uppercase tracking-wider">Hasil Rekomendasi AI:</p>
+                <p className="text-[10px] font-bold text-[#127a79] uppercase tracking-wider">Hasil Rekomendasi AI:</p>
                 <div className="space-y-2">
                   {aiResults.map((item, idx) => (
-                    <div key={idx} className="rounded-md border border-purple-100 bg-white p-2.5 shadow-sm text-xs space-y-1.5 hover:border-purple-300 transition-colors">
+                    <div key={idx} className="rounded-md border border-gray-100 bg-white p-2.5 shadow-sm text-xs space-y-1.5 hover:border-[#127a79]/30 transition-colors">
                       <div className="flex items-start justify-between gap-2">
                         <span className="font-semibold text-gray-900">{item.name}</span>
                         <span className={`inline-flex items-center rounded-full px-1.5 py-0.5 text-[9px] font-medium ${
@@ -203,7 +205,7 @@ function AdminProducts() {
                       <Button
                         size="sm"
                         variant="outline"
-                        className="w-full h-7 text-[10px] border-purple-200 text-purple-700 hover:bg-purple-50 hover:text-purple-800 flex items-center justify-center gap-1 mt-1"
+                        className="w-full h-7 text-[10px] border-[#127a79]/20 text-[#127a79] hover:bg-[#127a79]/5 hover:text-[#127a79] flex items-center justify-center gap-1 mt-1"
                         onClick={() => {
                           setName(item.name);
                           setCategory(item.category);
@@ -221,7 +223,7 @@ function AdminProducts() {
 
             {/* Info local API key */}
             {localStorage.getItem("pasardeck_gemini_api_key") && (
-              <p className="text-[9px] text-purple-400 text-right italic">
+              <p className="text-[9px] text-[#127a79]/70 text-right italic">
                 Menggunakan local API key dari browser.
               </p>
             )}
