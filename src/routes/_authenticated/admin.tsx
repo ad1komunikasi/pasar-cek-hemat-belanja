@@ -1,7 +1,8 @@
 import { createFileRoute, Outlet, redirect, Link, useRouterState } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
-import { Shield, Users, Package, ShoppingCart, CreditCard, Store, Boxes, BarChart3, Settings, LogIn } from "lucide-react";
+import { Shield, Users, Package, ShoppingCart, CreditCard, Store, Boxes, BarChart3, Settings, LogIn, Menu, X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useState } from "react";
 
 export const Route = createFileRoute("/_authenticated/admin")({
   ssr: false,
@@ -31,28 +32,63 @@ const adminNav = [
 
 function AdminLayout() {
   const path = useRouterState({ select: (s) => s.location.pathname });
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
   return (
     <div className="app-shell min-h-screen bg-[var(--color-gray-50)]">
       <header className="sticky top-0 z-30 border-b border-[var(--color-gray-100)] bg-[var(--color-ink)] text-white">
         <div className="mx-auto flex max-w-[1400px] items-center justify-between px-6 py-3">
-          <Link to="/admin" className="flex items-center gap-2 font-bold"><Shield className="h-5 w-5" /> PasarCek Admin</Link>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="rounded-md p-1 hover:bg-white/10 lg:hidden focus:outline-none"
+              aria-label="Toggle Menu"
+            >
+              {isMobileMenuOpen ? (
+                <X className="h-6 w-6" />
+              ) : (
+                <Menu className="h-6 w-6" />
+              )}
+            </button>
+            <Link to="/admin" className="flex items-center gap-2 font-bold">
+              <Shield className="h-5 w-5" /> PasarCek Admin
+            </Link>
+          </div>
           <Link to="/dashboard" className="text-xs text-white/70 hover:text-white">← Kembali ke aplikasi</Link>
         </div>
       </header>
       <div className="mx-auto flex max-w-[1400px]">
-        <aside className="sticky top-[57px] h-[calc(100vh-57px)] w-56 shrink-0 border-r border-[var(--color-gray-100)] bg-white p-3">
+        {/* Backdrop for mobile */}
+        {isMobileMenuOpen && (
+          <div
+            className="fixed inset-0 top-[57px] z-30 bg-black/40 lg:hidden"
+            onClick={() => setIsMobileMenuOpen(false)}
+          />
+        )}
+        <aside className={cn(
+          "fixed bottom-0 top-[57px] left-0 z-40 w-56 border-r border-[var(--color-gray-100)] bg-white p-3 transition-transform duration-200 ease-in-out lg:sticky lg:h-[calc(100vh-57px)] lg:translate-x-0",
+          isMobileMenuOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
+        )}>
           <nav className="flex flex-col gap-1">
             {adminNav.map((n) => {
               const active = n.exact ? path === n.to : path.startsWith(n.to);
               return (
-                <Link key={n.to} to={n.to} className={cn("flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium", active ? "bg-[var(--color-ink)] text-white" : "text-[var(--color-gray-700)] hover:bg-[var(--color-gray-50)]")}>
+                <Link
+                  key={n.to}
+                  to={n.to}
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className={cn(
+                    "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium",
+                    active ? "bg-[var(--color-ink)] text-white" : "text-[var(--color-gray-700)] hover:bg-[var(--color-gray-50)]"
+                  )}
+                >
                   <n.icon className="h-4 w-4" />{n.label}
                 </Link>
               );
             })}
           </nav>
         </aside>
-        <main className="flex-1 p-6 lg:p-10">
+        <main className="flex-1 p-6 lg:p-10 w-full overflow-hidden">
           <Outlet />
         </main>
       </div>

@@ -787,77 +787,6 @@ function AdminReports() {
               </ResponsiveContainer>
             </div>
           </div>
-
-          <div className="rounded-lg border border-[var(--color-gray-100)] bg-white p-6">
-            <h3 className="mb-4 text-lg font-bold">Informasi Penggunaan & Penjualan Paket</h3>
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead className="bg-[var(--color-gray-50)] text-left text-xs uppercase text-[var(--color-gray-500)]">
-                  <tr>
-                    <th className="px-4 py-3">Nama Paket</th>
-                    <th className="px-4 py-3 text-right">Harga Satuan</th>
-                    <th className="px-4 py-3 text-center">Pengguna Aktif</th>
-                    <th className="px-4 py-3 text-center">Total Pesanan</th>
-                    <th className="px-4 py-3 text-center">Pesanan Sukses</th>
-                    <th className="px-4 py-3 text-right">Total Pendapatan</th>
-                    <th className="px-4 py-3 text-right font-semibold">Kontribusi Pendapatan</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-[var(--color-gray-100)]">
-                  {(data?.packageRows ?? []).map((row: any) => {
-                    const totalRevenue = data?.total ?? 1;
-                    const pct = row.revenue > 0 ? ((row.revenue / totalRevenue) * 100).toFixed(1) : "0.0";
-                    return (
-                      <tr key={row.id} className="hover:bg-[var(--color-gray-50)] transition-colors">
-                        <td className="px-4 py-3 font-semibold text-[var(--color-gray-900)]">
-                          <div className="flex items-center gap-2">
-                            <span>{row.name}</span>
-                            {row.slug === "free" && (
-                              <Badge className="bg-[var(--color-gray-100)] text-[var(--color-gray-600)] border-0 text-[10px] px-1.5 py-0">
-                                Bawaan
-                              </Badge>
-                            )}
-                            {row.slug === "premium" && (
-                              <Badge className="bg-blue-100 text-blue-800 border-0 text-[10px] px-1.5 py-0 font-semibold">
-                                Populer
-                              </Badge>
-                            )}
-                            {row.slug === "tahunan" && (
-                              <Badge className="bg-green-100 text-green-800 border-0 text-[10px] px-1.5 py-0 font-semibold">
-                                Hemat 17%
-                              </Badge>
-                            )}
-                          </div>
-                        </td>
-                        <td className="px-4 py-3 text-right text-[var(--color-gray-700)]">
-                          {row.price === 0 ? "Gratis" : idr(row.price)}
-                        </td>
-                        <td className="px-4 py-3 text-center font-medium text-[var(--color-gray-800)]">
-                          {row.activeUsers} user
-                        </td>
-                        <td className="px-4 py-3 text-center text-[var(--color-gray-600)]">
-                          {row.totalOrders}
-                        </td>
-                        <td className="px-4 py-3 text-center">
-                          {row.successOrders === "-" ? (
-                            <span className="text-[var(--color-gray-600)]">-</span>
-                          ) : (
-                            <span className="font-semibold text-[var(--color-success)]">{row.successOrders}</span>
-                          )}
-                        </td>
-                        <td className="px-4 py-3 text-right font-medium text-[var(--color-gray-900)]">
-                          {row.price === 0 ? "Rp0" : idr(row.revenue)}
-                        </td>
-                        <td className="px-4 py-3 text-right font-semibold text-[var(--color-gray-900)]">
-                          {row.price === 0 ? "0.0%" : `${pct}%`}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          </div>
         </div>
 
         {/* Right Side: AI Sales Assistant */}
@@ -1189,6 +1118,77 @@ function AdminReports() {
               )}
             </CardContent>
           </Card>
+      </div>
+    </div>
+
+      <div className="mt-6 rounded-lg border border-[var(--color-gray-100)] bg-white p-6">
+        <h3 className="mb-4 text-lg font-bold">Informasi Penggunaan & Penjualan Paket</h3>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead className="bg-[var(--color-gray-50)] text-left text-xs uppercase text-[var(--color-gray-500)]">
+              <tr>
+                <th className="px-3 py-3">Nama Paket</th>
+                <th className="px-3 py-3 text-right">Harga Satuan</th>
+                <th className="px-3 py-3 text-center">Pengguna Aktif</th>
+                <th className="px-3 py-3 text-center">Total Pesanan</th>
+                <th className="px-3 py-3 text-center">Pesanan Sukses</th>
+                <th className="px-3 py-3 text-right">Total Pendapatan</th>
+                <th className="px-3 py-3 text-right font-semibold">Kontribusi Pendapatan</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-[var(--color-gray-100)]">
+              {(data?.packageRows ?? []).map((row: any) => {
+                const totalRevenue = data?.total ?? 1;
+                const pct = row.revenue > 0 ? ((row.revenue / totalRevenue) * 100).toFixed(1) : "0.0";
+                return (
+                  <tr key={row.id} className="hover:bg-[var(--color-gray-50)] transition-colors">
+                    <td className="px-3 py-3 font-semibold text-[var(--color-gray-900)]">
+                      <div className="flex items-center gap-2">
+                        <span>{row.name}</span>
+                        {row.slug === "free" && (
+                          <Badge className="bg-[var(--color-gray-100)] text-[var(--color-gray-600)] border-0 text-[10px] px-1.5 py-0">
+                            Bawaan
+                          </Badge>
+                        )}
+                        {row.slug === "premium" && (
+                          <Badge className="bg-blue-100 text-blue-800 border-0 text-[10px] px-1.5 py-0 font-semibold">
+                            Populer
+                          </Badge>
+                        )}
+                        {row.slug === "tahunan" && (
+                          <Badge className="bg-green-100 text-green-800 border-0 text-[10px] px-1.5 py-0 font-semibold">
+                            Hemat 17%
+                          </Badge>
+                        )}
+                      </div>
+                    </td>
+                    <td className="px-3 py-3 text-right text-[var(--color-gray-700)]">
+                      {row.price === 0 ? "Gratis" : idr(row.price)}
+                    </td>
+                    <td className="px-3 py-3 text-center font-medium text-[var(--color-gray-800)]">
+                      {row.activeUsers} user
+                    </td>
+                    <td className="px-3 py-3 text-center text-[var(--color-gray-600)]">
+                      {row.totalOrders}
+                    </td>
+                    <td className="px-3 py-3 text-center">
+                      {row.successOrders === "-" ? (
+                        <span className="text-[var(--color-gray-600)]">-</span>
+                      ) : (
+                        <span className="font-semibold text-[var(--color-success)]">{row.successOrders}</span>
+                      )}
+                    </td>
+                    <td className="px-3 py-3 text-right font-medium text-[var(--color-gray-900)]">
+                      {row.price === 0 ? "Rp0" : idr(row.revenue)}
+                    </td>
+                    <td className="px-3 py-3 text-right font-semibold text-[var(--color-gray-900)]">
+                      {row.price === 0 ? "0.0%" : `${pct}%`}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
         </div>
       </div>
     </>

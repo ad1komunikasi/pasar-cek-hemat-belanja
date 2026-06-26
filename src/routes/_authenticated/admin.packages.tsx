@@ -41,7 +41,7 @@ function AdminPackages() {
     <>
       <h1 className="mb-6 text-3xl font-black">Paket</h1>
       <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
-        <div className="overflow-hidden rounded-lg border border-[var(--color-gray-100)] bg-white">
+        <div className="overflow-x-auto rounded-lg border border-[var(--color-gray-100)] bg-white">
           <table className="w-full text-sm">
             <thead className="bg-[var(--color-gray-50)] text-left text-xs uppercase text-[var(--color-gray-500)]">
               <tr><th className="px-4 py-3">Nama</th><th className="px-4 py-3">Slug</th><th className="px-4 py-3 text-right">Harga</th><th className="px-4 py-3 text-right">Durasi</th><th className="px-4 py-3">Aktif</th><th /></tr>

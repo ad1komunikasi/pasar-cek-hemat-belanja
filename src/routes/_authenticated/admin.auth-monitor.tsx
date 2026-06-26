@@ -26,7 +26,7 @@ function AuthMonitor() {
         <StatCard label="Login Hari Ini" value={(data?.logs ?? []).filter((l: any) => l.event === "login" && l.created_at.slice(0, 10) === new Date().toISOString().slice(0, 10)).length} icon={LogIn} accent="green" />
         <StatCard label="Failed Login" value={(data?.logs ?? []).filter((l: any) => !l.success).length} icon={ShieldAlert} accent="danger" />
       </div>
-      <div className="overflow-hidden rounded-lg border border-[var(--color-gray-100)] bg-white">
+      <div className="overflow-x-auto rounded-lg border border-[var(--color-gray-100)] bg-white">
         <table className="w-full text-sm">
           <thead className="bg-[var(--color-gray-50)] text-left text-xs uppercase text-[var(--color-gray-500)]">
             <tr><th className="px-4 py-3">Waktu</th><th className="px-4 py-3">Event</th><th className="px-4 py-3">IP</th><th className="px-4 py-3">User Agent</th></tr>
