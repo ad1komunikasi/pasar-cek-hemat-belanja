@@ -178,3 +178,117 @@ Gunakan selalu nada bicara konsultan profesional ("kami" / "tim kami"), berikan 
     // If all models failed:
     throw new Error(`Gagal menghubungi AI. Layanan sedang padat atau kunci API tidak valid. Detail: ${lastError?.message || "Tidak diketahui"}`);
   });
+
+export const getAiProductSuggestions = createServerFn({ method: "POST" })
+  .validator(
+    z.object({
+      query: z.string(),
+      existingProducts: z.array(
+        z.object({
+          name: z.string(),
+          category: z.string(),
+          unit: z.string(),
+        })
+      ),
+      apiKey: z.string().optional(),
+    })
+  )
+  .handler(async ({ data }) => {
+    const apiKey = data.apiKey || process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+      throw new Error("GEMINI_API_KEY is not defined in environment variables.");
+    }
+
+    const { query, existingProducts } = data;
+
+    const prompt = `Anda adalah asisten AI untuk PasarCek, sebuah platform komparasi harga bahan pokok (sembako) di Indonesia.
+Admin ingin mencari/mengidentifikasi jenis produk baru yang belum tersedia di database untuk ditambahkan.
+
+Daftar produk yang sudah ada di database kami:
+${existingProducts.map((p) => `- ${p.name} (Kategori: ${p.category}, Satuan: ${p.unit})`).join("\n")}
+
+Query pencarian admin: "${query}"
+
+Tugas Anda:
+1. Analisis apakah ada produk dalam query pencarian admin yang sudah ada di database atau mirip sekali.
+2. Cari dan rekomendasikan beberapa jenis produk (maksimal 5) yang cocok dengan query tersebut.
+3. Untuk setiap produk hasil pencarian, berikan:
+   - name: Nama produk standar (bahasa Indonesia, capitalize, contoh: "Minyak Goreng Curah", "Buncis Organik", "Telur Bebek")
+   - category: Kategori produk. Usahakan mencocokkan dengan kategori yang sudah ada jika relevan (misal: "Sayur", "Beras", "Daging", "Bumbu", "Ikan", "Minyak", "Telur", "Susu", dll.). Jika tidak ada yang cocok, buat kategori baru yang tepat dan singkat.
+   - unit: Satuan standar yang umum digunakan di pasar (contoh: "kg", "liter", "butir", "pcs", "ikat", "bungkus").
+   - description: Penjelasan singkat kegunaan atau deskripsi produk tersebut.
+   - status: Tentukan apakah "Belum Tersedia" (jika tidak ada produk sejenis/mirip di database) atau "Sudah Tersedia" (jika ada produk yang sama atau sangat mirip di database).
+   - similarity: Jika statusnya "Sudah Tersedia", sebutkan nama produk di database kami yang mirip tersebut. Jika "Belum Tersedia", kosongkan atau null.
+
+Kembalikan respon hanya dalam format JSON array yang valid. Jangan sertakan format markdown lain seperti \`\`\`json. Pastikan output Anda berupa raw JSON array yang valid dengan format berikut:
+[
+  {
+    "name": "Nama Produk",
+    "category": "Kategori",
+    "unit": "Satuan",
+    "description": "Deskripsi singkat",
+    "status": "Belum Tersedia" | "Sudah Tersedia",
+    "similarity": "Nama produk mirip"
+  }
+]`;
+
+    const models = ["gemini-3.5-flash", "gemini-2.5-flash", "gemini-2.0-flash", "gemini-2.5-pro"];
+    let lastError: any = null;
+
+    for (const model of models) {
+      try {
+        const response = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              contents: [
+                {
+                  role: "user",
+                  parts: [{ text: prompt }],
+                },
+              ],
+              generationConfig: {
+                temperature: 0.2,
+                responseMimeType: "application/json",
+              },
+            }),
+          }
+        );
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.warn(`Model ${model} failed with status ${response.status}:`, errorText);
+          lastError = new Error(`Gemini API error (${model}): ${response.statusText} (${errorText})`);
+          continue;
+        }
+
+        const resJson = await response.json();
+        const textResponse = resJson.candidates?.[0]?.content?.parts?.[0]?.text;
+
+        if (!textResponse) {
+          console.warn(`Model ${model} returned empty response.`);
+          lastError = new Error(`Empty response from model ${model}`);
+          continue;
+        }
+
+        try {
+          const parsed = JSON.parse(textResponse.trim());
+          return parsed;
+        } catch (e: any) {
+          console.error("Failed to parse AI response as JSON:", textResponse);
+          lastError = new Error(`Failed to parse AI response as JSON: ${e.message}`);
+          continue;
+        }
+      } catch (error: any) {
+        console.warn(`Failed call with model ${model}:`, error);
+        lastError = error;
+      }
+    }
+
+    throw new Error(`Gagal menghubungi AI. Layanan sedang padat atau kunci API tidak valid. Detail: ${lastError?.message || "Tidak diketahui"}`);
+  });
+
