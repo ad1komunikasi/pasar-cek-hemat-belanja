@@ -292,3 +292,123 @@ Kembalikan respon hanya dalam format JSON array yang valid. Jangan sertakan form
     throw new Error(`Gagal menghubungi AI. Layanan sedang padat atau kunci API tidak valid. Detail: ${lastError?.message || "Tidak diketahui"}`);
   });
 
+export const getAiMarketSuggestions = createServerFn({ method: "POST" })
+  .validator(
+    z.object({
+      query: z.string(),
+      existingMarkets: z.array(
+        z.object({
+          name: z.string(),
+          address: z.string(),
+          city: z.string(),
+          type: z.string(),
+          hours: z.string().nullable().optional(),
+        })
+      ),
+      apiKey: z.string().optional(),
+    })
+  )
+  .handler(async ({ data }) => {
+    const apiKey = data.apiKey || process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+      throw new Error("GEMINI_API_KEY is not defined in environment variables.");
+    }
+
+    const { query, existingMarkets } = data;
+
+    const prompt = `Anda adalah asisten AI untuk PasarCek, sebuah platform komparasi harga bahan pokok (sembako) di Indonesia.
+Admin ingin mencari/mengidentifikasi lokasi pasar (pasar tradisional, modern, swalayan) baru yang belum tersedia di database untuk ditambahkan.
+
+Daftar pasar yang sudah ada di database kami:
+${existingMarkets.map((m) => `- ${m.name} di ${m.city} (${m.address}, Tipe: ${m.type})`).join("\n")}
+
+Query pencarian admin: "${query}"
+
+Tugas Anda:
+1. Analisis apakah ada pasar dalam query pencarian admin yang sudah ada di database atau mirip sekali.
+2. Cari dan rekomendasikan beberapa lokasi pasar (maksimal 5) di Indonesia yang cocok dengan query tersebut.
+3. Untuk setiap pasar hasil pencarian, berikan informasi berikut berdasarkan pengetahuan umum Anda (atau perkiraan logis jika detail presisi tidak tersedia):
+   - name: Nama pasar standar (bahasa Indonesia, capitalize, contoh: "Pasar Tomang Barat", "Pasar Induk Kramat Jati", "Super Indo Duren Tiga")
+   - address: Alamat lengkap jalan lokasi pasar tersebut berada.
+   - city: Kota/Kabupaten (contoh: "Jakarta Barat", "Jakarta Selatan", "Depok", "Surabaya").
+   - province: Provinsi (contoh: "DKI Jakarta", "Jawa Barat", "Jawa Timur").
+   - type: Tipe pasar. Harus salah satu dari: "tradisional", "modern", atau "swalayan".
+   - hours: Jam operasional standar yang umum (contoh: "05:00 - 18:00", "08:00 - 22:00").
+   - status: Tentukan apakah "Belum Tersedia" (jika tidak ada pasar sejenis/mirip di database) atau "Sudah Tersedia" (jika ada pasar yang sama atau sangat mirip di database).
+   - similarity: Jika statusnya "Sudah Tersedia", sebutkan nama pasar di database kami yang mirip tersebut. Jika "Belum Tersedia", kosongkan atau null.
+
+Kembalikan respon hanya dalam format JSON array yang valid. Jangan sertakan format markdown lain seperti \`\`\`json. Pastikan output Anda berupa raw JSON array yang valid dengan format berikut:
+[
+  {
+    "name": "Nama Pasar",
+    "address": "Alamat Lengkap",
+    "city": "Kota/Kabupaten",
+    "province": "Provinsi",
+    "type": "tradisional" | "modern" | "swalayan",
+    "hours": "HH:MM - HH:MM",
+    "status": "Belum Tersedia" | "Sudah Tersedia",
+    "similarity": "Nama pasar mirip"
+  }
+]`;
+
+    const models = ["gemini-3.5-flash", "gemini-2.5-flash", "gemini-2.0-flash", "gemini-2.5-pro"];
+    let lastError: any = null;
+
+    for (const model of models) {
+      try {
+        const response = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              contents: [
+                {
+                  role: "user",
+                  parts: [{ text: prompt }],
+                },
+              ],
+              generationConfig: {
+                temperature: 0.2,
+                responseMimeType: "application/json",
+              },
+            }),
+          }
+        );
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.warn(`Model ${model} failed with status ${response.status}:`, errorText);
+          lastError = new Error(`Gemini API error (${model}): ${response.statusText} (${errorText})`);
+          continue;
+        }
+
+        const resJson = await response.json();
+        const textResponse = resJson.candidates?.[0]?.content?.parts?.[0]?.text;
+
+        if (!textResponse) {
+          console.warn(`Model ${model} returned empty response.`);
+          lastError = new Error(`Empty response from model ${model}`);
+          continue;
+        }
+
+        try {
+          const parsed = JSON.parse(textResponse.trim());
+          return parsed;
+        } catch (e: any) {
+          console.error("Failed to parse AI response as JSON:", textResponse);
+          lastError = new Error(`Failed to parse AI response as JSON: ${e.message}`);
+          continue;
+        }
+      } catch (error: any) {
+        console.warn(`Failed call with model ${model}:`, error);
+        lastError = error;
+      }
+    }
+
+    throw new Error(`Gagal menghubungi AI. Layanan sedang padat atau kunci API tidak valid. Detail: ${lastError?.message || "Tidak diketahui"}`);
+  });
+
+
