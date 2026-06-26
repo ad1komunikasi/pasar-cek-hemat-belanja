@@ -51,11 +51,15 @@ function AdminMarkets() {
     setProvince("DKI Jakarta");
     setHours("");
     qc.invalidateQueries({ queryKey: ["admin-markets"] });
+    qc.invalidateQueries({ queryKey: ["markets-public"] });
+    qc.invalidateQueries({ queryKey: ["markets-list"] });
   }
 
   async function remove(id: string) {
     await supabase.from("markets").delete().eq("id", id);
     qc.invalidateQueries({ queryKey: ["admin-markets"] });
+    qc.invalidateQueries({ queryKey: ["markets-public"] });
+    qc.invalidateQueries({ queryKey: ["markets-list"] });
   }
 
   async function handleAiSearch() {
