@@ -239,105 +239,54 @@ function MarketsPage() {
         markersRef.current = [];
       }
       mapInstance.current = null;
+      // Also destroy existing Leaflet instance so it re-inits with correct container size
+      if (leafletMapInstance.current) {
+        leafletMapInstance.current.remove();
+        leafletMapInstance.current = null;
+        leafletMarkersGroupRef.current = null;
+      }
     }
   }, [useLeafletFallback]);
 
-  // Initialize Google Map
+  // Initialize Google Map — wait for container to have real dimensions first
   useEffect(() => {
     if (useLeafletFallback) return;
     if (!mapsLoaded || !googleMapRef.current || mapInstance.current) return;
 
-    mapInstance.current = new google.maps.Map(googleMapRef.current, {
-      center: { lat: -6.21, lng: 106.84 },
-      zoom: 11,
-      fullscreenControl: false,
-      streetViewControl: false,
-      mapTypeControl: false,
-      zoomControl: true,
-      zoomControlOptions: {
-        position: google.maps.ControlPosition.RIGHT_BOTTOM,
-      },
-    });
-  }, [mapsLoaded, useLeafletFallback]);
+    const container = googleMapRef.current;
 
-  // Check for Google Maps rendering errors in the container (Double safety fallback)
-  useEffect(() => {
-    if (useLeafletFallback || !googleMapRef.current || !mapsLoaded) return;
-
-    // Helper to find elements inside Shadow DOM recursively
-    const findInShadowDOM = (root: Element | ShadowRoot, selector: string): Element | null => {
-      const found = root.querySelector(selector);
-      if (found) return found;
-
-      const elements = root.querySelectorAll("*");
-      for (const el of Array.from(elements)) {
-        if (el.shadowRoot) {
-          const res = findInShadowDOM(el.shadowRoot, selector);
-          if (res) return res;
-        }
-      }
-      return null;
+    const doInit = () => {
+      if (!container || mapInstance.current) return;
+      mapInstance.current = new google.maps.Map(container, {
+        center: { lat: -6.21, lng: 106.84 },
+        zoom: 11,
+        fullscreenControl: false,
+        streetViewControl: false,
+        mapTypeControl: false,
+        zoomControl: true,
+        zoomControlOptions: {
+          position: google.maps.ControlPosition.RIGHT_BOTTOM,
+        },
+      });
     };
 
-    // Helper to find text content inside Shadow DOM recursively
-    const findTextInShadowDOM = (root: Element | ShadowRoot, text: string): boolean => {
-      if (root.textContent && root.textContent.includes(text)) {
-        return true;
-      }
-
-      const elements = root.querySelectorAll("*");
-      for (const el of Array.from(elements)) {
-        if (el.shadowRoot) {
-          if (findTextInShadowDOM(el.shadowRoot, text)) {
-            return true;
+    // Use ResizeObserver to wait until container has real pixel dimensions
+    if (container.offsetWidth > 0 && container.offsetHeight > 0) {
+      // Container already has size — init immediately via rAF
+      requestAnimationFrame(doInit);
+    } else {
+      const ro = new ResizeObserver((entries) => {
+        for (const entry of entries) {
+          if (entry.contentRect.width > 0 && entry.contentRect.height > 0) {
+            ro.disconnect();
+            requestAnimationFrame(doInit);
+            break;
           }
         }
-      }
-      return false;
-    };
-
-    const checkForGmapsError = () => {
-      if (googleMapRef.current) {
-        // 1. Check for the error documentation link (language-independent and cannot be obfuscated!)
-        const hasErrorLink = findInShadowDOM(googleMapRef.current, 'a[href*="error-messages"]') ||
-                             findInShadowDOM(googleMapRef.current, 'a[href*="staticmaperror"]') ||
-                             findInShadowDOM(googleMapRef.current, 'a[href*="developers.google.com/maps"]');
-
-        // 2. Check for localized error texts (English and Indonesian)
-        const hasErrorText = findTextInShadowDOM(googleMapRef.current, "Oops!") ||
-                             findTextInShadowDOM(googleMapRef.current, "Something went wrong") ||
-                             findTextInShadowDOM(googleMapRef.current, "Maaf!") ||
-                             findTextInShadowDOM(googleMapRef.current, "Terjadi kesalahan") ||
-                             findTextInShadowDOM(googleMapRef.current, "tidak memuat Google Maps dengan benar");
-
-        // 3. Check for typical class names
-        const hasErrorClass = findInShadowDOM(googleMapRef.current, ".gm-err-container") || 
-                              findInShadowDOM(googleMapRef.current, ".gm-err-content");
-        
-        if (hasErrorLink || hasErrorText || hasErrorClass) {
-          console.warn("Google Maps error detected via DOM/Shadow DOM scanning. Triggering Leaflet fallback.");
-          setUseLeafletFallback(true);
-          return true;
-        }
-      }
-      return false;
-    };
-
-    // Run check immediately and then periodically for 6 seconds
-    const interval = setInterval(() => {
-      if (checkForGmapsError()) {
-        clearInterval(interval);
-      }
-    }, 500);
-
-    const timeout = setTimeout(() => {
-      clearInterval(interval);
-    }, 6000);
-
-    return () => {
-      clearInterval(interval);
-      clearTimeout(timeout);
-    };
+      });
+      ro.observe(container);
+      return () => ro.disconnect();
+    }
   }, [mapsLoaded, useLeafletFallback]);
 
   const filtered = (markets ?? []).filter((m: any) => !q || m.name.toLowerCase().includes(q.toLowerCase()) || m.city.toLowerCase().includes(q.toLowerCase()));
@@ -418,91 +367,204 @@ function MarketsPage() {
   useEffect(() => {
     if (!useLeafletFallback || !leafletMapRef.current) return;
 
-    Promise.all([
-      import("leaflet"),
-      // @ts-ignore
-      import("leaflet/dist/leaflet.css")
-    ]).then(([leafletModule]) => {
-      const L = leafletModule.default || leafletModule;
-      if (!leafletMapRef.current) return;
+    const container = leafletMapRef.current;
 
-      if (!leafletMapInstance.current) {
-        leafletMapInstance.current = L.map(leafletMapRef.current, {
-          center: [-6.21, 106.84],
-          zoom: 11,
-          zoomControl: false,
-        });
+    const initLeaflet = () => {
+      Promise.all([
+        import("leaflet"),
+        // @ts-ignore
+        import("leaflet/dist/leaflet.css")
+      ]).then(([leafletModule]) => {
+        const L = leafletModule.default || leafletModule;
+        if (!container) return;
 
-        L.control.zoom({ position: "bottomright" }).addTo(leafletMapInstance.current);
-
-        // Light themed clean Voyager tiles
-        L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png", {
-          attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
-          subdomains: "abcd",
-          maxZoom: 20,
-        }).addTo(leafletMapInstance.current);
-
-        leafletMarkersGroupRef.current = L.layerGroup().addTo(leafletMapInstance.current);
-      }
-
-      if (leafletMarkersGroupRef.current) {
-        leafletMarkersGroupRef.current.clearLayers();
-      }
-
-      const customIcon = L.divIcon({
-        className: "custom-leaflet-icon",
-        html: `
-          <div class="flex items-center justify-center w-8 h-8 rounded-full bg-[#1e3a8a] text-white shadow-lg border-2 border-white transform transition-transform hover:scale-110 hover:bg-[#127a79]">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4 text-white">
-              <path fill-rule="evenodd" d="M11.54 22.351l.07.04.028.016a.76.76 0 00.723 0l.028-.015.071-.041a16.975 16.975 0 001.144-.742 19.58 19.58 0 002.683-2.282c1.944-1.99 3.963-4.98 3.963-8.827a8.25 8.25 0 00-16.5 0c0 3.846 2.02 6.837 3.963 8.827a19.58 19.58 0 002.682 2.282 16.975 16.975 0 001.145.742zM12 13.5a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd" />
-            </svg>
-          </div>
-        `,
-        iconSize: [32, 32],
-        iconAnchor: [16, 32],
-        popupAnchor: [0, -32],
-      });
-
-      const coords: [number, number][] = [];
-
-      filtered.forEach((m: any) => {
-        if (m.lat && m.lng) {
-          const lat = Number(m.lat);
-          const lng = Number(m.lng);
-          coords.push([lat, lng]);
-
-          const marker = L.marker([lat, lng], { icon: customIcon });
-
-          const popupContent = `
-            <div class="p-1 font-sans">
-              <h3 class="font-bold text-sm text-[#1e3a8a]">${m.name}</h3>
-              <p class="text-xs text-gray-600 mt-1">${m.address}, ${m.city}</p>
-              <div class="mt-2 flex items-center justify-between border-t border-gray-100 pt-2 gap-4">
-                <span class="text-[10px] text-gray-500 font-semibold">${m.hours || ""}</span>
-                <a href="/markets/${m.id}" class="text-xs text-[#127a79] font-bold hover:underline whitespace-nowrap">Lihat Detail &rarr;</a>
-              </div>
-            </div>
-          `;
-
-          marker.bindPopup(popupContent, {
-            maxWidth: 220,
-            className: "custom-leaflet-popup",
+        if (!leafletMapInstance.current) {
+          leafletMapInstance.current = L.map(container, {
+            center: [-6.21, 106.84],
+            zoom: 11,
+            zoomControl: false,
           });
 
-          leafletMarkersGroupRef.current?.addLayer(marker);
+          L.control.zoom({ position: "bottomright" }).addTo(leafletMapInstance.current);
+
+          // Light themed clean Voyager tiles
+          L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png", {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+            subdomains: "abcd",
+            maxZoom: 20,
+          }).addTo(leafletMapInstance.current);
+
+          leafletMarkersGroupRef.current = L.layerGroup().addTo(leafletMapInstance.current);
+        }
+
+        // Force size recalculation after init (key fix for blank map on nav)
+        requestAnimationFrame(() => {
+          leafletMapInstance.current?.invalidateSize({ animate: false });
+        });
+
+        if (leafletMarkersGroupRef.current) {
+          leafletMarkersGroupRef.current.clearLayers();
+        }
+
+        const customIcon = L.divIcon({
+          className: "custom-leaflet-icon",
+          html: `
+            <div class="flex items-center justify-center w-8 h-8 rounded-full bg-[#1e3a8a] text-white shadow-lg border-2 border-white transform transition-transform hover:scale-110 hover:bg-[#127a79]">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4 text-white">
+                <path fill-rule="evenodd" d="M11.54 22.351l.07.04.028.016a.76.76 0 00.723 0l.028-.015.071-.041a16.975 16.975 0 001.144-.742 19.58 19.58 0 002.683-2.282c1.944-1.99 3.963-4.98 3.963-8.827a8.25 8.25 0 00-16.5 0c0 3.846 2.02 6.837 3.963 8.827a19.58 19.58 0 002.682 2.282 16.975 16.975 0 001.145.742zM12 13.5a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd" />
+              </svg>
+            </div>
+          `,
+          iconSize: [32, 32],
+          iconAnchor: [16, 32],
+          popupAnchor: [0, -32],
+        });
+
+        const coords: [number, number][] = [];
+
+        filtered.forEach((m: any) => {
+          if (m.lat && m.lng) {
+            const lat = Number(m.lat);
+            const lng = Number(m.lng);
+            coords.push([lat, lng]);
+
+            const marker = L.marker([lat, lng], { icon: customIcon });
+
+            const popupContent = `
+              <div class="p-1 font-sans">
+                <h3 class="font-bold text-sm text-[#1e3a8a]">${m.name}</h3>
+                <p class="text-xs text-gray-600 mt-1">${m.address}, ${m.city}</p>
+                <div class="mt-2 flex items-center justify-between border-t border-gray-100 pt-2 gap-4">
+                  <span class="text-[10px] text-gray-500 font-semibold">${m.hours || ""}</span>
+                  <a href="/markets/${m.id}" class="text-xs text-[#127a79] font-bold hover:underline whitespace-nowrap">Lihat Detail &rarr;</a>
+                </div>
+              </div>
+            `;
+
+            marker.bindPopup(popupContent, {
+              maxWidth: 220,
+              className: "custom-leaflet-popup",
+            });
+
+            leafletMarkersGroupRef.current?.addLayer(marker);
+          }
+        });
+
+        if (coords.length > 0 && leafletMapInstance.current) {
+          const bounds = L.latLngBounds(coords);
+          leafletMapInstance.current.fitBounds(bounds, { padding: [50, 50], maxZoom: 14 });
+        } else if (leafletMapInstance.current) {
+          leafletMapInstance.current.setView([-6.21, 106.84], 11);
+        }
+
+        // Force Leaflet to recalculate tile layout after container renders
+        if (leafletMapInstance.current) {
+          requestAnimationFrame(() => {
+            leafletMapInstance.current?.invalidateSize({ animate: false });
+          });
+        }
+      }).catch(err => {
+        console.error("Failed to load leaflet modules dynamically", err);
+      });
+    };
+
+    // Wait until container has real pixel dimensions before initializing
+    if (container.offsetWidth > 0 && container.offsetHeight > 0) {
+      initLeaflet();
+    } else {
+      const ro = new ResizeObserver((entries) => {
+        for (const entry of entries) {
+          if (entry.contentRect.width > 0 && entry.contentRect.height > 0) {
+            ro.disconnect();
+            initLeaflet();
+            break;
+          }
         }
       });
-
-      if (coords.length > 0 && leafletMapInstance.current) {
-        const bounds = L.latLngBounds(coords);
-        leafletMapInstance.current.fitBounds(bounds, { padding: [50, 50], maxZoom: 14 });
-      } else if (leafletMapInstance.current) {
-        leafletMapInstance.current.setView([-6.21, 106.84], 11);
-      }
-    }).catch(err => {
-      console.error("Failed to load leaflet modules dynamically", err);
-    });
+      ro.observe(container);
+      return () => ro.disconnect();
+    }
   }, [useLeafletFallback, filtered]);
+
+  // Check for Google Maps rendering errors in the container (Double safety fallback)
+  useEffect(() => {
+    if (useLeafletFallback || !googleMapRef.current || !mapsLoaded) return;
+
+    // Helper to find elements inside Shadow DOM recursively
+    const findInShadowDOM = (root: Element | ShadowRoot, selector: string): Element | null => {
+      const found = root.querySelector(selector);
+      if (found) return found;
+
+      const elements = root.querySelectorAll("*");
+      for (const el of Array.from(elements)) {
+        if (el.shadowRoot) {
+          const res = findInShadowDOM(el.shadowRoot, selector);
+          if (res) return res;
+        }
+      }
+      return null;
+    };
+
+    // Helper to find text content inside Shadow DOM recursively
+    const findTextInShadowDOM = (root: Element | ShadowRoot, text: string): boolean => {
+      if (root.textContent && root.textContent.includes(text)) {
+        return true;
+      }
+
+      const elements = root.querySelectorAll("*");
+      for (const el of Array.from(elements)) {
+        if (el.shadowRoot) {
+          if (findTextInShadowDOM(el.shadowRoot, text)) {
+            return true;
+          }
+        }
+      }
+      return false;
+    };
+
+    const checkForGmapsError = () => {
+      if (googleMapRef.current) {
+        // 1. Check for the error documentation link (language-independent and cannot be obfuscated!)
+        const hasErrorLink = findInShadowDOM(googleMapRef.current, 'a[href*="error-messages"]') ||
+                             findInShadowDOM(googleMapRef.current, 'a[href*="staticmaperror"]') ||
+                             findInShadowDOM(googleMapRef.current, 'a[href*="developers.google.com/maps"]');
+
+        // 2. Check for localized error texts (English and Indonesian)
+        const hasErrorText = findTextInShadowDOM(googleMapRef.current, "Oops!") ||
+                             findTextInShadowDOM(googleMapRef.current, "Something went wrong") ||
+                             findTextInShadowDOM(googleMapRef.current, "Maaf!") ||
+                             findTextInShadowDOM(googleMapRef.current, "Terjadi kesalahan") ||
+                             findTextInShadowDOM(googleMapRef.current, "tidak memuat Google Maps dengan benar");
+
+        // 3. Check for typical class names
+        const hasErrorClass = findInShadowDOM(googleMapRef.current, ".gm-err-container") || 
+                              findInShadowDOM(googleMapRef.current, ".gm-err-content");
+        
+        if (hasErrorLink || hasErrorText || hasErrorClass) {
+          console.warn("Google Maps error detected via DOM/Shadow DOM scanning. Triggering Leaflet fallback.");
+          setUseLeafletFallback(true);
+          return true;
+        }
+      }
+      return false;
+    };
+
+    // Run check immediately and then periodically for 6 seconds
+    const interval = setInterval(() => {
+      if (checkForGmapsError()) {
+        clearInterval(interval);
+      }
+    }, 500);
+
+    const timeout = setTimeout(() => {
+      clearInterval(interval);
+    }, 6000);
+
+    return () => {
+      clearInterval(interval);
+      clearTimeout(timeout);
+    };
+  }, [mapsLoaded, useLeafletFallback]);
 
   // Clean up Leaflet on unmount
   useEffect(() => {
