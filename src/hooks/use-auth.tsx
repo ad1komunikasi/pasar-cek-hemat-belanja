@@ -11,12 +11,13 @@ type AuthCtx = {
   profile: Profile | null;
   roles: Role[];
   isAdmin: boolean;
+  isPremium: boolean;
   loading: boolean;
   refresh: () => Promise<void>;
 };
 
 const Ctx = createContext<AuthCtx>({
-  user: null, session: null, profile: null, roles: [], isAdmin: false, loading: true, refresh: async () => {},
+  user: null, session: null, profile: null, roles: [], isAdmin: false, isPremium: false, loading: true, refresh: async () => {},
 });
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -77,7 +78,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const isAdmin = roles.includes("admin") || roles.includes("super_admin");
-  return <Ctx.Provider value={{ user, session, profile, roles, isAdmin, loading, refresh }}>{children}</Ctx.Provider>;
+  const isPremium = roles.includes("premium") || isAdmin;
+  return <Ctx.Provider value={{ user, session, profile, roles, isAdmin, isPremium, loading, refresh }}>{children}</Ctx.Provider>;
 }
 
 export const useAuth = () => useContext(Ctx);

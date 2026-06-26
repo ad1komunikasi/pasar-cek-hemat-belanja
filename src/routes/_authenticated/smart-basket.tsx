@@ -9,10 +9,11 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { idr } from "@/lib/format";
 import { getDeterministicBenchmarkPrices } from "@/lib/benchmark";
-import { Plus, Trash2, Trophy, Share2, TrendingDown, Store, Split, AlertCircle, Wheat, Flame, Beef, Egg, Droplets, ShoppingBasket } from "lucide-react";
+import { Plus, Trash2, Trophy, Share2, TrendingDown, Store, Split, AlertCircle, Wheat, Flame, Beef, Egg, Droplets, ShoppingBasket, Crown } from "lucide-react";
 import { toast } from "sonner";
 import cookingOilImg from "@/assets/cooking-oil.png";
 import shallotsImg from "@/assets/shallots.png";
+import { PremiumUpgradeModal } from "@/components/premium-upgrade-modal";
 
 // Helper to match category/product name with mockup image
 function getProductImage(categoryName: string, productName: string) {
@@ -64,8 +65,15 @@ export const Route = createFileRoute("/_authenticated/smart-basket")({
 });
 
 function SmartBasketPage() {
-  const { user } = useAuth();
+  const { user, isPremium } = useAuth();
   const qc = useQueryClient();
+  const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
+  const [lockedFeatureName, setLockedFeatureName] = useState("");
+
+  const handleOpenLock = (feature: string) => {
+    setLockedFeatureName(feature);
+    setUpgradeModalOpen(true);
+  };
 
   const { data: basket } = useQuery({
     queryKey: ["basket", user?.id],
@@ -204,6 +212,13 @@ function SmartBasketPage() {
 
   async function addItem() {
     if (!newProduct || !basket) return;
+
+    // Check item limit for free users (max 3 items)
+    if (!isPremium && items && items.length >= 3) {
+      handleOpenLock("Smart Basket Lengkap (Kapasitas > 3 Produk)");
+      return;
+    }
+
     const p = (products as any[]).find((x) => x.id === newProduct);
     const { error } = await supabase.from("basket_items").insert({ basket_id: basket.id, product_id: newProduct, unit: p?.unit ?? "kg", quantity: Number(qty) || 1 });
     if (error) return toast.error(error.message);
@@ -359,6 +374,27 @@ function SmartBasketPage() {
                               );
                             }
                             
+                            // Blur comparison for non-premium
+                            if (!isPremium) {
+                              return (
+                                <div key={row.market.id} className="flex items-center justify-between text-xs py-1.5 px-2.5 rounded-xl bg-slate-50/50 border border-slate-100/30 text-foreground/45 relative overflow-hidden select-none">
+                                  <div className="flex flex-col blur-[1.5px]">
+                                    <span>{row.market.name}</span>
+                                    <span className="text-[8px]">{row.market.city}</span>
+                                  </div>
+                                  <div className="flex items-center gap-1.5">
+                                    <div className="flex flex-col items-end blur-[1.5px]">
+                                      <span className="font-bold">{idr(Number(row.price))}</span>
+                                      <span className="text-[9px] font-medium">Total: {idr(totalMarketPrice)}</span>
+                                    </div>
+                                    <span className="text-[8px] font-bold bg-amber-500/10 text-amber-600 border border-amber-500/20 px-1.5 py-0.5 rounded flex items-center gap-0.5 pointer-events-auto cursor-pointer" onClick={() => handleOpenLock("Smart Basket Lengkap (Detail Pasar)")}>
+                                      <Crown className="h-2.5 w-2.5 fill-current" /> Lock
+                                    </span>
+                                  </div>
+                                </div>
+                              );
+                            }
+
                             return (
                               <div key={row.market.id} className="flex items-center justify-between text-xs py-1.5 px-2.5 rounded-xl bg-transparent text-foreground/80">
                                 <div className="flex flex-col">
@@ -433,22 +469,35 @@ function SmartBasketPage() {
                 </div>
 
                 {/* Taktik 2: Belanja Multi-Pasar */}
-                <div className="rounded-md bg-[var(--color-brand-green)]/[0.03] p-3 border border-[var(--color-brand-green)]/15 hover:border-[var(--color-brand-green)]/35 transition-all">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <span className="text-[9px] font-bold uppercase tracking-wider text-[var(--color-brand-green)] bg-emerald-50 border border-emerald-100 px-1.5 py-0.5 rounded">Taktik B: Multi-Pasar</span>
-                      <h4 className="font-bold text-xs mt-1.5 text-[var(--color-brand-green)] flex items-center gap-1">
-                        <Split className="h-3.5 w-3.5" />
-                        Lintas Pasar Termurah
-                      </h4>
+                <div className="relative rounded-md bg-[var(--color-brand-green)]/[0.03] p-3 border border-[var(--color-brand-green)]/15 overflow-hidden">
+                  {!isPremium && (
+                    <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-white/80 backdrop-blur-xs p-3 text-center">
+                      <span className="text-[8px] font-extrabold bg-amber-500 text-slate-900 px-1.5 py-0.5 rounded uppercase tracking-wider mb-1 flex items-center gap-0.5">
+                        <Crown className="h-2.5 w-2.5 fill-current" /> PREMIUM
+                      </span>
+                      <p className="text-[9px] text-[var(--color-gray-700)] font-bold">Taktik B: Lintas Pasar Terkunci</p>
+                      <button onClick={() => handleOpenLock("Smart Basket Lengkap (Taktik Multi-Pasar)")} className="mt-1 text-[9px] text-[var(--color-brand-blue)] font-extrabold underline hover:text-[var(--color-brand-green)]">
+                        Buka Sekarang
+                      </button>
                     </div>
-                    <span className="text-sm font-black text-[var(--color-brand-green)] shrink-0">
-                      {idr(crossMarketTotal)}
-                    </span>
+                  )}
+                  <div className={!isPremium ? "blur-[1.5px] opacity-35 select-none pointer-events-none" : ""}>
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <span className="text-[9px] font-bold uppercase tracking-wider text-[var(--color-brand-green)] bg-emerald-50 border border-emerald-100 px-1.5 py-0.5 rounded">Taktik B: Multi-Pasar</span>
+                        <h4 className="font-bold text-xs mt-1.5 text-[var(--color-brand-green)] flex items-center gap-1">
+                          <Split className="h-3.5 w-3.5" />
+                          Lintas Pasar Termurah
+                        </h4>
+                      </div>
+                      <span className="text-sm font-black text-[var(--color-brand-green)] shrink-0">
+                        {idr(crossMarketTotal)}
+                      </span>
+                    </div>
+                    <p className="text-[10px] text-[var(--color-brand-green)] mt-1.5 leading-relaxed">
+                      Beli tiap produk di pasar termurahnya masing-masing untuk mendapatkan total harga paling murah.
+                    </p>
                   </div>
-                  <p className="text-[10px] text-[var(--color-brand-green)] mt-1.5 leading-relaxed">
-                    Beli tiap produk di pasar termurahnya masing-masing untuk mendapatkan total harga paling murah.
-                  </p>
                 </div>
 
                 {/* Analisis Hemat Selisih */}
@@ -491,6 +540,11 @@ function SmartBasketPage() {
           </div>
         </div>
       </div>
+      <PremiumUpgradeModal
+        isOpen={upgradeModalOpen}
+        onOpenChange={setUpgradeModalOpen}
+        featureName={lockedFeatureName}
+      />
     </AppShell>
   );
 }
