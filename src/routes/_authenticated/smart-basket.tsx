@@ -240,7 +240,25 @@ function SmartBasketPage() {
   return (
     <AppShell>
       <PageHeader
-        title="Smart Basket"
+        title={
+          <div className="flex items-center gap-2">
+            <span>Smart Basket</span>
+            {isPremium ? (
+              <span className="inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-amber-500 to-yellow-500 px-2.5 py-0.5 text-[10px] font-black text-slate-900 shadow-md">
+                <Crown className="h-3 w-3 fill-current" />
+                Premium
+              </span>
+            ) : (
+              <button
+                onClick={() => handleOpenLock("Smart Basket Lengkap")}
+                className="inline-flex items-center gap-1 rounded-full bg-slate-200 border border-slate-300 hover:bg-amber-500/15 hover:border-amber-500/35 hover:text-amber-600 px-2.5 py-0.5 text-[10px] font-bold text-slate-600 transition-colors cursor-pointer"
+              >
+                <Crown className="h-3 w-3 text-slate-400" />
+                Gratis
+              </button>
+            )}
+          </div>
+        }
         description='Simulasikan belanja Anda dan temukan pasar termurah hari ini.'
         action={<Button variant="outline" onClick={() => { navigator.clipboard.writeText(window.location.href); toast.success("Link disalin"); }}><Share2 className="h-4 w-4" /> Bagikan</Button>}
       />

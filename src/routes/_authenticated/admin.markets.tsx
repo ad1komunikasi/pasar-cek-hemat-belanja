@@ -19,6 +19,18 @@ function AdminMarkets() {
     queryFn: async () => (await supabase.from("markets").select("*").order("name")).data ?? [],
   });
 
+  const { data: requests } = useQuery({
+    queryKey: ["admin-market-requests"],
+    queryFn: async () => (await supabase.from("market_requests" as any).select("*").order("created_at", { ascending: false })).data ?? [],
+  });
+
+  async function removeRequest(id: string) {
+    const { error } = await supabase.from("market_requests" as any).delete().eq("id", id);
+    if (error) return toast.error(error.message);
+    toast.success("Permintaan pengajuan dihapus");
+    qc.invalidateQueries({ queryKey: ["admin-market-requests"] });
+  }
+
   const [name, setName] = useState("");
   const [address, setAddress] = useState("");
   const [city, setCity] = useState("");
@@ -366,6 +378,31 @@ function AdminMarkets() {
                         </span>
                       </div>
 
+                      {/* Coordinates & Maps URL */}
+                      {(item.lat || item.lng) && (
+                        <div className="flex items-center gap-1 text-[10px] bg-blue-50 border border-blue-100 rounded px-1.5 py-1">
+                          <svg className="h-3 w-3 text-blue-500 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+                          <span className="text-blue-700 font-mono">
+                            {item.lat != null ? item.lat.toFixed(6) : "—"}, {item.lng != null ? item.lng.toFixed(6) : "—"}
+                          </span>
+                        </div>
+                      )}
+                      {item.google_maps_url && (
+                        <a
+                          href={item.google_maps_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-1 text-[10px] text-[#127a79] hover:underline truncate"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <svg className="h-3 w-3 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                          <span className="truncate">{item.google_maps_url}</span>
+                        </a>
+                      )}
+                      {!item.lat && !item.lng && !item.google_maps_url && (
+                        <p className="text-[10px] text-amber-600 italic">⚠ Koordinat & link Maps tidak tersedia dari AI</p>
+                      )}
+
                       <Button
                         size="sm"
                         variant="outline"
@@ -400,6 +437,77 @@ function AdminMarkets() {
           </div>
         </div>
       </div>
+
+      {/* Market Requests Section */}
+      {requests && requests.length > 0 && (
+        <div className="mt-12 space-y-4">
+          <h2 className="text-xl font-bold text-gray-900">
+            Permintaan Pasar Baru ({requests.filter((r: any) => r.status === "pending").length})
+          </h2>
+          <div className="overflow-x-auto rounded-lg border border-[var(--color-gray-100)] bg-white shadow-sm">
+            <table className="w-full text-sm">
+              <thead className="bg-[var(--color-gray-50)] text-left text-xs uppercase text-[var(--color-gray-500)] border-b border-gray-100">
+                <tr>
+                  <th className="px-4 py-3">Nama Pasar</th>
+                  <th className="px-4 py-3">Alamat</th>
+                  <th className="px-4 py-3">Kota / Provinsi</th>
+                  <th className="px-4 py-3">Status</th>
+                  <th className="px-4 py-3" />
+                </tr>
+              </thead>
+              <tbody>
+                {requests.map((r: any) => (
+                  <tr key={r.id} className="border-t border-[var(--color-gray-100)] hover:bg-gray-55/20 transition-colors">
+                    <td className="px-4 py-3 font-semibold text-gray-900">{r.market_name}</td>
+                    <td className="px-4 py-3 text-gray-600">{r.address || "—"}</td>
+                    <td className="px-4 py-3">
+                      {r.city}
+                      {r.province && <span className="text-xs text-gray-400 block">{r.province}</span>}
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold ${
+                        r.status === "pending" 
+                          ? "bg-amber-50 text-amber-700 border border-amber-200" 
+                          : r.status === "approved" 
+                            ? "bg-green-50 text-green-700 border border-green-200" 
+                            : "bg-red-50 text-red-700 border border-red-200"
+                      }`}>
+                        {r.status}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      <div className="flex justify-end gap-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => {
+                            setName(r.market_name);
+                            setAddress(r.address || "");
+                            setCity(r.city || "");
+                            setProvince(r.province || "DKI Jakarta");
+                            toast.success(`Data ${r.market_name} dimuat ke form.`);
+                          }}
+                          className="h-8 text-xs flex items-center gap-1 border-gray-200"
+                        >
+                          <Check className="h-3.5 w-3.5" /> Gunakan
+                        </Button>
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          onClick={() => removeRequest(r.id)}
+                          className="h-8 w-8 hover:bg-red-50 hover:text-red-600"
+                        >
+                          <Trash2 className="h-4 w-4 text-[var(--color-destructive)]" />
+                        </Button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
     </>
   );
 }

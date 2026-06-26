@@ -13,6 +13,11 @@ CREATE TABLE IF NOT EXISTS public.ai_reports (
 -- Enable RLS
 ALTER TABLE public.ai_reports ENABLE ROW LEVEL SECURITY;
 
+-- Drop existing policies if any (idempotent)
+DROP POLICY IF EXISTS "ai_reports admin select" ON public.ai_reports;
+DROP POLICY IF EXISTS "ai_reports admin insert" ON public.ai_reports;
+DROP POLICY IF EXISTS "ai_reports admin delete" ON public.ai_reports;
+
 -- Add RLS policies for admin
 CREATE POLICY "ai_reports admin select" ON public.ai_reports
   FOR SELECT TO authenticated

@@ -120,11 +120,11 @@ export function AppShell({ children }: { children: ReactNode }) {
   );
 }
 
-export function PageHeader({ title, description, action }: { title: string; description?: string; action?: ReactNode }) {
+export function PageHeader({ title, description, action }: { title: ReactNode; description?: string; action?: ReactNode }) {
   return (
     <div className="mb-8 grid grid-cols-[minmax(0,1fr)_auto] items-end gap-4">
       <div className="min-w-0">
-        <h1 className="truncate text-3xl font-black tracking-tight text-[var(--color-ink)] sm:text-4xl">{title}</h1>
+        <h1 className="flex items-center gap-2.5 flex-wrap text-3xl font-black tracking-tight text-[var(--color-ink)] sm:text-4xl">{title}</h1>
         {description && <p className="mt-2 text-sm text-[var(--color-gray-500)] sm:text-base">{description}</p>}
       </div>
       {action && <div className="shrink-0">{action}</div>}

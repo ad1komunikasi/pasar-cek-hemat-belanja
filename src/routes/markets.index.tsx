@@ -58,10 +58,85 @@ function MarketsPage() {
   const { user } = useAuth();
   const qc = useQueryClient();
 
+  const searchRef = useRef<HTMLDivElement>(null);
+  const [showDropdown, setShowDropdown] = useState(false);
+  
+  // New Market Request states
+  const [showRequestModal, setShowRequestModal] = useState(false);
+  const [reqName, setReqName] = useState("");
+  const [reqAddress, setReqAddress] = useState("");
+  const [reqCity, setReqCity] = useState("");
+  const [reqProvince, setReqProvince] = useState("DKI Jakarta");
+  const [isSubmittingReq, setIsSubmittingReq] = useState(false);
+
+  // Close dropdown on click outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
+        setShowDropdown(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
   const { data: markets } = useQuery({
     queryKey: ["markets-public"],
     queryFn: async () => (await supabase.from("markets").select("*").eq("is_active", true).order("name")).data ?? [],
   });
+
+  // Extract unique cities from active markets
+  const allCities = useMemo(() => {
+    const cities = new Set<string>();
+    (markets ?? []).forEach((m: any) => {
+      if (m.city) cities.add(m.city);
+    });
+    return Array.from(cities);
+  }, [markets]);
+
+  // Matches for cities based on q
+  const matchedCities = useMemo(() => {
+    if (!q.trim()) return [];
+    return allCities.filter(city => city.toLowerCase().includes(q.toLowerCase())).slice(0, 3);
+  }, [allCities, q]);
+
+  // Matches for markets based on q
+  const matchedMarkets = useMemo(() => {
+    if (!q.trim()) return [];
+    return (markets ?? []).filter(m => m.name.toLowerCase().includes(q.toLowerCase())).slice(0, 5);
+  }, [markets, q]);
+
+  async function submitRequest(e: React.FormEvent) {
+    e.preventDefault();
+    if (!reqName || !reqAddress || !reqCity) {
+      toast.error("Lengkapi data permintaan pasar.");
+      return;
+    }
+    setIsSubmittingReq(true);
+    try {
+      const { error } = await supabase.from("market_requests" as any).insert({
+        user_id: user?.id || null,
+        market_name: reqName,
+        address: reqAddress,
+        city: reqCity,
+        province: reqProvince,
+        status: "pending"
+      });
+      if (error) throw error;
+
+      toast.success("Permintaan tambah pasar berhasil dikirim!");
+      setShowRequestModal(false);
+      setReqName("");
+      setReqAddress("");
+      setReqCity("");
+      setReqProvince("DKI Jakarta");
+    } catch (err: any) {
+      console.error(err);
+      toast.error("Gagal mengirim permintaan: " + err.message);
+    } finally {
+      setIsSubmittingReq(false);
+    }
+  }
 
   const { data: favMarkets } = useQuery({
     queryKey: ["fav-markets", user?.id],
@@ -459,9 +534,98 @@ function MarketsPage() {
               className="relative z-0 h-[500px] overflow-hidden rounded-lg border border-[var(--color-gray-100)] bg-white shadow-sm"
             />
           )}
-          <div>
-            <Input placeholder="Cari pasar / kota..." value={q} onChange={(e) => setQ(e.target.value)} />
-            <div className="mt-4 max-h-[440px] space-y-3 overflow-y-auto pr-2">
+          <div className="flex flex-col gap-3">
+            <div className="relative" ref={searchRef}>
+              <Input
+                placeholder="Cari pasar / kota..."
+                value={q}
+                onChange={(e) => {
+                  setQ(e.target.value);
+                  setShowDropdown(true);
+                }}
+                onFocus={() => setShowDropdown(true)}
+              />
+              {showDropdown && q.trim().length > 0 && (
+                <div className="absolute left-0 right-0 mt-1 z-50 max-h-[300px] overflow-y-auto rounded-md border border-gray-200 bg-white p-2 shadow-lg space-y-3">
+                  {matchedCities.length > 0 && (
+                    <div className="space-y-1">
+                      <p className="text-[9px] font-bold text-gray-400 uppercase tracking-wider px-1">Kota</p>
+                      <div className="space-y-0.5">
+                        {matchedCities.map((city) => (
+                          <button
+                            key={city}
+                            type="button"
+                            className="w-full text-left px-2 py-1.5 rounded hover:bg-gray-50 text-xs font-semibold text-gray-700 transition-colors flex items-center gap-1.5"
+                            onClick={() => {
+                              setQ(city);
+                              setShowDropdown(false);
+                            }}
+                          >
+                            <MapPin className="h-3 w-3 text-gray-400 shrink-0" />
+                            {city}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {matchedMarkets.length > 0 && (
+                    <div className="space-y-1">
+                      <p className="text-[9px] font-bold text-gray-400 uppercase tracking-wider px-1">Pasar</p>
+                      <div className="space-y-0.5">
+                        {matchedMarkets.map((m) => (
+                          <Link
+                            key={m.id}
+                            to="/markets/$id"
+                            params={{ id: m.id }}
+                            className="w-full text-left px-2 py-1.5 rounded hover:bg-gray-50 text-xs font-semibold text-gray-700 transition-colors flex items-center gap-1.5"
+                            onClick={() => setShowDropdown(false)}
+                          >
+                            <span className="inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500 shrink-0" />
+                            <span className="truncate">{m.name}</span>
+                            <span className="text-[10px] text-gray-400 font-normal ml-auto truncate max-w-[120px]">{m.city}</span>
+                          </Link>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {matchedCities.length === 0 && matchedMarkets.length === 0 ? (
+                    <div className="py-3 text-center space-y-2">
+                      <p className="text-xs text-gray-500 italic">Pasar/kota "{q}" tidak ditemukan.</p>
+                      <Button
+                        size="sm"
+                        type="button"
+                        onClick={() => {
+                          setReqName(q);
+                          setShowRequestModal(true);
+                          setShowDropdown(false);
+                        }}
+                        className="text-xs bg-[var(--color-brand-blue)] hover:bg-[var(--color-brand-blue)]/90 text-white"
+                      >
+                        Ajukan Permintaan Pasar Baru
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="pt-2 border-t border-gray-100 flex justify-between items-center text-[10px]">
+                      <span className="text-gray-400 px-1">Tidak menemukan pasar Anda?</span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setReqName(q);
+                          setShowRequestModal(true);
+                          setShowDropdown(false);
+                        }}
+                        className="text-[var(--color-brand-blue)] font-bold hover:underline px-1"
+                      >
+                        Ajukan Baru
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+            <div className="max-h-[440px] space-y-3 overflow-y-auto pr-2">
               {filtered.map((m: any) => (
                 <Link
                   key={m.id}
@@ -513,6 +677,80 @@ function MarketsPage() {
           </div>
         </div>
       </main>
+
+      {/* Request Market Modal */}
+      {showRequestModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 animate-in fade-in duration-200">
+          <div className="w-full max-w-md rounded-xl border border-gray-100 bg-white p-6 shadow-xl space-y-4 animate-in zoom-in-95 duration-200">
+            <div className="flex items-center justify-between border-b border-gray-100 pb-3">
+              <h3 className="text-lg font-bold text-gray-900">Ajukan Pasar Baru</h3>
+              <button 
+                onClick={() => setShowRequestModal(false)}
+                className="text-gray-400 hover:text-gray-600 font-semibold text-lg"
+              >
+                &times;
+              </button>
+            </div>
+            <form onSubmit={submitRequest} className="space-y-4">
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-gray-700">Nama Pasar</label>
+                <Input 
+                  value={reqName} 
+                  onChange={(e) => setReqName(e.target.value)} 
+                  placeholder="e.g. Pasar Jaya Tebet"
+                  required
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-gray-700">Alamat Lengkap</label>
+                <Input 
+                  value={reqAddress} 
+                  onChange={(e) => setReqAddress(e.target.value)} 
+                  placeholder="e.g. Jl. Tebet Barat Raya No. 1"
+                  required
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-gray-700">Kota</label>
+                  <Input 
+                    value={reqCity} 
+                    onChange={(e) => setReqCity(e.target.value)} 
+                    placeholder="e.g. Jakarta Selatan"
+                    required
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-gray-700">Provinsi</label>
+                  <Input 
+                    value={reqProvince} 
+                    onChange={(e) => setReqProvince(e.target.value)} 
+                    placeholder="e.g. DKI Jakarta"
+                    required
+                  />
+                </div>
+              </div>
+              <div className="flex gap-2 pt-2">
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={() => setShowRequestModal(false)}
+                  className="flex-1"
+                >
+                  Batal
+                </Button>
+                <Button 
+                  type="submit" 
+                  disabled={isSubmittingReq}
+                  className="flex-1 bg-[var(--color-brand-blue)] hover:bg-[var(--color-brand-blue)]/90 text-white"
+                >
+                  {isSubmittingReq ? "Mengirim..." : "Kirim Pengajuan"}
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

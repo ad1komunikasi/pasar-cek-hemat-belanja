@@ -24,7 +24,7 @@ CREATE POLICY "users read own email_logs" ON public.email_logs
 -- Allow admin and super_admin to read all email logs
 CREATE POLICY "admin read all email_logs" ON public.email_logs
   FOR SELECT TO authenticated
-  USING (public.has_role(auth.uid(), 'admin') OR public.has_role(auth.uid(), 'super_admin'));
+  USING (private.has_role(auth.uid(), 'admin'::public.app_role) OR private.has_role(auth.uid(), 'super_admin'::public.app_role));
 
 -- Allow authenticated users to insert email logs
 CREATE POLICY "users insert own email_logs" ON public.email_logs
