@@ -11,7 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Sparkles, Send, Brain, Bot, User, Loader2, HelpCircle, RefreshCw, BarChart2, Save, Download, ChevronDown, FileText, Clipboard, Printer, Trash2, Key, AlertTriangle } from "lucide-react";
+import { Sparkles, Send, Brain, Bot, User, Loader2, HelpCircle, RefreshCw, BarChart2, Save, Download, ChevronDown, FileText, Clipboard, Printer, Trash2, Key, AlertTriangle, Copy, Check } from "lucide-react";
 import { getAiAnalysis } from "@/lib/api/ai.functions";
 import { toast } from "sonner";
 import {
@@ -204,6 +204,110 @@ function AdminReports() {
     setShowKeyInput(false);
   }
 
+  const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
+
+  function handleCopyText(text: string, index: number) {
+    navigator.clipboard.writeText(text);
+    setCopiedIndex(index);
+    toast.success("Jawaban konsultan berhasil disalin ke clipboard!");
+    setTimeout(() => {
+      setCopiedIndex(null);
+    }, 2000);
+  }
+
+  async function autoSaveChatHistory(updatedHistory: any[]) {
+    try {
+      const { data: userData } = await supabase.auth.getUser();
+      
+      if (selectedReportId) {
+        // Update existing report
+        if (userData?.user) {
+          const { error } = await supabase
+            .from("ai_reports")
+            .update({ chat_history: updatedHistory })
+            .eq("id", selectedReportId);
+            
+          if (error) {
+            console.warn("Gagal auto-save ke database, mencoba lokal:", error.message);
+            updateLocalStorageHistory(selectedReportId, updatedHistory);
+          } else {
+            refetchSavedReports();
+          }
+        } else {
+          updateLocalStorageHistory(selectedReportId, updatedHistory);
+        }
+      } else {
+        // Auto-create new report because they started chatting
+        const reportId = crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2, 15);
+        const defaultTitle = `Diskusi Konsultasi ${new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' })}`;
+        
+        const newReport = {
+          id: reportId,
+          created_at: new Date().toISOString(),
+          title: defaultTitle,
+          report_text: reportText || "Sesi tanya jawab konsultan AI.",
+          chat_history: updatedHistory,
+          metrics_snapshot: data?.aiMetrics || {},
+        };
+        
+        if (userData?.user) {
+          const { error } = await supabase
+            .from("ai_reports")
+            .insert({
+              id: reportId,
+              title: defaultTitle,
+              report_text: reportText || "Sesi tanya jawab konsultan AI.",
+              chat_history: updatedHistory,
+              metrics_snapshot: data?.aiMetrics || {},
+              user_id: userData.user.id
+            });
+            
+          if (error) {
+            console.warn("Gagal auto-create ke database, mencoba lokal:", error.message);
+            saveToLocalStorageQuietly(newReport);
+          } else {
+            setSelectedReportId(reportId);
+            refetchSavedReports();
+          }
+        } else {
+          saveToLocalStorageQuietly(newReport);
+        }
+      }
+    } catch (err: any) {
+      console.error("Gagal melakukan auto-save percakapan:", err);
+    }
+  }
+
+  function updateLocalStorageHistory(id: string, updatedHistory: any[]) {
+    try {
+      const local = localStorage.getItem("pasardeck_ai_reports");
+      if (local) {
+        const list = JSON.parse(local);
+        const idx = list.findIndex((r: any) => r.id === id);
+        if (idx !== -1) {
+          list[idx].chat_history = updatedHistory;
+          localStorage.setItem("pasardeck_ai_reports", JSON.stringify(list));
+          refetchSavedReports();
+        }
+      }
+    } catch (e) {
+      console.error("Gagal update history lokal:", e);
+    }
+  }
+
+  function saveToLocalStorageQuietly(report: any) {
+    try {
+      const local = localStorage.getItem("pasardeck_ai_reports");
+      const list = local ? JSON.parse(local) : [];
+      list.unshift(report);
+      localStorage.setItem("pasardeck_ai_reports", JSON.stringify(list));
+      setSelectedReportId(report.id);
+      refetchSavedReports();
+    } catch (e) {
+      console.error("Gagal simpan lokal secara senyap:", e);
+    }
+  }
+
   // Fetch saved reports history from Supabase or localStorage fallback
   const { data: savedReportsList, refetch: refetchSavedReports } = useQuery({
     queryKey: ["admin-saved-reports"],
@@ -312,6 +416,8 @@ function AdminReports() {
       }
     ];
     setChatHistory(newHistory);
+    // Auto-save the user message immediately so it's persisted
+    await autoSaveChatHistory(newHistory);
 
     try {
       const response = await getAiAnalysis({
@@ -326,7 +432,10 @@ function AdminReports() {
         }
       });
 
-      setChatHistory(response.updatedHistory || []);
+      const updatedHistory = response.updatedHistory || [];
+      setChatHistory(updatedHistory);
+      // Auto-save the response
+      await autoSaveChatHistory(updatedHistory);
     } catch (err: any) {
       if (err.message?.includes("GEMINI_API_KEY")) {
         setShowKeyInput(true);
@@ -1011,12 +1120,36 @@ function AdminReports() {
                           return (
                             <div key={idx} className={`flex items-start gap-2 ${isUser ? 'justify-end' : 'justify-start'}`}>
                               {!isUser && (
-                                <div className="h-6 w-6 rounded-full bg-blue-900 flex items-center justify-center text-white text-[10px] shrink-0 font-bold">
+                                <div className="h-6 w-6 rounded-full bg-blue-900 flex items-center justify-center text-white text-[10px] shrink-0 font-bold mt-1">
                                   AI
                                 </div>
                               )}
-                              <div className={`max-w-[85%] rounded-lg px-3 py-2 text-xs leading-relaxed ${isUser ? 'bg-blue-600 text-white rounded-tr-none' : 'bg-gray-100 text-gray-800 rounded-tl-none border border-gray-200/50'}`}>
-                                {isUser ? msg.parts[0].text : renderMarkdown(msg.parts[0].text)}
+                              <div className="relative group max-w-[85%] flex flex-col">
+                                <div className={`rounded-lg px-3 py-2 text-xs leading-relaxed ${isUser ? 'bg-blue-600 text-white rounded-tr-none' : 'bg-gray-100 text-gray-800 rounded-tl-none border border-gray-200/50'}`}>
+                                  {isUser ? msg.parts[0].text : renderMarkdown(msg.parts[0].text)}
+                                </div>
+                                {!isUser && (
+                                  <div className="mt-1 flex items-center justify-end gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                                    <button
+                                      type="button"
+                                      onClick={() => handleCopyText(msg.parts[0].text, idx)}
+                                      className="flex items-center gap-1 text-[10px] text-gray-400 hover:text-blue-600 focus:outline-none transition-colors cursor-pointer"
+                                      title="Salin jawaban ini"
+                                    >
+                                      {copiedIndex === idx ? (
+                                        <>
+                                          <Check className="h-3 w-3 text-green-600" />
+                                          <span className="text-green-600 font-semibold">Tersalin!</span>
+                                        </>
+                                      ) : (
+                                        <>
+                                          <Copy className="h-3 w-3" />
+                                          <span>Salin</span>
+                                        </>
+                                      )}
+                                    </button>
+                                  </div>
+                                )}
                               </div>
                             </div>
                           );
