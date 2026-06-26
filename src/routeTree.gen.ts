@@ -17,6 +17,7 @@ import { Route as FeaturesRouteImport } from './routes/features'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as MarketsIndexRouteImport } from './routes/markets.index'
 import { Route as MarketsIdRouteImport } from './routes/markets.$id'
 import { Route as FeaturesSlugRouteImport } from './routes/features.$slug'
 import { Route as AuthenticatedSmartBasketRouteImport } from './routes/_authenticated/smart-basket'
@@ -82,6 +83,11 @@ const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const MarketsIndexRoute = MarketsIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => MarketsRoute,
 } as any)
 const MarketsIdRoute = MarketsIdRouteImport.update({
   id: '/$id',
@@ -247,6 +253,7 @@ export interface FileRoutesByFullPath {
   '/smart-basket': typeof AuthenticatedSmartBasketRoute
   '/features/$slug': typeof FeaturesSlugRoute
   '/markets/$id': typeof MarketsIdRoute
+  '/markets/': typeof MarketsIndexRoute
   '/admin/auth-monitor': typeof AuthenticatedAdminAuthMonitorRoute
   '/admin/markets': typeof AuthenticatedAdminMarketsRoute
   '/admin/orders': typeof AuthenticatedAdminOrdersRoute
@@ -264,7 +271,6 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/features': typeof FeaturesRouteWithChildren
-  '/markets': typeof MarketsRouteWithChildren
   '/pricing': typeof PricingRoute
   '/reset-password': typeof ResetPasswordRoute
   '/trust': typeof TrustRoute
@@ -280,6 +286,7 @@ export interface FileRoutesByTo {
   '/smart-basket': typeof AuthenticatedSmartBasketRoute
   '/features/$slug': typeof FeaturesSlugRoute
   '/markets/$id': typeof MarketsIdRoute
+  '/markets': typeof MarketsIndexRoute
   '/admin/auth-monitor': typeof AuthenticatedAdminAuthMonitorRoute
   '/admin/markets': typeof AuthenticatedAdminMarketsRoute
   '/admin/orders': typeof AuthenticatedAdminOrdersRoute
@@ -317,6 +324,7 @@ export interface FileRoutesById {
   '/_authenticated/smart-basket': typeof AuthenticatedSmartBasketRoute
   '/features/$slug': typeof FeaturesSlugRoute
   '/markets/$id': typeof MarketsIdRoute
+  '/markets/': typeof MarketsIndexRoute
   '/_authenticated/admin/auth-monitor': typeof AuthenticatedAdminAuthMonitorRoute
   '/_authenticated/admin/markets': typeof AuthenticatedAdminMarketsRoute
   '/_authenticated/admin/orders': typeof AuthenticatedAdminOrdersRoute
@@ -354,6 +362,7 @@ export interface FileRouteTypes {
     | '/smart-basket'
     | '/features/$slug'
     | '/markets/$id'
+    | '/markets/'
     | '/admin/auth-monitor'
     | '/admin/markets'
     | '/admin/orders'
@@ -371,7 +380,6 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/features'
-    | '/markets'
     | '/pricing'
     | '/reset-password'
     | '/trust'
@@ -387,6 +395,7 @@ export interface FileRouteTypes {
     | '/smart-basket'
     | '/features/$slug'
     | '/markets/$id'
+    | '/markets'
     | '/admin/auth-monitor'
     | '/admin/markets'
     | '/admin/orders'
@@ -423,6 +432,7 @@ export interface FileRouteTypes {
     | '/_authenticated/smart-basket'
     | '/features/$slug'
     | '/markets/$id'
+    | '/markets/'
     | '/_authenticated/admin/auth-monitor'
     | '/_authenticated/admin/markets'
     | '/_authenticated/admin/orders'
@@ -505,6 +515,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/markets/': {
+      id: '/markets/'
+      path: '/'
+      fullPath: '/markets/'
+      preLoaderRoute: typeof MarketsIndexRouteImport
+      parentRoute: typeof MarketsRoute
     }
     '/markets/$id': {
       id: '/markets/$id'
@@ -780,10 +797,12 @@ const FeaturesRouteWithChildren = FeaturesRoute._addFileChildren(
 
 interface MarketsRouteChildren {
   MarketsIdRoute: typeof MarketsIdRoute
+  MarketsIndexRoute: typeof MarketsIndexRoute
 }
 
 const MarketsRouteChildren: MarketsRouteChildren = {
   MarketsIdRoute: MarketsIdRoute,
+  MarketsIndexRoute: MarketsIndexRoute,
 }
 
 const MarketsRouteWithChildren =
