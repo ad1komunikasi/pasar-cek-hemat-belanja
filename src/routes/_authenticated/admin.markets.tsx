@@ -25,6 +25,9 @@ function AdminMarkets() {
   const [province, setProvince] = useState("DKI Jakarta");
   const [type, setType] = useState<"tradisional" | "modern" | "swalayan">("tradisional");
   const [hours, setHours] = useState("");
+  const [lat, setLat] = useState("");
+  const [lng, setLng] = useState("");
+  const [googleMapsUrl, setGoogleMapsUrl] = useState("");
 
   // AI Assistant state variables
   const [aiQuery, setAiQuery] = useState("");
@@ -42,6 +45,9 @@ function AdminMarkets() {
       province,
       type,
       hours,
+      lat: lat ? Number(lat) : null,
+      lng: lng ? Number(lng) : null,
+      google_maps_url: googleMapsUrl || null,
     });
     if (error) return toast.error(error.message);
     toast.success("Pasar ditambahkan");
@@ -50,6 +56,9 @@ function AdminMarkets() {
     setCity("");
     setProvince("DKI Jakarta");
     setHours("");
+    setLat("");
+    setLng("");
+    setGoogleMapsUrl("");
     qc.invalidateQueries({ queryKey: ["admin-markets"] });
     qc.invalidateQueries({ queryKey: ["markets-public"] });
     qc.invalidateQueries({ queryKey: ["markets-list"] });
@@ -184,6 +193,20 @@ function AdminMarkets() {
               <Label>Jam Operasional</Label>
               <Input value={hours} onChange={(e) => setHours(e.target.value)} placeholder="05:00 - 17:00" />
             </div>
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <Label>Latitude</Label>
+                <Input value={lat} onChange={(e) => setLat(e.target.value)} placeholder="-6.175..." />
+              </div>
+              <div>
+                <Label>Longitude</Label>
+                <Input value={lng} onChange={(e) => setLng(e.target.value)} placeholder="106.827..." />
+              </div>
+            </div>
+            <div>
+              <Label>Tautan Google Maps</Label>
+              <Input value={googleMapsUrl} onChange={(e) => setGoogleMapsUrl(e.target.value)} placeholder="https://google.com/maps/..." />
+            </div>
             <Button onClick={create} className="w-full">
               Simpan
             </Button>
@@ -283,6 +306,9 @@ function AdminMarkets() {
                           if (item.province) setProvince(item.province);
                           if (item.type) setType(item.type.toLowerCase() as any);
                           if (item.hours) setHours(item.hours);
+                          setLat(item.lat ? String(item.lat) : "");
+                          setLng(item.lng ? String(item.lng) : "");
+                          setGoogleMapsUrl(item.google_maps_url || "");
                           toast.success(`Data ${item.name} diterapkan ke form.`);
                         }}
                       >

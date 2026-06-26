@@ -336,6 +336,9 @@ Tugas Anda:
    - hours: Jam operasional standar yang umum (contoh: "05:00 - 18:00", "08:00 - 22:00").
    - status: Tentukan apakah "Belum Tersedia" (jika tidak ada pasar sejenis/mirip di database) atau "Sudah Tersedia" (jika ada pasar yang sama atau sangat mirip di database).
    - similarity: Jika statusnya "Sudah Tersedia", sebutkan nama pasar di database kami yang mirip tersebut. Jika "Belum Tersedia", kosongkan atau null.
+   - lat: Angka desimal latitude koordinat pasar tersebut (contoh: -6.175392). Berikan nilai numeric (number), bukan string.
+   - lng: Angka desimal longitude koordinat pasar tersebut (contoh: 106.827153). Berikan nilai numeric (number), bukan string.
+   - google_maps_url: Tautan Google Maps untuk lokasi pasar tersebut (contoh: https://www.google.com/maps/search/?api=1&query=-6.175392,106.827153 atau link Google Maps resmi yang valid jika Anda ketahui).
 
 Kembalikan respon hanya dalam format JSON array yang valid. Jangan sertakan format markdown lain seperti \`\`\`json. Pastikan output Anda berupa raw JSON array yang valid dengan format berikut:
 [
@@ -347,7 +350,10 @@ Kembalikan respon hanya dalam format JSON array yang valid. Jangan sertakan form
     "type": "tradisional" | "modern" | "swalayan",
     "hours": "HH:MM - HH:MM",
     "status": "Belum Tersedia" | "Sudah Tersedia",
-    "similarity": "Nama pasar mirip"
+    "similarity": "Nama pasar mirip",
+    "lat": -6.175392,
+    "lng": 106.827153,
+    "google_maps_url": "https://www.google.com/maps/search/?api=1&query=-6.175392,106.827153"
   }
 ]`;
 
