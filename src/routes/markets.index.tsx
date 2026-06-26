@@ -675,6 +675,7 @@ function MarketsPage() {
                 </Link>
               ))}
             </div>
+          </div>
         </div>
       </AppShell>
 
