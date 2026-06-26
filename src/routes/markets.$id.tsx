@@ -40,26 +40,47 @@ function MarketDetail() {
         dateToUse = today;
       }
 
+      // Always fetch products and markets first to ensure complete coverage
+      const { data: products } = await supabase.from("products").select("id,name,category,unit").order("name");
+      const { data: markets } = await supabase.from("markets").select("id,name,city").order("name");
+
+      if (!products || !markets) return [];
+
+      const currentMarket = markets.find((m) => m.id === id);
+      if (!currentMarket) return [];
+
       const { data } = await supabase.from("product_prices")
-        .select("price, product:products(id,name,unit,category)")
+        .select("price, product_id, product:products(id,name,unit,category)")
         .eq("market_id", id)
         .eq("recorded_at", dateToUse);
       
-      let dbPrices = data ?? [];
-
-      if (dbPrices.length === 0) {
-        const { data: products } = await supabase.from("products").select("id,name,category,unit").order("name");
-        const { data: markets } = await supabase.from("markets").select("id,name,city").order("name");
-        if (products && markets) {
-          const benchmarkPrices = getDeterministicBenchmarkPrices(products as any[], markets as any[], dateToUse);
-          dbPrices = benchmarkPrices.filter((p: any) => p.market_id === id).map((p: any) => ({
-            price: p.price,
-            product: p.product
-          }));
+      const dbPrices = data ?? [];
+      const dbPriceMap = new Map<string, any>();
+      dbPrices.forEach((r: any) => {
+        const pId = r.product_id || r.product?.id;
+        if (pId) {
+          dbPriceMap.set(pId, r);
         }
-      }
+      });
 
-      return dbPrices;
+      const benchmarkPrices = getDeterministicBenchmarkPrices(products as any[], [currentMarket] as any[], dateToUse);
+
+      const mergedPrices = benchmarkPrices.map((bp: any) => {
+        const key = bp.product_id;
+        if (dbPriceMap.has(key)) {
+          const dbRow = dbPriceMap.get(key);
+          return {
+            price: Number(dbRow.price),
+            product: dbRow.product || bp.product
+          };
+        }
+        return {
+          price: bp.price,
+          product: bp.product
+        };
+      });
+
+      return mergedPrices;
     },
   });
 

@@ -35,15 +35,23 @@ function DashboardPage() {
         dateToUse = today;
       }
 
-      const [prices, markets, unread, baskets] = await Promise.all([
+      const [pricesRes, marketsRes, productsRes, unread, baskets] = await Promise.all([
         supabase.from("product_prices").select("id", { count: "exact", head: true }).eq("recorded_at", dateToUse),
         supabase.from("markets").select("id", { count: "exact", head: true }).eq("is_active", true),
+        supabase.from("products").select("id", { count: "exact", head: true }),
         supabase.from("notifications").select("id", { count: "exact", head: true }).is("read_at", null).eq("user_id", user.id),
         supabase.from("smart_baskets").select("id", { count: "exact", head: true }).eq("user_id", user.id),
       ]);
+
+      const marketsCount = marketsRes.count ?? 0;
+      const productsCount = productsRes.count ?? 0;
+      
+      // Because we merge DB prices with benchmark prices, all product-market combinations are covered.
+      const priceUpdates = productsCount * marketsCount;
+
       return {
-        priceUpdates: prices.count ?? 0,
-        markets: markets.count ?? 0,
+        priceUpdates,
+        markets: marketsCount,
         unread: unread.count ?? 0,
         baskets: baskets.count ?? 0,
       };

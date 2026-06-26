@@ -63,27 +63,48 @@ function SmartBasketPage() {
         dateToUse = today;
       }
 
+      // Always fetch products and markets first to ensure complete coverage
+      const { data: products } = await supabase.from("products").select("id,name,category,unit").order("name");
+      const { data: markets } = await supabase.from("markets").select("id,name,city").order("name");
+
+      if (!products || !markets) return [];
+
       const { data } = await supabase.from("product_prices")
-        .select("price,product_id,market:markets(id,name,city)")
+        .select("price,product_id,market_id,market:markets(id,name,city)")
         .eq("recorded_at", dateToUse)
         .in("product_id", productIds);
       
-      let dbPrices = data ?? [];
-
-      if (dbPrices.length === 0) {
-        const { data: products } = await supabase.from("products").select("id,name,category,unit").order("name");
-        const { data: markets } = await supabase.from("markets").select("id,name,city").order("name");
-        if (products && markets) {
-          const benchmarkPrices = getDeterministicBenchmarkPrices(products as any[], markets as any[], dateToUse);
-          dbPrices = benchmarkPrices.filter((p: any) => productIds.includes(p.product_id)).map((p: any) => ({
-            price: p.price,
-            product_id: p.product_id,
-            market: p.market
-          }));
+      const dbPrices = data ?? [];
+      const dbPriceMap = new Map<string, any>();
+      dbPrices.forEach((r: any) => {
+        const pId = r.product_id;
+        const mId = r.market_id || r.market?.id;
+        if (pId && mId) {
+          dbPriceMap.set(`${pId}:${mId}`, r);
         }
-      }
+      });
 
-      return dbPrices;
+      const activeProducts = products.filter((p) => productIds.includes(p.id));
+      const benchmarkPrices = getDeterministicBenchmarkPrices(activeProducts as any[], markets as any[], dateToUse);
+
+      const mergedPrices = benchmarkPrices.map((bp: any) => {
+        const key = `${bp.product_id}:${bp.market_id}`;
+        if (dbPriceMap.has(key)) {
+          const dbRow = dbPriceMap.get(key);
+          return {
+            price: Number(dbRow.price),
+            product_id: bp.product_id,
+            market: dbRow.market || bp.market
+          };
+        }
+        return {
+          price: bp.price,
+          product_id: bp.product_id,
+          market: bp.market
+        };
+      });
+
+      return mergedPrices;
     },
   });
 

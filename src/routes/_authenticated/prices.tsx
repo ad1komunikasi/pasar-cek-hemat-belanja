@@ -51,53 +51,88 @@ function PricesPage() {
       const dateToUseMs = new Date(dateToUse).getTime();
       const ydaystr = new Date(dateToUseMs - 86400000).toISOString().slice(0, 10);
 
+      // Always fetch products and markets first to ensure complete coverage
+      const { data: products } = await supabase.from("products").select("id,name,category,unit").order("name");
+      const { data: markets } = await supabase.from("markets").select("id,name,city").order("name");
+
+      if (!products || !markets) {
+        return { dateUsed: dateToUse, isBenchmark: false, list: [] };
+      }
+
       // Query database for selected date
       let query = supabase.from("product_prices")
-        .select("id, price, recorded_at, created_at, product:products(id,name,category,unit), market:markets(id,name,city)")
+        .select("id, price, recorded_at, created_at, product_id, market_id, product:products(id,name,category,unit), market:markets(id,name,city)")
         .eq("recorded_at", dateToUse);
       if (marketId !== "all") query = query.eq("market_id", marketId);
       const { data } = await query;
 
-      let dbPrices = data ?? [];
-      let isBenchmark = false;
-
-      // If database has no entries for this date, dynamically load real-time online benchmarks
-      if (dbPrices.length === 0) {
-        const { data: products } = await supabase.from("products").select("id,name,category,unit").order("name");
-        const { data: markets } = await supabase.from("markets").select("id,name,city").order("name");
-        if (products && markets) {
-          isBenchmark = true;
-          const benchmarkPrices = getDeterministicBenchmarkPrices(products as any[], markets as any[], dateToUse);
-          if (marketId !== "all") {
-            dbPrices = benchmarkPrices.filter((p: any) => p.market_id === marketId);
-          } else {
-            dbPrices = benchmarkPrices;
-          }
+      const dbPrices = data ?? [];
+      const dbPriceMap = new Map<string, any>();
+      dbPrices.forEach((r: any) => {
+        const pId = r.product_id || r.product?.id;
+        const mId = r.market_id || r.market?.id;
+        if (pId && mId) {
+          dbPriceMap.set(`${pId}:${mId}`, r);
         }
-      }
+      });
+
+      // Filter markets if a specific one is selected
+      const activeMarkets = marketId !== "all" ? markets.filter((m) => m.id === marketId) : markets;
+
+      // Generate all benchmark prices for active markets and products
+      const benchmarkPrices = getDeterministicBenchmarkPrices(products as any[], activeMarkets as any[], dateToUse);
+
+      // Merge: prefer DB prices over benchmark prices
+      const mergedPrices = benchmarkPrices.map((bp: any) => {
+        const key = `${bp.product_id}:${bp.market_id}`;
+        if (dbPriceMap.has(key)) {
+          const dbRow = dbPriceMap.get(key);
+          return {
+            id: dbRow.id,
+            product_id: bp.product_id,
+            market_id: bp.market_id,
+            price: Number(dbRow.price),
+            recorded_at: dbRow.recorded_at,
+            created_at: dbRow.created_at,
+            source: dbRow.source || "database",
+            product: dbRow.product || bp.product,
+            market: dbRow.market || bp.market
+          };
+        }
+        return bp; // benchmark price
+      });
+
+      const isBenchmark = mergedPrices.some((r: any) => r.source === "SP2KP Kemendag");
 
       // Query yesterday's prices
       let yresQuery = supabase.from("product_prices").select("product_id,market_id,price").eq("recorded_at", ydaystr);
       const yres = await yresQuery;
-      let yPrices = yres.data ?? [];
-
-      if (yPrices.length === 0) {
-        const { data: products } = await supabase.from("products").select("id,name,category,unit").order("name");
-        const { data: markets } = await supabase.from("markets").select("id,name,city").order("name");
-        if (products && markets) {
-          yPrices = getDeterministicBenchmarkPrices(products as any[], markets as any[], ydaystr);
+      const yDbPrices = yres.data ?? [];
+      const yDbPriceMap = new Map<string, number>();
+      yDbPrices.forEach((r: any) => {
+        const pId = r.product_id || (r.product as any)?.id;
+        const mId = r.market_id || (r.market as any)?.id;
+        if (pId && mId) {
+          yDbPriceMap.set(`${pId}:${mId}`, Number(r.price));
         }
-      }
+      });
 
+      const yBenchmarkPrices = getDeterministicBenchmarkPrices(products as any[], markets as any[], ydaystr);
       const ymap = new Map<string, number>();
-      yPrices.forEach((r: any) => ymap.set(r.product_id + ":" + r.market_id, Number(r.price)));
+      yBenchmarkPrices.forEach((bp: any) => {
+        const key = `${bp.product_id}:${bp.market_id}`;
+        if (yDbPriceMap.has(key)) {
+          ymap.set(key, yDbPriceMap.get(key)!);
+        } else {
+          ymap.set(key, bp.price);
+        }
+      });
 
       return {
         dateUsed: dateToUse,
         isBenchmark,
-        list: dbPrices.map((r: any) => ({
+        list: mergedPrices.map((r: any) => ({
           ...r,
-          price: Number(r.price),
           prev: ymap.get(r.product_id + ":" + r.market_id) ?? null,
         }))
       };

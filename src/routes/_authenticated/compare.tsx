@@ -49,27 +49,48 @@ function ComparePage() {
         dateToUse = today;
       }
 
+      // Always fetch products and markets first to ensure complete coverage
+      const { data: products } = await supabase.from("products").select("id,name,category,unit").order("name");
+      const { data: markets } = await supabase.from("markets").select("id,name,city,address").order("name");
+
+      if (!products || !markets) return [];
+
+      const selectedProduct = products.find((p) => p.id === productId);
+      if (!selectedProduct) return [];
+
       let query = supabase.from("product_prices")
-        .select("price,market:markets(id,name,city,address)")
+        .select("price, market_id, market:markets(id,name,city,address)")
         .eq("recorded_at", dateToUse)
         .eq("product_id", productId);
       const { data } = await query;
       
-      let dbPrices = data ?? [];
-
-      if (dbPrices.length === 0) {
-        const { data: products } = await supabase.from("products").select("id,name,category,unit").order("name");
-        const { data: markets } = await supabase.from("markets").select("id,name,city,address").order("name");
-        if (products && markets) {
-          const benchmarkPrices = getDeterministicBenchmarkPrices(products as any[], markets as any[], dateToUse);
-          dbPrices = benchmarkPrices.filter((p: any) => p.product_id === productId).map((p: any) => ({
-            price: p.price,
-            market: p.market
-          }));
+      const dbPrices = data ?? [];
+      const dbPriceMap = new Map<string, any>();
+      dbPrices.forEach((r: any) => {
+        const mId = r.market_id || r.market?.id;
+        if (mId) {
+          dbPriceMap.set(mId, r);
         }
-      }
+      });
 
-      let out = dbPrices.map((r: any) => ({ price: Number(r.price), market: r.market }));
+      const benchmarkPrices = getDeterministicBenchmarkPrices([selectedProduct] as any[], markets as any[], dateToUse);
+
+      const mergedPrices = benchmarkPrices.map((bp: any) => {
+        const key = bp.market_id;
+        if (dbPriceMap.has(key)) {
+          const dbRow = dbPriceMap.get(key);
+          return {
+            price: Number(dbRow.price),
+            market: dbRow.market || bp.market
+          };
+        }
+        return {
+          price: bp.price,
+          market: bp.market
+        };
+      });
+
+      let out = mergedPrices;
       if (city !== "all") out = out.filter((r) => r.market?.city === city);
       out.sort((a, b) => a.price - b.price);
       return out;

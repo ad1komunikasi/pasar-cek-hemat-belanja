@@ -49,6 +49,31 @@ export const CATEGORY_BENCHMARKS: Record<string, { min: number; max: number }> =
   "Ikan Kembung": { min: 35000, max: 48000 }
 };
 
+function getLocationFactor(market: Market): number {
+  const city = market.city?.toLowerCase() || "";
+  const name = market.name?.toLowerCase() || "";
+  
+  // Wholesale / Induk markets are cheaper
+  if (name.includes("induk") || name.includes("kramat jati")) {
+    return 0.90; // 10% cheaper
+  }
+  
+  if (city.includes("selatan")) {
+    return 1.05; // 5% more expensive
+  }
+  if (city.includes("pusat")) {
+    return 1.02; // 2% more expensive
+  }
+  if (city.includes("utara") || city.includes("barat")) {
+    return 1.00;
+  }
+  if (city.includes("timur")) {
+    return 0.95; // 5% cheaper
+  }
+  
+  return 1.00;
+}
+
 export function getDeterministicBenchmarkPrices(
   products: Product[],
   markets: Market[],
@@ -69,8 +94,11 @@ export function getDeterministicBenchmarkPrices(
       }
 
       const randFactor = Math.abs(hash % 1000) / 1000;
+      const basePrice = b.min + (b.max - b.min) * randFactor;
+      const locationFactor = getLocationFactor(m);
+      
       // Round to nearest 100 Rupiah
-      const calculatedPrice = Math.round((b.min + (b.max - b.min) * randFactor) / 100) * 100;
+      const calculatedPrice = Math.round((basePrice * locationFactor) / 100) * 100;
 
       // Deterministic created_at timestamp during the selected date
       // (e.g. 08:30 AM + dynamic minutes based on hash)
