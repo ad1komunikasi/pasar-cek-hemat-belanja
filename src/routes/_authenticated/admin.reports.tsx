@@ -11,7 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Sparkles, Send, Brain, Bot, User, Loader2, HelpCircle, RefreshCw, BarChart2, Save, Download, ChevronDown, FileText, Clipboard, Printer, Trash2 } from "lucide-react";
+import { Sparkles, Send, Brain, Bot, User, Loader2, HelpCircle, RefreshCw, BarChart2, Save, Download, ChevronDown, FileText, Clipboard, Printer, Trash2, Key, AlertTriangle } from "lucide-react";
 import { getAiAnalysis } from "@/lib/api/ai.functions";
 import { toast } from "sonner";
 import {
@@ -188,6 +188,22 @@ function AdminReports() {
   const [isSaving, setIsSaving] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
 
+  const [localApiKey, setLocalApiKey] = useState<string>("");
+  const [showKeyInput, setShowKeyInput] = useState(false);
+
+  useEffect(() => {
+    const key = localStorage.getItem("pasardeck_gemini_api_key") || "";
+    setLocalApiKey(key);
+  }, []);
+
+  function handleSaveApiKey(key: string) {
+    const trimmed = key.trim();
+    localStorage.setItem("pasardeck_gemini_api_key", trimmed);
+    setLocalApiKey(trimmed);
+    toast.success(trimmed ? "Kunci API Gemini berhasil disimpan secara lokal!" : "Kunci API lokal dihapus. Menggunakan environment variable server.");
+    setShowKeyInput(false);
+  }
+
   // Fetch saved reports history from Supabase or localStorage fallback
   const { data: savedReportsList, refetch: refetchSavedReports } = useQuery({
     queryKey: ["admin-saved-reports"],
@@ -255,6 +271,7 @@ function AdminReports() {
       const response = await getAiAnalysis({
         data: {
           metricsData: data.aiMetrics,
+          apiKey: localApiKey || undefined,
         }
       });
       
@@ -270,7 +287,12 @@ function AdminReports() {
 
     } catch (err: any) {
       setIsAnalyzing(false);
-      toast.error("Gagal melakukan analisis: " + err.message);
+      if (err.message?.includes("GEMINI_API_KEY")) {
+        setShowKeyInput(true);
+        toast.error("Kunci API Gemini tidak ditemukan. Silakan isi API Key di panel pengaturan.");
+      } else {
+        toast.error("Gagal melakukan analisis: " + err.message);
+      }
     }
   }
 
@@ -300,12 +322,18 @@ function AdminReports() {
             parts: h.parts
           })),
           metricsData: data.aiMetrics,
+          apiKey: localApiKey || undefined,
         }
       });
 
       setChatHistory(response.updatedHistory || []);
     } catch (err: any) {
-      toast.error("Gagal mengirim pesan: " + err.message);
+      if (err.message?.includes("GEMINI_API_KEY")) {
+        setShowKeyInput(true);
+        toast.error("Kunci API Gemini tidak ditemukan. Silakan isi API Key di panel pengaturan.");
+      } else {
+        toast.error("Gagal mengirim pesan: " + err.message);
+      }
     } finally {
       setIsReplying(false);
     }
@@ -737,20 +765,92 @@ function AdminReports() {
                     </CardDescription>
                   </div>
                 </div>
-                {reportText && (
+                <div className="flex items-center gap-1">
                   <Button
-                    onClick={handleStartAnalysis}
+                    onClick={() => setShowKeyInput(!showKeyInput)}
                     variant="ghost"
                     size="icon"
-                    className="h-7 w-7 text-white hover:bg-white/10"
-                    title="Mulai Ulang Analisis"
+                    className={`h-7 w-7 transition-colors ${showKeyInput ? 'text-amber-300 bg-white/10' : 'text-blue-200 hover:text-white hover:bg-white/10'}`}
+                    title="Konfigurasi API Key"
                   >
-                    <RefreshCw className="h-3.5 w-3.5" />
+                    <Key className="h-3.5 w-3.5" />
                   </Button>
-                )}
+                  {reportText && (
+                    <Button
+                      onClick={handleStartAnalysis}
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 text-white hover:bg-white/10"
+                      title="Mulai Ulang Analisis"
+                    >
+                      <RefreshCw className="h-3.5 w-3.5" />
+                    </Button>
+                  )}
+                </div>
               </div>
             </CardHeader>
-            <CardContent className="p-4 flex flex-col h-[580px] bg-white">
+            <CardContent className="p-4 flex flex-col h-[580px] bg-white relative">
+              {showKeyInput && (
+                <div className="absolute inset-0 bg-white z-10 p-5 flex flex-col justify-between border-t border-gray-100 rounded-b-xl">
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-2 text-indigo-950 font-bold text-sm">
+                      <Key className="h-4 w-4 text-blue-700" />
+                      <span>Konfigurasi Gemini API Key</span>
+                    </div>
+                    <p className="text-xs text-gray-500 leading-relaxed">
+                      Fitur konsultasi bisnis AI memerlukan <strong>GEMINI_API_KEY</strong>. 
+                      Anda bisa menambahkannya secara permanen di environment variables Vercel (direkomendasikan) 
+                      atau menyimpannya secara lokal di browser ini untuk penggunaan sementara.
+                    </p>
+                    
+                    <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 space-y-2 text-[11px] text-amber-900 leading-normal">
+                      <div className="flex gap-1.5 items-center font-bold">
+                        <AlertTriangle className="h-3.5 w-3.5 text-amber-600 shrink-0" />
+                        <span>Instruksi Vercel (Permanen):</span>
+                      </div>
+                      <ol className="list-decimal list-inside space-y-1 ml-1 text-gray-700">
+                        <li>Buka dashboard Vercel &gt; Proyek Anda.</li>
+                        <li>Pilih tab <strong>Settings</strong> &gt; <strong>Environment Variables</strong>.</li>
+                        <li>Tambahkan key: <code className="bg-amber-100 px-1 rounded font-mono text-[10px] font-semibold text-amber-950">GEMINI_API_KEY</code></li>
+                        <li>Masukkan nilai API Key Gemini Anda lalu simpan.</li>
+                        <li>Lakukan <strong>Redeploy</strong> pada deployment terakhir.</li>
+                      </ol>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <label className="text-[11px] font-bold text-gray-700">API Key Lokal (Simpan di Browser):</label>
+                      <Input
+                        type="password"
+                        value={localApiKey}
+                        onChange={(e) => setLocalApiKey(e.target.value)}
+                        placeholder="Masukkan GEMINI_API_KEY..."
+                        className="text-xs h-9 focus-visible:ring-blue-600"
+                      />
+                      <p className="text-[10px] text-gray-400">
+                        Kunci disimpan secara lokal di browser Anda dan dikirim dengan aman ke server function.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-2 pt-4 border-t border-gray-100">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setShowKeyInput(false)}
+                      className="flex-1 text-xs h-9 font-semibold text-gray-700 hover:bg-gray-50 border-gray-200"
+                    >
+                      Batal
+                    </Button>
+                    <Button
+                      size="sm"
+                      onClick={() => handleSaveApiKey(localApiKey)}
+                      className="flex-1 text-xs h-9 font-semibold bg-blue-700 hover:bg-blue-800 text-white"
+                    >
+                      Simpan Kunci
+                    </Button>
+                  </div>
+                </div>
+              )}
               {/* Saved Reports Dropdown */}
               {savedReports && savedReports.length > 0 && (
                 <div className="mb-3 flex items-center gap-2 shrink-0">

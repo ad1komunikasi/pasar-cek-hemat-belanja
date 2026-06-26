@@ -5,6 +5,7 @@ export const getAiAnalysis = createServerFn({ method: "POST" })
   .validator(
     z.object({
       customPrompt: z.string().optional(),
+      apiKey: z.string().optional(),
       history: z
         .array(
           z.object({
@@ -43,7 +44,7 @@ export const getAiAnalysis = createServerFn({ method: "POST" })
     })
   )
   .handler(async ({ data }) => {
-    const apiKey = process.env.GEMINI_API_KEY;
+    const apiKey = data.apiKey || process.env.GEMINI_API_KEY;
     if (!apiKey) {
       throw new Error("GEMINI_API_KEY is not defined in environment variables.");
     }
