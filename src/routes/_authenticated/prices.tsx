@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { AppShell, PageHeader, EmptyState } from "@/components/app-shell";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useState, useMemo } from "react";
 import { idr, deltaPct, fmtDate, fmtDateTime } from "@/lib/format";
@@ -8,7 +8,9 @@ import { getDeterministicBenchmarkPrices } from "@/lib/benchmark";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { ArrowDown, ArrowUp, Minus, Search, Calendar as CalendarIcon, Database, ExternalLink } from "lucide-react";
+import { ArrowDown, ArrowUp, Minus, Search, Calendar as CalendarIcon, Database, ExternalLink, Heart } from "lucide-react";
+import { useAuth } from "@/hooks/use-auth";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/prices")({
   head: () => ({ meta: [{ title: "Harga Sembako Hari Ini — PasarCek" }] }),
@@ -22,6 +24,38 @@ function PricesPage() {
   const [selectedDate, setSelectedDate] = useState<string>("");
 
   const today = new Date().toLocaleDateString('en-CA');
+  const { user } = useAuth();
+  const qc = useQueryClient();
+
+  const { data: favProducts } = useQuery({
+    queryKey: ["fav-products", user?.id],
+    queryFn: async () => {
+      if (!user) return [];
+      return (await supabase.from("favorites_products").select("product_id").eq("user_id", user.id)).data ?? [];
+    },
+    enabled: !!user,
+  });
+
+  const favProductIds = useMemo(() => new Set((favProducts ?? []).map((fp: any) => fp.product_id)), [favProducts]);
+
+  async function toggleFavProduct(productId: string) {
+    if (!user) return;
+    const isFav = favProductIds.has(productId);
+    if (isFav) {
+      const { data } = await supabase.from("favorites_products").select("id").eq("user_id", user.id).eq("product_id", productId).maybeSingle();
+      if (data) {
+        await supabase.from("favorites_products").delete().eq("id", data.id);
+        toast.success("Dihapus dari produk favorit");
+      }
+    } else {
+      await supabase.from("favorites_products").insert({
+        user_id: user.id,
+        product_id: productId
+      });
+      toast.success("Ditambahkan ke produk favorit");
+    }
+    qc.invalidateQueries({ queryKey: ["fav-products"] });
+  }
 
   const { data: markets } = useQuery({
     queryKey: ["markets-list"],
@@ -257,7 +291,25 @@ function PricesPage() {
               const status = d == null ? "stabil" : d > 1 ? "naik" : d < -1 ? "turun" : "stabil";
               return (
                 <tr key={r.id} className="border-t border-[var(--color-gray-100)] hover:bg-[var(--color-gray-50)]/30 transition-colors">
-                  <td className="px-4 py-3 font-semibold text-[var(--color-ink)]">{r.product.name} <span className="text-xs text-[var(--color-gray-500)] font-normal">/ {r.product.unit}</span></td>
+                  <td className="px-4 py-3 font-semibold text-[var(--color-ink)] flex items-center gap-2">
+                    <button
+                      onClick={() => toggleFavProduct(r.product.id)}
+                      className="focus:outline-none group p-1 -ml-1 rounded hover:bg-gray-50 transition-colors"
+                      title={favProductIds.has(r.product.id) ? "Hapus dari Favorit" : "Tambah ke Favorit"}
+                    >
+                      <Heart
+                        className={`h-4 w-4 transition-all duration-200 ${
+                          favProductIds.has(r.product.id)
+                            ? "fill-[var(--color-destructive)] text-[var(--color-destructive)] scale-110"
+                            : "text-[var(--color-gray-300)] group-hover:text-[var(--color-destructive)]"
+                        }`}
+                      />
+                    </button>
+                    <div>
+                      <span>{r.product.name}</span>
+                      <span className="ml-1 text-xs text-[var(--color-gray-500)] font-normal">/ {r.product.unit}</span>
+                    </div>
+                  </td>
                   <td className="px-4 py-3 text-[var(--color-gray-700)]">{r.product.category}</td>
                   <td className="px-4 py-3 text-[var(--color-gray-700)]">{r.market.name}</td>
                   <td className="px-4 py-3 text-right font-bold">{idr(r.price)}</td>

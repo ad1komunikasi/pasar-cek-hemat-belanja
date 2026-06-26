@@ -33,6 +33,7 @@ function FavoritesPage() {
   async function unfavMarket(id: string) {
     await supabase.from("favorites_markets").delete().eq("id", id);
     qc.invalidateQueries({ queryKey: ["fav-markets"] });
+    toast.success("Dihapus dari favorit");
   }
 
   return (

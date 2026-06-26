@@ -1,10 +1,12 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useEffect, useRef, useState } from "react";
-import { MapPin, Star, Clock } from "lucide-react";
+import { useEffect, useRef, useState, useMemo } from "react";
+import { MapPin, Star, Clock, Heart } from "lucide-react";
+import { useAuth } from "@/hooks/use-auth";
+import { toast } from "sonner";
 import type L from "leaflet";
 
 let scriptLoaded = false;
@@ -53,10 +55,46 @@ export const Route = createFileRoute("/markets/")({
 
 function MarketsPage() {
   const [q, setQ] = useState("");
+  const { user } = useAuth();
+  const qc = useQueryClient();
+
   const { data: markets } = useQuery({
     queryKey: ["markets-public"],
     queryFn: async () => (await supabase.from("markets").select("*").eq("is_active", true).order("name")).data ?? [],
   });
+
+  const { data: favMarkets } = useQuery({
+    queryKey: ["fav-markets", user?.id],
+    queryFn: async () => {
+      if (!user) return [];
+      return (await supabase.from("favorites_markets").select("market_id").eq("user_id", user.id)).data ?? [];
+    },
+    enabled: !!user,
+  });
+
+  const favMarketIds = useMemo(() => new Set((favMarkets ?? []).map((fm: any) => fm.market_id)), [favMarkets]);
+
+  async function toggleFavMarket(marketId: string) {
+    if (!user) {
+      toast.error("Silakan masuk terlebih dahulu untuk menyimpan pasar favorit.");
+      return;
+    }
+    const isFav = favMarketIds.has(marketId);
+    if (isFav) {
+      const { data } = await supabase.from("favorites_markets").select("id").eq("user_id", user.id).eq("market_id", marketId).maybeSingle();
+      if (data) {
+        await supabase.from("favorites_markets").delete().eq("id", data.id);
+        toast.success("Dihapus dari pasar favorit");
+      }
+    } else {
+      await supabase.from("favorites_markets").insert({
+        user_id: user.id,
+        market_id: marketId
+      });
+      toast.success("Ditambahkan ke pasar favorit");
+    }
+    qc.invalidateQueries({ queryKey: ["fav-markets"] });
+  }
 
   // Separate refs for different map instances
   const googleMapRef = useRef<HTMLDivElement>(null);
@@ -431,7 +469,26 @@ function MarketsPage() {
                   params={{ id: m.id }}
                   className="block rounded-lg border border-[var(--color-gray-100)] bg-white p-4 transition-colors hover:border-[var(--color-brand-blue)]"
                 >
-                  <p className="font-bold">{m.name}</p>
+                  <div className="flex items-start justify-between">
+                    <p className="font-bold">{m.name}</p>
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        toggleFavMarket(m.id);
+                      }}
+                      className="focus:outline-none p-1 -mt-1 -mr-1 rounded-full hover:bg-gray-100 transition-colors"
+                      title={favMarketIds.has(m.id) ? "Hapus dari Favorit" : "Tambah ke Favorit"}
+                    >
+                      <Heart
+                        className={`h-4 w-4 transition-all duration-200 ${
+                          favMarketIds.has(m.id)
+                            ? "fill-[var(--color-destructive)] text-[var(--color-destructive)] scale-110"
+                            : "text-[var(--color-gray-300)] hover:text-[var(--color-destructive)]"
+                        }`}
+                      />
+                    </button>
+                  </div>
                   <p className="mt-1 flex items-start gap-1 text-xs text-[var(--color-gray-500)]">
                     <MapPin className="h-3 w-3 shrink-0 mt-0.5" />
                     <span>{m.address}, {m.city}</span>

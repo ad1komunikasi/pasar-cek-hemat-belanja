@@ -11,7 +11,7 @@ import { z } from "zod";
 import { ShoppingBasket, MapPin, TrendingDown, Sparkles } from "lucide-react";
 
 export const Route = createFileRoute("/auth")({
-  validateSearch: (s: Record<string, unknown>) => ({
+  validateSearch: (s: Record<string, unknown>): { tab?: string } => ({
     tab: (s.tab as string) ?? "login",
   }),
   beforeLoad: async () => {
@@ -41,7 +41,7 @@ function AuthPage() {
   const activeTab = search.tab === "register" || search.tab === "forgot" ? search.tab : "login";
 
   function handleTabChange(value: string) {
-    navigate({ search: { tab: value } });
+    navigate({ to: ".", search: { tab: value } });
   }
 
   useEffect(() => { if (!loading && user) router.navigate({ to: "/dashboard", replace: true }); }, [user, loading, router]);

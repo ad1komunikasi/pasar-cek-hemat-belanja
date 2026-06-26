@@ -1,11 +1,13 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { createFileRoute, Link } from '@tanstack/react-router'
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { idr } from "@/lib/format";
 import { getDeterministicBenchmarkPrices } from "@/lib/benchmark";
-import { useEffect, useRef } from "react";
-import { ArrowLeft, MapPin, Clock, ExternalLink, Star, Store } from "lucide-react";
+import { useEffect, useRef, useMemo } from "react";
+import { ArrowLeft, MapPin, Clock, ExternalLink, Star, Store, Heart } from "lucide-react";
+import { useAuth } from "@/hooks/use-auth";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/markets/$id")({
   head: ({ params }) => ({
@@ -21,6 +23,41 @@ function MarketDetail() {
   const { id } = Route.useParams();
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstance = useRef<any>(null);
+  const { user } = useAuth();
+  const qc = useQueryClient();
+
+  const { data: favMarkets } = useQuery({
+    queryKey: ["fav-markets", user?.id],
+    queryFn: async () => {
+      if (!user) return [];
+      return (await supabase.from("favorites_markets").select("market_id").eq("user_id", user.id)).data ?? [];
+    },
+    enabled: !!user,
+  });
+
+  const favMarketIds = useMemo(() => new Set((favMarkets ?? []).map((fm: any) => fm.market_id)), [favMarkets]);
+
+  async function toggleFavMarket(marketId: string) {
+    if (!user) {
+      toast.error("Silakan masuk terlebih dahulu untuk menyimpan pasar favorit.");
+      return;
+    }
+    const isFav = favMarketIds.has(marketId);
+    if (isFav) {
+      const { data } = await supabase.from("favorites_markets").select("id").eq("user_id", user.id).eq("market_id", marketId).maybeSingle();
+      if (data) {
+        await supabase.from("favorites_markets").delete().eq("id", data.id);
+        toast.success("Dihapus dari pasar favorit");
+      }
+    } else {
+      await supabase.from("favorites_markets").insert({
+        user_id: user.id,
+        market_id: marketId
+      });
+      toast.success("Ditambahkan ke pasar favorit");
+    }
+    qc.invalidateQueries({ queryKey: ["fav-markets"] });
+  }
 
   const { data: market } = useQuery({
     queryKey: ["market", id],
@@ -200,8 +237,21 @@ function MarketDetail() {
         <div className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm mb-8">
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div className="space-y-2">
-              <div className="flex items-center gap-3">
+              <div className="flex flex-wrap items-center gap-3">
                 <h1 className="text-3xl font-black text-gray-900 leading-tight">{market.name}</h1>
+                <button
+                  onClick={() => toggleFavMarket(market.id)}
+                  className="focus:outline-none p-1.5 rounded-full hover:bg-gray-100 transition-colors"
+                  title={favMarketIds.has(market.id) ? "Hapus dari Favorit" : "Tambah ke Favorit"}
+                >
+                  <Heart
+                    className={`h-6 w-6 transition-all duration-200 ${
+                      favMarketIds.has(market.id)
+                        ? "fill-[var(--color-destructive)] text-[var(--color-destructive)] scale-110"
+                        : "text-gray-300 hover:text-[var(--color-destructive)]"
+                    }`}
+                  />
+                </button>
                 <span
                   className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold capitalize ${getTypeBadgeStyles(
                     market.type
