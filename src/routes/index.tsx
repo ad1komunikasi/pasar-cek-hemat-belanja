@@ -404,7 +404,7 @@ function HowItWorks() {
   const steps = [
     { icon: MapPin, title: "Pilih Lokasi", desc: "Aktifkan GPS atau pilih area belanja Anda secara manual." },
     { icon: BarChart3, title: "Bandingkan Harga", desc: "Lihat harga komoditas yang Anda butuhkan di berbagai pasar terdekat." },
-    { icon: ShoppingBag, title: "Belanja di Pasar Termurah", desc: "Berangkat ke pasar dengan total belanja paling hemat." },
+    { icon: ShoppingBasket, title: "Belanja di Pasar Termurah", desc: "Berangkat ke pasar dengan total belanja paling hemat." },
   ];
   return (
     <section id="cara-kerja" className="py-20 bg-secondary/40">
