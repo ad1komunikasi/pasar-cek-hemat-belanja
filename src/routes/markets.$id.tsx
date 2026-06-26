@@ -8,6 +8,7 @@ import { useEffect, useRef, useMemo } from "react";
 import { ArrowLeft, MapPin, Clock, ExternalLink, Star, Store, Heart } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
+import { AppShell } from "@/components/app-shell";
 
 export const Route = createFileRoute("/markets/$id")({
   head: ({ params }) => ({
@@ -217,22 +218,16 @@ function MarketDetail() {
   };
 
   return (
-    <div className="min-h-screen bg-[var(--color-gray-50)] pb-12">
-      <header className="border-b border-[var(--color-gray-100)] bg-white">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4">
-          <Link
-            to="/markets"
-            className="inline-flex items-center gap-2 text-sm font-bold text-gray-600 hover:text-[var(--color-brand-blue)] transition-colors"
-          >
-            <ArrowLeft className="h-4 w-4" /> Kembali ke Peta Pasar
-          </Link>
-          <Button asChild size="sm">
-            <Link to="/auth">Masuk</Link>
-          </Button>
-        </div>
-      </header>
-
-      <main className="mx-auto max-w-7xl px-4 py-8">
+    <AppShell>
+      {/* Back navigation */}
+      <div className="mb-6">
+        <Link
+          to="/markets"
+          className="inline-flex items-center gap-2 text-sm font-bold text-gray-500 hover:text-[var(--color-brand-blue)] transition-colors"
+        >
+          <ArrowLeft className="h-4 w-4" /> Kembali ke Peta Pasar
+        </Link>
+      </div>
         {/* Top Info Banner Card */}
         <div className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm mb-8">
           <div className="flex flex-wrap items-start justify-between gap-4">
@@ -360,7 +355,6 @@ function MarketDetail() {
             </div>
           </div>
         </div>
-      </main>
-    </div>
+      </AppShell>
   );
 }

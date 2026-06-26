@@ -8,6 +8,7 @@ import { MapPin, Star, Clock, Heart } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
 import type L from "leaflet";
+import { AppShell } from "@/components/app-shell";
 
 let scriptLoaded = false;
 let scriptLoadingPromise: Promise<void> | null = null;
@@ -514,13 +515,13 @@ function MarketsPage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-[var(--color-gray-50)]">
-      <main className="mx-auto max-w-7xl px-4 py-10">
+    <>
+      <AppShell>
         <h1 className="text-4xl font-black">Pasar Tradisional Terdekat</h1>
-        <p className="mt-2 text-[var(--color-gray-500)]">
+        <p className="mt-2 mb-6 text-[var(--color-gray-500)]">
           Lihat lokasi, alamat, dan jam operasional pasar di sekitar Anda.
         </p>
-        <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_400px]">
+        <div className="grid gap-6 lg:grid-cols-[1fr_400px]">
           {useLeafletFallback ? (
             <div
               key="leaflet-container"
@@ -674,9 +675,8 @@ function MarketsPage() {
                 </Link>
               ))}
             </div>
-          </div>
         </div>
-      </main>
+      </AppShell>
 
       {/* Request Market Modal */}
       {showRequestModal && (
@@ -751,6 +751,6 @@ function MarketsPage() {
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 }
