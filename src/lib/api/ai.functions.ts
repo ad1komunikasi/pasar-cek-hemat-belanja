@@ -118,7 +118,7 @@ Gunakan selalu nada bicara konsultan profesional ("kami" / "tim kami"), berikan 
       });
     }
 
-    const models = ["gemini-3.5-flash", "gemini-2.0-flash", "gemini-1.5-flash"];
+    const models = ["gemini-3.5-flash", "gemini-2.5-flash", "gemini-2.0-flash", "gemini-2.5-pro"];
     let lastError: any = null;
 
     for (const model of models) {
