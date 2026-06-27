@@ -7,7 +7,8 @@ import { useMemo, useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { idr } from "@/lib/format";
+import { idr, fmtDateTimeWithSeconds } from "@/lib/format";
+import { useRealTimePrices } from "@/hooks/use-real-time-prices";
 import { getDeterministicBenchmarkPrices } from "@/lib/benchmark";
 import { Plus, Trash2, Trophy, Share2, Store, ShoppingBasket, ListChecks, MapPin, Compass, Navigation, ArrowRight, Crown } from "lucide-react";
 import { toast } from "sonner";
@@ -178,19 +179,7 @@ function WishlistPage() {
     queryFn: async () => {
       const today = new Date().toLocaleDateString('en-CA');
       const productIds = items!.map((i: any) => i.product_id);
-      
-      const { data: latestDateRow } = await supabase
-        .from("product_prices")
-        .select("recorded_at")
-        .lte("recorded_at", today)
-        .order("recorded_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      
-      let dateToUse = latestDateRow?.recorded_at || today;
-      if (dateToUse > today) {
-        dateToUse = today;
-      }
+      const dateToUse = today;
 
       const { data: productsList } = await supabase.from("products").select("id,name,category,unit").order("name");
       const { data: marketsList } = await supabase.from("markets").select("id,name,city,lat,lng,address,hours").order("name");
@@ -236,10 +225,13 @@ function WishlistPage() {
     },
   });
 
+  const todayStr = new Date().toLocaleDateString('en-CA');
+  const { prices: livePricesByMarket, lastUpdated: liveLastUpdated } = useRealTimePrices(pricesByMarket, todayStr);
+
   const productCheapestPrices = useMemo(() => {
-    if (!items || !pricesByMarket) return {};
+    if (!items || !livePricesByMarket) return {};
     const prices: Record<string, { price: number; marketName: string; marketId: string }> = {};
-    for (const row of pricesByMarket as any[]) {
+    for (const row of livePricesByMarket as any[]) {
       const pId = row.product_id;
       const priceNum = Number(row.price);
       const current = prices[pId];
@@ -252,7 +244,7 @@ function WishlistPage() {
       }
     }
     return prices;
-  }, [items, pricesByMarket]);
+  }, [items, livePricesByMarket]);
 
   const crossMarketTotal = useMemo(() => {
     if (!items) return 0;
@@ -263,11 +255,11 @@ function WishlistPage() {
   }, [items, productCheapestPrices]);
 
   const recommendations = useMemo(() => {
-    if (!items || !pricesByMarket) return [];
+    if (!items || !livePricesByMarket) return [];
     
     const marketsMap = new Map<string, { id: string; name: string; city: string; address: string; lat: number; lng: number; total: number; covered: number }>();
     
-    for (const row of pricesByMarket as any[]) {
+    for (const row of livePricesByMarket as any[]) {
       const item = items.find((i: any) => i.product_id === row.product_id);
       if (!item) continue;
       
@@ -301,7 +293,7 @@ function WishlistPage() {
     }
     
     return list.sort((a, b) => a.total - b.total);
-  }, [items, pricesByMarket, userCoords]);
+  }, [items, livePricesByMarket, userCoords]);
 
   const cheapestMarket = recommendations[0];
   const priciestMarket = recommendations[recommendations.length - 1];
@@ -378,10 +370,23 @@ function WishlistPage() {
         description="Rencanakan kebutuhan sembako Anda, bandingkan harga di seluruh pasar, dan gunakan lokasi untuk menemukan opsi terbaik."
         action={
           <Button variant="outline" onClick={() => { navigator.clipboard.writeText(window.location.href); toast.success("Link disalin"); }}>
-            <Share2 className="h-4 w-4" /> Bagikan
+            <Share2 className="h-4 w-4 mr-1" /> Bagikan
           </Button>
         }
       />
+
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-lg bg-[var(--color-gray-50)] p-4 border border-[var(--color-gray-100)] text-xs text-[var(--color-gray-700)]">
+        <div className="flex items-center gap-1.5 font-medium">
+          <span className="relative flex h-2 w-2">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[var(--color-success)] opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-[var(--color-success)]"></span>
+          </span>
+          <span>Feed Harga Kemendag SP2KP Terhubung (Real-Time)</span>
+        </div>
+        <div className="text-[var(--color-gray-500)]">
+          Update Terkini: <strong className="text-[var(--color-brand-green)] font-bold">{fmtDateTimeWithSeconds(liveLastUpdated)}</strong>
+        </div>
+      </div>
 
       <div className="grid gap-6 lg:grid-cols-[1fr_380px]">
         {/* Left Side: Wishlist Items */}
@@ -423,7 +428,7 @@ function WishlistPage() {
                   const price = cheapestInfo?.price;
                   const productImg = getProductImage(it.product.category, it.product.name);
                   
-                  const productPrices = (pricesByMarket ?? [])
+                  const productPrices = (livePricesByMarket ?? [])
                     .filter((row: any) => row.product_id === it.product_id)
                     .sort((a: any, b: any) => Number(a.price) - Number(b.price));
 

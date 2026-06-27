@@ -3,7 +3,8 @@ import { AppShell, PageHeader, EmptyState } from "@/components/app-shell";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useState, useMemo } from "react";
-import { idr, deltaPct, fmtDate, fmtDateTime } from "@/lib/format";
+import { idr, deltaPct, fmtDate, fmtDateTime, fmtDateTimeWithSeconds } from "@/lib/format";
+import { useRealTimePrices } from "@/hooks/use-real-time-prices";
 import { getDeterministicBenchmarkPrices } from "@/lib/benchmark";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -160,22 +161,7 @@ function PricesPage() {
   const { data: prices, isLoading } = useQuery({
     queryKey: ["prices-today", marketId, category, selectedDate],
     queryFn: async () => {
-      let dateToUse = selectedDate;
-      if (!dateToUse) {
-        const { data: latestDateRow } = await supabase
-          .from("product_prices")
-          .select("recorded_at")
-          .lte("recorded_at", today)
-          .order("recorded_at", { ascending: false })
-          .limit(1)
-          .maybeSingle();
-        
-        dateToUse = latestDateRow?.recorded_at || today;
-      }
-
-      if (dateToUse > today) {
-        dateToUse = today;
-      }
+      const dateToUse = selectedDate || today;
       
       const dateToUseMs = new Date(dateToUse).getTime();
       const ydaystr = new Date(dateToUseMs - 86400000).toISOString().slice(0, 10);
@@ -268,8 +254,9 @@ function PricesPage() {
     },
   });
 
-  const pricesList = prices?.list ?? [];
-  const activeDate = prices?.dateUsed ?? selectedDate;
+  const activeDate = (prices?.dateUsed ?? selectedDate) || today;
+  const { prices: livePrices, lastUpdated: liveLastUpdated } = useRealTimePrices(prices?.list, activeDate);
+  const pricesList = livePrices;
   const categories = Array.from(new Set(pricesList.map((p: any) => p.product.category)));
   
   const filtered = pricesList.filter((p: any) =>
@@ -277,13 +264,7 @@ function PricesPage() {
     (!q || p.product.name.toLowerCase().includes(q.toLowerCase())),
   );
 
-  const lastUpdatedTimestamp = useMemo(() => {
-    if (!pricesList.length) return null;
-    const times = pricesList
-      .map((p: any) => p.created_at ? new Date(p.created_at).getTime() : 0)
-      .filter((t: number) => !isNaN(t) && t > 0);
-    return times.length ? new Date(Math.max(...times)) : null;
-  }, [pricesList]);
+  const lastUpdatedTimestamp = liveLastUpdated;
 
   return (
     <AppShell>
@@ -367,7 +348,7 @@ function PricesPage() {
             Tanggal Data: <strong className="text-[var(--color-brand-blue)] font-bold">{fmtDate(activeDate)}</strong>
             {lastUpdatedTimestamp && (
               <span className="ml-2 pl-2 border-l border-[var(--color-gray-300)]">
-                Update Real-Time: <strong className="text-[var(--color-brand-green)] font-bold">{fmtDateTime(lastUpdatedTimestamp)}</strong>
+                Update Real-Time: <strong className="text-[var(--color-brand-green)] font-bold">{fmtDateTimeWithSeconds(lastUpdatedTimestamp)}</strong>
               </span>
             )}
           </div>

@@ -18,6 +18,14 @@ export const fmtDateTime = (d: string | Date | null | undefined) => {
   }).format(dt);
 };
 
+export const fmtDateTimeWithSeconds = (d: string | Date | null | undefined) => {
+  if (!d) return "—";
+  const dt = typeof d === "string" ? new Date(d) : d;
+  return new Intl.DateTimeFormat("id-ID", {
+    day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit", second: "2-digit",
+  }).format(dt);
+};
+
 export function deltaPct(now: number, prev: number | null | undefined): number | null {
   if (!prev || prev === 0) return null;
   return ((now - prev) / prev) * 100;

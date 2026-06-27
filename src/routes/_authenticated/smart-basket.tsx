@@ -7,9 +7,10 @@ import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { idr } from "@/lib/format";
+import { idr, fmtDateTimeWithSeconds, fmtDate } from "@/lib/format";
+import { useRealTimePrices } from "@/hooks/use-real-time-prices";
 import { getDeterministicBenchmarkPrices } from "@/lib/benchmark";
-import { Plus, Trash2, Trophy, Share2, TrendingDown, Store, Split, AlertCircle, Wheat, Flame, Beef, Egg, Droplets, ShoppingBasket, Crown } from "lucide-react";
+import { Plus, Trash2, Trophy, Share2, TrendingDown, Store, Split, AlertCircle, Wheat, Flame, Beef, Egg, Droplets, ShoppingBasket, Crown, Calendar as CalendarIcon } from "lucide-react";
 import { toast } from "sonner";
 import cookingOilImg from "@/assets/cooking-oil.png";
 import shallotsImg from "@/assets/shallots.png";
@@ -70,6 +71,9 @@ function SmartBasketPage() {
   const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
   const [lockedFeatureName, setLockedFeatureName] = useState("");
 
+  const today = new Date().toLocaleDateString('en-CA');
+  const [selectedDate, setSelectedDate] = useState<string>(today);
+
   const handleOpenLock = (feature: string) => {
     setLockedFeatureName(feature);
     setUpgradeModalOpen(true);
@@ -97,25 +101,11 @@ function SmartBasketPage() {
   });
 
   const { data: pricesByMarket } = useQuery({
-    queryKey: ["basket-prices", items?.map((i: any) => i.product_id).sort().join(",")],
+    queryKey: ["basket-prices", items?.map((i: any) => i.product_id).sort().join(","), selectedDate],
     enabled: !!items && items.length > 0,
     queryFn: async () => {
-      const today = new Date().toLocaleDateString('en-CA');
       const productIds = items!.map((i: any) => i.product_id);
-      
-      // Get the latest date with prices in the database to fallback on
-      const { data: latestDateRow } = await supabase
-        .from("product_prices")
-        .select("recorded_at")
-        .lte("recorded_at", today)
-        .order("recorded_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      
-      let dateToUse = latestDateRow?.recorded_at || today;
-      if (dateToUse > today) {
-        dateToUse = today;
-      }
+      const dateToUse = selectedDate || today;
 
       // Always fetch products and markets first to ensure complete coverage
       const { data: products } = await supabase.from("products").select("id,name,category,unit").order("name");
@@ -162,10 +152,12 @@ function SmartBasketPage() {
     },
   });
 
+  const { prices: livePricesByMarket, lastUpdated: liveLastUpdated } = useRealTimePrices(pricesByMarket, selectedDate);
+
   const recommendations = useMemo(() => {
-    if (!items || !pricesByMarket) return [];
+    if (!items || !livePricesByMarket) return [];
     const markets = new Map<string, { id: string; name: string; city: string; total: number; covered: number }>();
-    for (const row of pricesByMarket as any[]) {
+    for (const row of livePricesByMarket as any[]) {
       const item = items.find((i: any) => i.product_id === row.product_id);
       if (!item) continue;
       const key = row.market.id;
@@ -175,16 +167,16 @@ function SmartBasketPage() {
       markets.set(key, m);
     }
     return Array.from(markets.values()).filter((m) => m.covered === items.length).sort((a, b) => a.total - b.total);
-  }, [items, pricesByMarket]);
+  }, [items, livePricesByMarket]);
 
   const cheapest = recommendations[0];
   const priciest = recommendations[recommendations.length - 1];
   const saving = cheapest && priciest ? priciest.total - cheapest.total : 0;
 
   const productCheapestPrices = useMemo(() => {
-    if (!items || !pricesByMarket) return {};
+    if (!items || !livePricesByMarket) return {};
     const prices: Record<string, { price: number; marketName: string; marketId: string }> = {};
-    for (const row of pricesByMarket as any[]) {
+    for (const row of livePricesByMarket as any[]) {
       const pId = row.product_id;
       const priceNum = Number(row.price);
       const current = prices[pId];
@@ -197,7 +189,7 @@ function SmartBasketPage() {
       }
     }
     return prices;
-  }, [items, pricesByMarket]);
+  }, [items, livePricesByMarket]);
 
   const crossMarketTotal = useMemo(() => {
     if (!items) return 0;
@@ -263,6 +255,35 @@ function SmartBasketPage() {
         action={<Button variant="outline" onClick={() => { navigator.clipboard.writeText(window.location.href); toast.success("Link disalin"); }}><Share2 className="h-4 w-4" /> Bagikan</Button>}
       />
 
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-lg bg-[var(--color-gray-50)] p-4 border border-[var(--color-gray-100)] text-xs text-[var(--color-gray-700)]">
+        <div className="flex flex-wrap items-center gap-3">
+          <span className="font-semibold text-[var(--color-gray-700)]">Simulasi Tanggal:</span>
+          <div className="relative w-48">
+            <CalendarIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--color-gray-500)] pointer-events-none" />
+            <Input
+              type="date"
+              className="pl-9 h-9 cursor-pointer text-xs bg-white"
+              value={selectedDate}
+              max={today}
+              onChange={(e) => setSelectedDate(e.target.value)}
+            />
+          </div>
+        </div>
+        <div className="flex items-center gap-1.5 font-medium">
+          <span className="relative flex h-2 w-2">
+            {selectedDate === today && (
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[var(--color-success)] opacity-75"></span>
+            )}
+            <span className={`relative inline-flex rounded-full h-2 w-2 ${selectedDate === today ? "bg-[var(--color-success)]" : "bg-amber-500"}`}></span>
+          </span>
+          {selectedDate === today ? (
+            <span>Live Terupdate: <strong className="text-[var(--color-brand-green)] font-bold">{fmtDateTimeWithSeconds(liveLastUpdated)}</strong></span>
+          ) : (
+            <span>Simulasi Arsip Historis ({fmtDate(selectedDate)})</span>
+          )}
+        </div>
+      </div>
+
       <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
         <div className="rounded-lg border border-[var(--color-gray-100)] bg-white @container">
           <div className="border-b border-[var(--color-gray-100)] p-4">
@@ -287,7 +308,7 @@ function SmartBasketPage() {
                   const price = cheapestInfo?.price;
                   const productImg = getProductImage(it.product.category, it.product.name);
                   
-                  const productPrices = (pricesByMarket ?? [])
+                  const productPrices = (livePricesByMarket ?? [])
                     .filter((row: any) => row.product_id === it.product_id)
                     .sort((a: any, b: any) => Number(a.price) - Number(b.price));
 
