@@ -8,13 +8,16 @@ import { toast } from "sonner";
 import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Users, Crown, Sparkles, Search, Loader2 } from "lucide-react";
+import { Users, Crown, Sparkles, Search, Loader2, Shield, ShieldAlert } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { useAuth } from "@/hooks/use-auth";
+import { EmailService } from "@/lib/email";
 
 export const Route = createFileRoute("/_authenticated/admin/users")({ component: AdminUsers });
 
 function AdminUsers() {
   const qc = useQueryClient();
+  const { isSuperAdmin } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState("all");
   const [updatingId, setUpdatingId] = useState<string | null>(null);
@@ -42,11 +45,52 @@ function AdminUsers() {
       .from("profiles")
       .update({ waitlist_priority: !currentVal } as any)
       .eq("id", userId);
+    setUpdatingId(userId);
     setUpdatingId(null);
     if (error) {
       toast.error("Gagal memperbarui prioritas: " + error.message);
     } else {
       toast.success(`Status prioritas waitlist berhasil di${!currentVal ? "aktifkan" : "nonaktifkan"}!`);
+      qc.invalidateQueries({ queryKey: ["admin-users"] });
+    }
+  };
+
+  const toggleAdminRole = async (userId: string, email: string, name: string, hasAdminRole: boolean) => {
+    setUpdatingId(userId + "-role");
+    let error;
+    if (hasAdminRole) {
+      // Demote: delete row where role = admin
+      const res = await supabase
+        .from("user_roles")
+        .delete()
+        .eq("user_id", userId)
+        .eq("role", "admin");
+      error = res.error;
+    } else {
+      // Promote: insert row where role = admin
+      const res = await supabase
+        .from("user_roles")
+        .insert({ user_id: userId, role: "admin" });
+      error = res.error;
+
+      if (!error && email) {
+        try {
+          await EmailService.sendAdminPromotionEmail(email, name || email.split("@")[0]);
+        } catch (mailErr) {
+          console.error("Gagal mengirim email notifikasi pengangkatan admin:", mailErr);
+        }
+      }
+    }
+
+    setUpdatingId(null);
+    if (error) {
+      toast.error("Gagal mengubah role admin: " + error.message);
+    } else {
+      toast.success(
+        hasAdminRole
+          ? "Akses admin berhasil dinonaktifkan."
+          : "Pengguna berhasil diangkat menjadi Admin Dashboard & Email notifikasi dikirim!"
+      );
       qc.invalidateQueries({ queryKey: ["admin-users"] });
     }
   };
@@ -119,6 +163,14 @@ function AdminUsers() {
         </Card>
       </div>
 
+      {/* Super Admin Notice */}
+      {!isSuperAdmin && (
+        <div className="mb-6 flex items-center gap-2.5 rounded-2xl border border-amber-100 bg-amber-50/30 px-5 py-4 text-sm font-semibold text-amber-850 shadow-sm animate-fade-down">
+          <ShieldAlert className="h-5 w-5 text-amber-600 flex-shrink-0" />
+          <span>Hanya <strong>Super Admin</strong> yang memiliki hak akses penuh untuk mengelola peran (role) Admin lainnya.</span>
+        </div>
+      )}
+
       {/* Filter and Search Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
         <div className="relative flex-1 max-w-md">
@@ -174,71 +226,90 @@ function AdminUsers() {
                 <th className="px-6 py-4">Email</th>
                 <th className="px-6 py-4">Kota</th>
                 <th className="px-6 py-4 text-center">Prioritas Waitlist</th>
+                <th className="px-6 py-4 text-center">Akses Admin</th>
                 <th className="px-6 py-4">Role</th>
                 <th className="px-6 py-4">Daftar Pada</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[var(--color-gray-100)]">
-              {filteredUsers.map((u: any) => (
-                <tr key={u.id} className="hover:bg-[var(--color-gray-50)]/50 transition-colors">
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-3">
-                      <div className="h-8 w-8 rounded-full bg-indigo-50 text-indigo-700 font-bold flex items-center justify-center text-xs border border-indigo-100">
-                        {u.full_name
-                          ? u.full_name.charAt(0).toUpperCase()
-                          : u.email
-                            ? u.email.charAt(0).toUpperCase()
-                            : "?"}
-                      </div>
-                      <div>
-                        <div className="font-semibold text-[var(--color-gray-900)] flex items-center gap-2">
-                          {u.full_name ?? "—"}
-                          {u.waitlist_priority && (
-                            <span className="inline-flex items-center gap-0.5 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-800">
-                              <Crown className="h-2.5 w-2.5 fill-amber-500 text-amber-500" />
-                              Prioritas
-                            </span>
-                          )}
+              {filteredUsers.map((u: any) => {
+                const hasAdminRole = u.roles.includes("admin");
+                const isSuperUser = u.roles.includes("super_admin");
+                const isAdminOrSuper = hasAdminRole || isSuperUser;
+                
+                return (
+                  <tr key={u.id} className="hover:bg-[var(--color-gray-50)]/50 transition-colors">
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-3">
+                        <div className="h-8 w-8 rounded-full bg-indigo-50 text-indigo-700 font-bold flex items-center justify-center text-xs border border-indigo-100">
+                          {u.full_name
+                            ? u.full_name.charAt(0).toUpperCase()
+                            : u.email
+                              ? u.email.charAt(0).toUpperCase()
+                              : "?"}
                         </div>
-                        <div className="text-xs text-muted-foreground">@{u.username ?? "username"}</div>
+                        <div>
+                          <div className="font-semibold text-[var(--color-gray-900)] flex items-center gap-2">
+                            {u.full_name ?? "—"}
+                            {u.waitlist_priority && (
+                              <span className="inline-flex items-center gap-0.5 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-800">
+                                <Crown className="h-2.5 w-2.5 fill-amber-500 text-amber-500" />
+                                Prioritas
+                              </span>
+                            )}
+                          </div>
+                          <div className="text-xs text-muted-foreground">@{u.username ?? "username"}</div>
+                        </div>
                       </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 text-[var(--color-gray-600)]">{u.email}</td>
-                  <td className="px-6 py-4 text-[var(--color-gray-600)]">{u.city ?? "—"}</td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center justify-center gap-3">
-                      <Switch
-                        checked={u.waitlist_priority}
-                        disabled={updatingId === u.id}
-                        onCheckedChange={() => toggleWaitlistPriority(u.id, u.waitlist_priority)}
-                      />
-                      {updatingId === u.id && <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex flex-wrap gap-1">
-                      {u.roles.map((r: string) => {
-                        const isAdm = r === "admin" || r === "super_admin";
-                        return (
-                          <Badge
-                            key={r}
-                            variant="outline"
-                            className={
-                              isAdm
-                                ? "bg-red-50 text-red-700 border-red-200 font-bold"
-                                : "bg-blue-50 text-blue-700 border-blue-200 font-semibold"
-                            }
-                          >
-                            {r}
-                          </Badge>
-                        );
-                      })}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 text-xs text-muted-foreground">{fmtDateTime(u.created_at)}</td>
-                </tr>
-              ))}
+                    </td>
+                    <td className="px-6 py-4 text-[var(--color-gray-600)]">{u.email}</td>
+                    <td className="px-6 py-4 text-[var(--color-gray-600)]">{u.city ?? "—"}</td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center justify-center gap-3">
+                        <Switch
+                          checked={u.waitlist_priority}
+                          disabled={updatingId === u.id}
+                          onCheckedChange={() => toggleWaitlistPriority(u.id, u.waitlist_priority)}
+                        />
+                        {updatingId === u.id && <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center justify-center gap-3">
+                        <Switch
+                          checked={isAdminOrSuper}
+                          disabled={!isSuperAdmin || isSuperUser || updatingId === u.id + "-role"}
+                          onCheckedChange={() => toggleAdminRole(u.id, u.email, u.full_name, hasAdminRole)}
+                        />
+                        {updatingId === u.id + "-role" && <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex flex-wrap gap-1">
+                        {u.roles.map((r: string) => {
+                          const isAdm = r === "admin" || r === "super_admin";
+                          return (
+                            <Badge
+                              key={r}
+                              variant="outline"
+                              className={
+                                isAdm
+                                  ? r === "super_admin"
+                                    ? "bg-purple-50 text-purple-700 border-purple-200 font-black"
+                                    : "bg-red-50 text-red-700 border-red-200 font-bold"
+                                  : "bg-blue-50 text-blue-700 border-blue-200 font-semibold"
+                              }
+                            >
+                              {r}
+                            </Badge>
+                          );
+                        })}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 text-xs text-muted-foreground">{fmtDateTime(u.created_at)}</td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         )}

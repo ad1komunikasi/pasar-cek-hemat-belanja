@@ -208,4 +208,33 @@ export const EmailService = {
 
     await this.logEmail(order.recipient_email, subject, body, order.id);
   },
+
+  /**
+   * Send Email Notification when promoted to Admin
+   */
+  async sendAdminPromotionEmail(recipientEmail: string, recipientName: string) {
+    const origin = window.location.origin;
+    const dashboardLink = `${origin}/admin`;
+    
+    const subject = `[PasarCek] Selamat! Anda Telah Diangkat Menjadi Admin Dashboard PasarCek 🎉`;
+    
+    const body = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #424242; line-height: 1.6;">
+        <h2 style="color: #1e3a8a; border-bottom: 2px solid #eaeaea; padding-bottom: 10px;">Akses Admin Aktif!</h2>
+        <p>Halo, <strong>${recipientName}</strong>,</p>
+        <p>Kami dengan senang hati menginformasikan bahwa akun Anda dengan email <strong>${recipientEmail}</strong> telah disetujui untuk menjadi <strong>Admin Dashboard PasarCek</strong> oleh Super Admin.</p>
+        
+        <p>Anda sekarang dapat mengakses Panel Admin dan berkontribusi penuh untuk memantau harga, laporan, dan data pasar terdekat secara real-time.</p>
+        
+        <div style="margin: 25px 0; text-align: center;">
+          <a href="${dashboardLink}" style="background-color: #1e3a8a; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">Masuk ke Admin Panel</a>
+        </div>
+        
+        <hr style="border: 0; border-top: 1px solid #eaeaea; margin: 20px 0;" />
+        <p style="font-size: 12px; color: #bdbdbd;">Email ini dikirim secara otomatis oleh PasarCek. Jangan membalas email ini.</p>
+      </div>
+    `;
+
+    await this.logEmail(recipientEmail, subject, body, "promotion");
+  },
 };
