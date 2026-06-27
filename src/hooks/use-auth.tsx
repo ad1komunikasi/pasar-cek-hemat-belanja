@@ -3,7 +3,16 @@ import { supabase } from "@/integrations/supabase/client";
 import type { User, Session } from "@supabase/supabase-js";
 
 type Role = "customer" | "premium" | "admin" | "super_admin";
-type Profile = { id: string; full_name: string | null; username: string | null; email: string | null; phone: string | null; city: string | null; avatar_url: string | null };
+type Profile = {
+  id: string;
+  full_name: string | null;
+  username: string | null;
+  email: string | null;
+  phone: string | null;
+  city: string | null;
+  avatar_url: string | null;
+  waitlist_priority?: boolean;
+};
 
 type AuthCtx = {
   user: User | null;
@@ -32,15 +41,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       supabase.from("profiles").select("*").eq("id", uid).maybeSingle(),
       supabase.from("user_roles").select("role").eq("user_id", uid),
     ]);
+    const hasWaitlistPriority = localStorage.getItem("waitlist_priority_signup") === "true";
     if (!p && uid) {
       const newProfile = {
         id: uid,
         email: uemail || null,
         full_name: umeta?.full_name || umeta?.name || null,
         avatar_url: umeta?.avatar_url || umeta?.picture || null,
+        waitlist_priority: hasWaitlistPriority,
       };
       const { data } = await supabase.from("profiles").upsert(newProfile).select().maybeSingle();
       if (data) p = data;
+      if (hasWaitlistPriority) {
+        localStorage.removeItem("waitlist_priority_signup");
+      }
+    } else if (p && hasWaitlistPriority && !(p as any).waitlist_priority) {
+      const { data } = await supabase.from("profiles").update({ waitlist_priority: true }).eq("id", uid).select().maybeSingle();
+      if (data) p = data;
+      localStorage.removeItem("waitlist_priority_signup");
+    } else if (p && hasWaitlistPriority) {
+      localStorage.removeItem("waitlist_priority_signup");
     }
     setProfile((p as Profile) ?? null);
     setRoles(((r as { role: Role }[]) ?? []).map((x) => x.role));

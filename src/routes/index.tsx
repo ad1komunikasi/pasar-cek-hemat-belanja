@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
   ShoppingBasket, MapPin, BarChart3, Bell, Heart, ListChecks,
@@ -19,7 +20,7 @@ export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
       { title: "PasarCek — Cek & Bandingkan Harga Sembako Terdekat | Gratis" },
-      { name: "description", content: "Cek harga sembako terbaru dan bandingkan antar pasar terdekat. Hemat waktu & uang belanja harian keluarga. Download aplikasi PasarCek gratis!" },
+      { name: "description", content: "Cek harga sembako terbaru dan bandingkan antar pasar terdekat. Hemat waktu & uang belanja harian keluarga. Akses aplikasi PasarCek gratis!" },
       { name: "keywords", content: "cek harga sembako, harga beras hari ini, bandingkan harga pasar, aplikasi belanja hemat, harga cabai, harga telur terdekat, pasar tradisional" },
       { property: "og:title", content: "PasarCek — Cek & Bandingkan Harga Sembako Terdekat" },
       { property: "og:description", content: "Cek harga sembako terbaru dan bandingkan antar pasar terdekat. Hemat waktu & uang belanja harian keluarga." },
@@ -845,12 +846,24 @@ function FAQ() {
 
 function FinalCTA() {
   const { user } = useAuth();
+  const [busy, setBusy] = useState(false);
 
-  const handleWaitlist = (e: React.MouseEvent) => {
+  const handleWaitlist = async (e: React.MouseEvent) => {
     e.preventDefault();
     if (user) {
-      toast.success("Terima kasih! Anda sudah terdaftar dalam antrean prioritas rilis aplikasi mobile kami.");
+      setBusy(true);
+      const { error } = await supabase
+        .from("profiles")
+        .update({ waitlist_priority: true })
+        .eq("id", user.id);
+      setBusy(false);
+      if (error) {
+        toast.error("Gagal mendaftar antrean prioritas: " + error.message);
+      } else {
+        toast.success("Terima kasih! Akun Anda telah dimasukkan ke daftar prioritas antrean PasarCek.");
+      }
     } else {
+      localStorage.setItem("waitlist_priority_signup", "true");
       toast.success("Terima kasih! Menghubungkan ke pendaftaran akun untuk prioritas waitlist...");
       setTimeout(() => {
         window.location.href = "/auth?tab=register";
@@ -870,10 +883,14 @@ function FinalCTA() {
             Ribuan keluarga sudah menggunakan PasarCek untuk membuat keputusan belanja yang lebih cerdas.
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
-            <CTAButton href={user ? "/dashboard" : "/auth?tab=register"} variant="white">Download Gratis</CTAButton>
-            <a href="#" onClick={handleWaitlist} className="inline-flex items-center justify-center gap-2 rounded-2xl px-6 py-3 text-sm font-semibold border border-white/30 text-white hover:bg-white/10 transition-all">
-              Gabung Waitlist
-            </a>
+            <CTAButton href={user ? "/dashboard" : "/auth?tab=register"} variant="white">Akses Gratis</CTAButton>
+            <button
+              onClick={handleWaitlist}
+              disabled={busy}
+              className="inline-flex items-center justify-center gap-2 rounded-2xl px-6 py-3 text-sm font-semibold border border-white/30 text-white hover:bg-white/10 transition-all disabled:opacity-50 cursor-pointer"
+            >
+              {busy ? "Memproses..." : "Gabung Waitlist"}
+            </button>
           </div>
         </div>
         <div className="flex justify-center">

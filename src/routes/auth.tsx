@@ -283,12 +283,22 @@ function RegisterForm() {
     if (fullName.trim().length < 2) return toast.error("Nama minimal 2 karakter");
     try { emailSchema.parse(email); passSchema.parse(password); } catch (err: any) { toast.error(err.errors?.[0]?.message ?? "Input tidak valid"); return; }
     setBusy(true);
+    const isWaitlist = localStorage.getItem("waitlist_priority_signup") === "true";
     const { error } = await supabase.auth.signUp({
       email, password,
-      options: { emailRedirectTo: window.location.origin + "/dashboard", data: { full_name: fullName } },
+      options: {
+        emailRedirectTo: window.location.origin + "/dashboard",
+        data: {
+          full_name: fullName,
+          waitlist_priority: isWaitlist,
+        }
+      },
     });
     setBusy(false);
     if (error) return toast.error(error.message);
+    if (isWaitlist) {
+      localStorage.removeItem("waitlist_priority_signup");
+    }
     toast.success("Pendaftaran berhasil! Selamat datang di PasarCek.");
     navigate({ to: "/dashboard", replace: true });
   }

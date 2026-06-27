@@ -500,6 +500,7 @@ export type Database = {
           phone: string | null
           updated_at: string
           username: string | null
+          waitlist_priority: boolean
         }
         Insert: {
           avatar_url?: string | null
@@ -511,6 +512,7 @@ export type Database = {
           phone?: string | null
           updated_at?: string
           username?: string | null
+          waitlist_priority?: boolean
         }
         Update: {
           avatar_url?: string | null
@@ -522,6 +524,7 @@ export type Database = {
           phone?: string | null
           updated_at?: string
           username?: string | null
+          waitlist_priority?: boolean
         }
         Relationships: []
       }
