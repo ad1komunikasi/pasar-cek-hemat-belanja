@@ -286,22 +286,22 @@ function DashboardPage() {
 
       {/* Upgrade Callout Banner for Free Users */}
       {!isPremium && (
-        <div className="mb-6 overflow-hidden rounded-2xl border border-amber-500/20 bg-gradient-to-r from-[#0d1b3e] to-[#050b1e] p-5 text-white relative shadow-md">
-          <div className="absolute right-0 top-0 h-32 w-32 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="mb-6 overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-r from-[var(--color-brand-blue)] to-[var(--color-brand-green)] p-5 text-white relative shadow-soft">
+          <div className="absolute right-0 top-0 h-32 w-32 bg-white/10 rounded-full blur-3xl pointer-events-none" />
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 relative z-10">
             <div>
-              <div className="flex items-center gap-1.5 text-amber-400 font-bold text-xs uppercase tracking-wider mb-1">
+              <div className="flex items-center gap-1.5 text-amber-300 font-bold text-[10px] uppercase tracking-wider mb-1">
                 <Crown className="h-3.5 w-3.5 fill-current" />
                 Penawaran Spesial Premium
               </div>
-              <h3 className="text-base font-bold tracking-tight">Upgrade Premium Hanya Rp9.900/bulan!</h3>
-              <p className="text-xs text-slate-300 mt-1 max-w-xl">
+              <h3 className="text-base font-black tracking-tight">Upgrade Premium Hanya Rp9.900/bulan!</h3>
+              <p className="text-xs text-white/80 mt-1 max-w-xl leading-relaxed">
                 Buka Prediksi Harga AI, Alert Harga tanpa batas, Analitik Tren & Riwayat Penghematan 90 Hari, serta Smart Basket tanpa batas produk.
               </p>
             </div>
             <Button
               asChild
-              className="shrink-0 bg-gradient-to-r from-amber-500 to-yellow-500 text-slate-950 hover:from-amber-600 hover:to-yellow-600 font-black border-0 rounded-xl px-4 py-2 shadow-lg shadow-amber-500/20 text-xs"
+              className="shrink-0 bg-white text-[var(--color-brand-blue)] hover:bg-white/95 hover:scale-[1.02] active:scale-[0.98] font-black border-0 rounded-xl px-4 py-2.5 shadow-md text-xs transition-all duration-200"
             >
               <Link to="/pricing">Upgrade Sekarang</Link>
             </Button>
