@@ -289,7 +289,7 @@ function RegisterForm() {
     });
     setBusy(false);
     if (error) return toast.error(error.message);
-    toast.success("Pendaftaran berhasil! Silakan cek email Anda.");
+    toast.success("Pendaftaran berhasil! Selamat datang di PasarCek.");
     navigate({ to: "/dashboard", replace: true });
   }
   return (
