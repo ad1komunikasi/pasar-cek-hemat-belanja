@@ -20,56 +20,58 @@ export function PremiumUpgradeModal({ isOpen, onOpenChange, featureName }: Premi
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md border-0 bg-gradient-to-b from-[#0b1528] to-[#040814] text-white p-6 shadow-2xl rounded-2xl overflow-hidden">
-        {/* Decorative background glow */}
-        <div className="absolute -right-20 -top-20 h-40 w-40 rounded-full bg-[var(--color-brand-green)] opacity-20 blur-3xl pointer-events-none" />
-        <div className="absolute -left-20 -bottom-20 h-40 w-40 rounded-full bg-[var(--color-primary)] opacity-20 blur-3xl pointer-events-none" />
+      <DialogContent className="max-w-md border-0 bg-white p-0 shadow-2xl rounded-2xl overflow-hidden">
+        <DialogHeader className="bg-gradient-to-br from-[var(--color-brand-blue)] to-[var(--color-brand-green)] px-6 py-8 text-white relative overflow-hidden text-center flex flex-col items-center sm:text-center">
+          {/* Decorative background glow */}
+          <div className="absolute -right-10 -top-10 h-32 w-32 rounded-full bg-white/10 blur-2xl pointer-events-none" />
+          <div className="absolute -left-10 -bottom-10 h-28 w-28 rounded-full bg-white/5 blur-xl pointer-events-none" />
 
-        <DialogHeader className="text-center relative z-10 flex flex-col items-center">
-          <div className="mx-auto my-3 flex h-14 w-14 items-center justify-center rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400 shadow-[0_0_15px_rgba(245,158,11,0.2)] animate-pulse">
-            <Crown className="h-7 w-7 stroke-[1.5]" />
+          <div className="relative z-10 mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-amber-400 text-amber-950 font-bold border-2 border-white shadow-soft animate-float">
+            <Crown className="h-7 w-7 stroke-[2]" />
           </div>
-          <DialogTitle className="text-2xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-yellow-400 to-amber-200">
+          <DialogTitle className="relative z-10 text-2xl font-black tracking-tight text-white font-display text-center">
             Buka Fitur Premium
           </DialogTitle>
           {featureName && (
-            <div className="mt-1.5 inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-500/15 border border-amber-500/35 text-[11px] font-bold text-amber-300">
-              <Sparkles className="h-3 w-3" />
-              Memerlukan fitur: {featureName}
+            <div className="relative z-10 mt-2 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/15 border border-white/10 text-[11px] font-extrabold text-white backdrop-blur-sm">
+              <Sparkles className="h-3.5 w-3.5 text-amber-300 animate-pulse" />
+              <span>Memerlukan: {featureName}</span>
             </div>
           )}
-          <DialogDescription className="text-slate-300 text-sm mt-2 max-w-xs mx-auto">
+          <DialogDescription className="relative z-10 text-white/80 text-xs mt-2.5 max-w-xs mx-auto leading-relaxed text-center">
             Mulai hemat belanja Anda secara maksimal dengan berlangganan paket Premium PasarCek.
           </DialogDescription>
         </DialogHeader>
 
-        <div className="my-6 space-y-3.5 relative z-10">
-          {benefits.map((b, idx) => (
-            <div key={idx} className="flex items-start gap-3 p-2.5 rounded-xl bg-white/5 border border-white/5 hover:border-white/10 transition-colors">
-              <div className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-amber-500/10 text-amber-400">
-                <Check className="h-3.5 w-3.5 stroke-[2.5]" />
+        <div className="p-6">
+          <div className="space-y-3 relative z-10">
+            {benefits.map((b, idx) => (
+              <div key={idx} className="flex items-start gap-3 p-3 rounded-xl border border-[var(--color-gray-100)] bg-[var(--color-gray-50)] hover:bg-[var(--color-accent-soft)]/20 hover:border-[var(--color-brand-green)]/20 transition-all duration-200 group">
+                <div className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[var(--color-brand-green)]/10 text-[var(--color-brand-green)] group-hover:scale-105 transition-transform duration-200">
+                  <Check className="h-3.5 w-3.5 stroke-[2.5]" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-xs font-black text-[var(--color-ink)]">{b.title}</p>
+                  <p className="text-[10px] text-[var(--color-gray-500)] mt-0.5 leading-normal">{b.desc}</p>
+                </div>
               </div>
-              <div className="min-w-0">
-                <p className="text-xs font-bold text-slate-100">{b.title}</p>
-                <p className="text-[10px] text-slate-400 mt-0.5 leading-normal">{b.desc}</p>
-              </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
 
-        <div className="text-center text-xs text-amber-400 font-bold bg-amber-500/10 py-2 rounded-xl border border-amber-500/20 mb-6">
-          Hanya Rp9.900/bulan — Upgrade kapan saja!
-        </div>
+          <div className="text-center text-xs text-[var(--color-brand-green)] font-black bg-[var(--color-accent-soft)] py-2.5 rounded-xl border border-[var(--color-brand-green)]/10 my-5 shadow-2xs">
+            Hanya Rp9.900/bulan — Upgrade kapan saja!
+          </div>
 
-        <div className="flex flex-col gap-2 relative z-10">
-          <Button asChild className="w-full h-11 bg-gradient-to-r from-amber-500 to-yellow-500 text-slate-950 hover:from-amber-600 hover:to-yellow-600 font-black shadow-lg shadow-amber-500/25 border-0 rounded-xl transition-all duration-300 hover:scale-[1.02]">
-            <Link to="/pricing">
-              Upgrade Sekarang
-            </Link>
-          </Button>
-          <Button variant="ghost" className="w-full text-slate-400 hover:text-white hover:bg-white/5" onClick={() => onOpenChange(false)}>
-            Mungkin Nanti
-          </Button>
+          <div className="flex flex-col gap-2 relative z-10">
+            <Button asChild className="w-full h-11 bg-gradient-to-r from-[var(--color-brand-blue)] to-[var(--color-brand-green)] text-white hover:opacity-95 font-bold shadow-md rounded-xl transition-all duration-300 hover:scale-[1.01] border-0">
+              <Link to="/pricing">
+                Upgrade Sekarang
+              </Link>
+            </Button>
+            <Button variant="ghost" className="w-full text-[var(--color-gray-500)] hover:text-[var(--color-ink)] hover:bg-[var(--color-gray-50)]" onClick={() => onOpenChange(false)}>
+              Mungkin Nanti
+            </Button>
+          </div>
         </div>
       </DialogContent>
     </Dialog>
