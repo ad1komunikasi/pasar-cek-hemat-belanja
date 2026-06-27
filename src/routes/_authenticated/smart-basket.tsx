@@ -264,7 +264,7 @@ function SmartBasketPage() {
       />
 
       <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
-        <div className="rounded-lg border border-[var(--color-gray-100)] bg-white">
+        <div className="rounded-lg border border-[var(--color-gray-100)] bg-white @container">
           <div className="border-b border-[var(--color-gray-100)] p-4">
             <div className="grid gap-2 sm:grid-cols-[1fr_120px_auto]">
               <Select value={newProduct} onValueChange={setNewProduct}>
@@ -281,7 +281,7 @@ function SmartBasketPage() {
             <EmptyState title="Belum ada produk di keranjang" description="Tambahkan produk untuk mulai menghitung penghematan." />
           ) : (
             <div className="p-4 space-y-4">
-              <div className="grid gap-4 grid-cols-1 xl:grid-cols-2">
+              <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
                 {items.map((it: any) => {
                   const cheapestInfo = productCheapestPrices[it.product_id];
                   const price = cheapestInfo?.price;
@@ -292,7 +292,7 @@ function SmartBasketPage() {
                     .sort((a: any, b: any) => Number(a.price) - Number(b.price));
 
                   return (
-                    <div key={it.id} className="bg-white rounded-2xl border border-[var(--color-gray-100)] p-4 shadow-soft flex flex-col gap-3.5 hover:shadow-card transition-shadow">
+                    <div key={it.id} className="bg-white rounded-2xl border border-[var(--color-gray-100)] p-4 shadow-soft flex flex-col gap-3.5 hover:shadow-card transition-shadow @container">
                       {/* Product Header */}
                       <div className="flex items-start justify-between gap-3">
                         <div className="flex items-center gap-3">
@@ -322,8 +322,8 @@ function SmartBasketPage() {
                       </div>
 
                       {/* Quantity & Subtotal Row */}
-                      <div className="flex items-center justify-between gap-2 bg-[var(--color-gray-50)] p-2.5 rounded-xl border border-[var(--color-gray-100)]">
-                        <div className="flex items-center gap-2">
+                      <div className="flex flex-col @xs:flex-row @xs:items-center justify-between gap-3 bg-[var(--color-gray-50)] p-2.5 rounded-xl border border-[var(--color-gray-100)]">
+                        <div className="flex items-center gap-2 flex-wrap @xs:flex-nowrap">
                           <span className="text-[10px] font-extrabold text-[var(--color-gray-500)] uppercase tracking-wider">Jumlah:</span>
                           <div className="flex items-center gap-1.5">
                             <button
@@ -353,7 +353,7 @@ function SmartBasketPage() {
                             <span className="text-xs text-[var(--color-gray-500)] font-medium">{it.unit}</span>
                           </div>
                         </div>
-                        <div className="text-right">
+                        <div className="text-left @xs:text-right">
                           <div className="text-[8px] font-bold text-[var(--color-gray-500)] uppercase tracking-wider">Subtotal:</div>
                           <div className="font-extrabold text-sm text-[var(--color-ink)]">
                             {price ? idr(price * it.quantity) : "—"}
@@ -434,12 +434,12 @@ function SmartBasketPage() {
               </div>
 
               {/* Total Belanja Terendah Box */}
-              <div className="mt-4 flex flex-col sm:flex-row items-center justify-between gap-4 rounded-xl bg-[var(--color-gray-50)] p-4 border-2 border-dashed border-[var(--color-gray-200)]">
+              <div className="mt-4 flex flex-col @md:flex-row @md:items-center justify-between gap-4 rounded-xl bg-[var(--color-gray-50)] p-4 border-2 border-dashed border-[var(--color-gray-200)]">
                 <div>
                   <h4 className="font-bold text-sm text-[var(--color-gray-700)]">Total Belanja Terendah (Campuran Pasar)</h4>
                   <p className="text-[10px] text-[var(--color-gray-500)]">Kombinasi harga termurah untuk setiap produk dari berbagai pasar.</p>
                 </div>
-                <div className="text-right">
+                <div className="text-left @md:text-right">
                   <span className="text-xl font-black text-[var(--color-brand-blue)]">
                     {idr(crossMarketTotal)}
                   </span>
