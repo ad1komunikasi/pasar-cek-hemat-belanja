@@ -14,6 +14,22 @@ import { Plus, Trash2, Trophy, Share2, Store, ShoppingBasket, ListChecks, MapPin
 import { toast } from "sonner";
 import cookingOilImg from "@/assets/cooking-oil.png";
 import shallotsImg from "@/assets/shallots.png";
+import garlicImg from "@/assets/garlic.png";
+import riceImg from "@/assets/rice.png";
+import eggsImg from "@/assets/eggs.png";
+import chickenImg from "@/assets/chicken.png";
+import beefImg from "@/assets/beef.png";
+import chiliImg from "@/assets/chili.png";
+import tomatoImg from "@/assets/tomato.png";
+import potatoImg from "@/assets/potato.png";
+import carrotImg from "@/assets/carrot.png";
+import sugarImg from "@/assets/sugar.png";
+import saltImg from "@/assets/salt.png";
+import flourImg from "@/assets/flour.png";
+import milkImg from "@/assets/milk.png";
+import tofuImg from "@/assets/tofu.png";
+import tempehImg from "@/assets/tempeh.png";
+import fishImg from "@/assets/fish.png";
 import { Wheat, Flame, Beef, Egg, Droplets } from "lucide-react";
 import { PremiumUpgradeModal } from "@/components/premium-upgrade-modal";
 
@@ -34,11 +50,63 @@ function getDistance(lat1: number, lon1: number, lat2: number, lon2: number) {
 function getProductImage(categoryName: string, productName: string) {
   const cat = (categoryName || "").toLowerCase();
   const name = (productName || "").toLowerCase();
+  
   if (cat.includes("minyak") || name.includes("minyak")) {
     return cookingOilImg;
   }
-  if (cat.includes("bawang") || name.includes("bawang") || cat.includes("bumbu") || name.includes("bumbu")) {
+  if (name.includes("bawang putih")) {
+    return garlicImg;
+  }
+  if (name.includes("bawang merah") || name.includes("shallot") || cat.includes("bawang") || name.includes("bawang")) {
     return shallotsImg;
+  }
+  if (cat.includes("beras") || name.includes("beras")) {
+    return riceImg;
+  }
+  if (cat.includes("telur") || name.includes("telur")) {
+    return eggsImg;
+  }
+  if (name.includes("daging ayam") || name.includes("ayam")) {
+    return chickenImg;
+  }
+  if (name.includes("daging sapi") || name.includes("sapi") || cat.includes("daging") || name.includes("daging")) {
+    return beefImg;
+  }
+  if (cat.includes("cabai") || name.includes("cabai")) {
+    return chiliImg;
+  }
+  if (name.includes("tomat")) {
+    return tomatoImg;
+  }
+  if (name.includes("kentang")) {
+    return potatoImg;
+  }
+  if (name.includes("wortel")) {
+    return carrotImg;
+  }
+  if (name.includes("gula")) {
+    return sugarImg;
+  }
+  if (name.includes("garam")) {
+    return saltImg;
+  }
+  if (cat.includes("tepung") || name.includes("tepung")) {
+    return flourImg;
+  }
+  if (cat.includes("susu") || name.includes("susu")) {
+    return milkImg;
+  }
+  if (name.includes("tahu")) {
+    return tofuImg;
+  }
+  if (name.includes("tempe")) {
+    return tempehImg;
+  }
+  if (cat.includes("ikan") || name.includes("ikan") || name.includes("kembung")) {
+    return fishImg;
+  }
+  if (cat.includes("sayur") || name.includes("sayur")) {
+    return chiliImg; // fallback vegetables to chili
   }
   return null;
 }
