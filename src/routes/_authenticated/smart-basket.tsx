@@ -78,7 +78,7 @@ function SmartBasketPage() {
   const { data: basket } = useQuery({
     queryKey: ["basket", user?.id],
     queryFn: async () => {
-      const { data: existing } = await supabase.from("smart_baskets").select("*").eq("user_id", user!.id).order("created_at", { ascending: false }).limit(1).maybeSingle();
+      const { data: existing } = await supabase.from("smart_baskets").select("*").eq("user_id", user!.id).eq("name", "Keranjang Saya").maybeSingle();
       if (existing) return existing;
       const { data: created } = await supabase.from("smart_baskets").insert({ user_id: user!.id, name: "Keranjang Saya" }).select().single();
       return created!;

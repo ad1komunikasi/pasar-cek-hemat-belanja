@@ -3,7 +3,7 @@ import { AppShell, PageHeader, StatCard, Section } from "@/components/app-shell"
 import { useAuth } from "@/hooks/use-auth";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { TrendingUp, MapPin, ShoppingBasket, Bell, Scale, Search, Crown, Sparkles, Plus, Trash2, AlertCircle, ArrowUpRight, ArrowDownRight, Eye } from "lucide-react";
+import { TrendingUp, MapPin, ShoppingBasket, Bell, Scale, Search, Crown, Sparkles, Plus, Trash2, AlertCircle, ArrowUpRight, ArrowDownRight, Eye, ListChecks } from "lucide-react";
 import celenganAyam from "@/assets/celengan-ayam.png";
 import { Button } from "@/components/ui/button";
 import { idr } from "@/lib/format";
@@ -150,13 +150,23 @@ function DashboardPage() {
         dateToUse = today;
       }
 
-      const [pricesRes, marketsRes, productsRes, unread, baskets] = await Promise.all([
+      const [pricesRes, marketsRes, productsRes, unread, baskets, wishlistBasketRes] = await Promise.all([
         supabase.from("product_prices").select("id", { count: "exact", head: true }).eq("recorded_at", dateToUse),
         supabase.from("markets").select("id", { count: "exact", head: true }).eq("is_active", true),
         supabase.from("products").select("id", { count: "exact", head: true }),
         supabase.from("notifications").select("id", { count: "exact", head: true }).is("read_at", null).eq("user_id", user.id),
-        supabase.from("smart_baskets").select("id", { count: "exact", head: true }).eq("user_id", user.id),
+        supabase.from("smart_baskets").select("id", { count: "exact", head: true }).eq("user_id", user.id).eq("name", "Keranjang Saya"),
+        supabase.from("smart_baskets").select("id").eq("user_id", user.id).eq("name", "Daftar Belanja Pintar").maybeSingle(),
       ]);
+
+      let wishlistCount = 0;
+      if (wishlistBasketRes.data) {
+        const itemsRes = await supabase
+          .from("basket_items")
+          .select("id", { count: "exact", head: true })
+          .eq("basket_id", wishlistBasketRes.data.id);
+        wishlistCount = itemsRes.count ?? 0;
+      }
 
       const marketsCount = marketsRes.count ?? 0;
       const productsCount = productsRes.count ?? 0;
@@ -167,6 +177,7 @@ function DashboardPage() {
         markets: marketsCount,
         unread: unread.count ?? 0,
         baskets: baskets.count ?? 0,
+        wishlist: wishlistCount,
       };
     },
     enabled: !!user?.id,
@@ -299,20 +310,22 @@ function DashboardPage() {
       )}
 
       <Section>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
           <StatCard label="Harga Hari Ini" value={data?.priceUpdates ?? 0} hint="Update harga sembako" icon={TrendingUp} accent="blue" />
           <StatCard label="Pasar Terdekat" value={data?.markets ?? 0} hint="Pasar aktif" icon={MapPin} accent="green" />
           <StatCard label="Smart Basket" value={data?.baskets ?? 0} hint="Simulasi tersimpan" icon={ShoppingBasket} accent="warning" />
+          <StatCard label="Daftar Belanja" value={data?.wishlist ?? 0} hint="Produk dipantau" icon={ListChecks} accent="green" />
           <StatCard label="Notifikasi Baru" value={data?.unread ?? 0} hint="Belum dibaca" icon={Bell} accent="danger" />
         </div>
       </Section>
 
       <Section title="Aksi Cepat">
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
           <QuickAction to="/prices" icon={TrendingUp} label="Harga Hari Ini" />
           <QuickAction to="/compare" icon={Scale} label="Bandingkan" />
           <QuickAction to="/markets" icon={Search} label="Cari Pasar" />
           <QuickAction to="/smart-basket" icon={ShoppingBasket} label="Smart Basket" />
+          <QuickAction to="/wishlist" icon={ListChecks} label="Daftar Belanja" />
           {isPremium ? (
             <QuickAction to="/profile" icon={Crown} label="Akun Premium" highlight />
           ) : (

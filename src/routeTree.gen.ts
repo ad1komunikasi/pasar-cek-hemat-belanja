@@ -20,6 +20,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as MarketsIndexRouteImport } from './routes/markets.index'
 import { Route as MarketsIdRouteImport } from './routes/markets.$id'
 import { Route as FeaturesSlugRouteImport } from './routes/features.$slug'
+import { Route as AuthenticatedWishlistRouteImport } from './routes/_authenticated/wishlist'
 import { Route as AuthenticatedSmartBasketRouteImport } from './routes/_authenticated/smart-basket'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedProfileRouteImport } from './routes/_authenticated/profile'
@@ -98,6 +99,11 @@ const FeaturesSlugRoute = FeaturesSlugRouteImport.update({
   id: '/$slug',
   path: '/$slug',
   getParentRoute: () => FeaturesRoute,
+} as any)
+const AuthenticatedWishlistRoute = AuthenticatedWishlistRouteImport.update({
+  id: '/wishlist',
+  path: '/wishlist',
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedSmartBasketRoute =
   AuthenticatedSmartBasketRouteImport.update({
@@ -251,6 +257,7 @@ export interface FileRoutesByFullPath {
   '/profile': typeof AuthenticatedProfileRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/smart-basket': typeof AuthenticatedSmartBasketRoute
+  '/wishlist': typeof AuthenticatedWishlistRoute
   '/features/$slug': typeof FeaturesSlugRoute
   '/markets/$id': typeof MarketsIdRoute
   '/markets/': typeof MarketsIndexRoute
@@ -284,6 +291,7 @@ export interface FileRoutesByTo {
   '/profile': typeof AuthenticatedProfileRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/smart-basket': typeof AuthenticatedSmartBasketRoute
+  '/wishlist': typeof AuthenticatedWishlistRoute
   '/features/$slug': typeof FeaturesSlugRoute
   '/markets/$id': typeof MarketsIdRoute
   '/markets': typeof MarketsIndexRoute
@@ -322,6 +330,7 @@ export interface FileRoutesById {
   '/_authenticated/profile': typeof AuthenticatedProfileRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/smart-basket': typeof AuthenticatedSmartBasketRoute
+  '/_authenticated/wishlist': typeof AuthenticatedWishlistRoute
   '/features/$slug': typeof FeaturesSlugRoute
   '/markets/$id': typeof MarketsIdRoute
   '/markets/': typeof MarketsIndexRoute
@@ -360,6 +369,7 @@ export interface FileRouteTypes {
     | '/profile'
     | '/settings'
     | '/smart-basket'
+    | '/wishlist'
     | '/features/$slug'
     | '/markets/$id'
     | '/markets/'
@@ -393,6 +403,7 @@ export interface FileRouteTypes {
     | '/profile'
     | '/settings'
     | '/smart-basket'
+    | '/wishlist'
     | '/features/$slug'
     | '/markets/$id'
     | '/markets'
@@ -430,6 +441,7 @@ export interface FileRouteTypes {
     | '/_authenticated/profile'
     | '/_authenticated/settings'
     | '/_authenticated/smart-basket'
+    | '/_authenticated/wishlist'
     | '/features/$slug'
     | '/markets/$id'
     | '/markets/'
@@ -536,6 +548,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/features/$slug'
       preLoaderRoute: typeof FeaturesSlugRouteImport
       parentRoute: typeof FeaturesRoute
+    }
+    '/_authenticated/wishlist': {
+      id: '/_authenticated/wishlist'
+      path: '/wishlist'
+      fullPath: '/wishlist'
+      preLoaderRoute: typeof AuthenticatedWishlistRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/smart-basket': {
       id: '/_authenticated/smart-basket'
@@ -763,6 +782,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedProfileRoute: typeof AuthenticatedProfileRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
   AuthenticatedSmartBasketRoute: typeof AuthenticatedSmartBasketRoute
+  AuthenticatedWishlistRoute: typeof AuthenticatedWishlistRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -778,6 +798,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedProfileRoute: AuthenticatedProfileRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
   AuthenticatedSmartBasketRoute: AuthenticatedSmartBasketRoute,
+  AuthenticatedWishlistRoute: AuthenticatedWishlistRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =

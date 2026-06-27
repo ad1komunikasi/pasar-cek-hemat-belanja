@@ -8,7 +8,7 @@ import { getDeterministicBenchmarkPrices } from "@/lib/benchmark";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { ArrowDown, ArrowUp, Minus, Search, Calendar as CalendarIcon, Database, ExternalLink, Heart, TrendingUp, Crown } from "lucide-react";
+import { ArrowDown, ArrowUp, Minus, Search, Calendar as CalendarIcon, Database, ExternalLink, Heart, TrendingUp, Crown, ListChecks } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
 import { PremiumUpgradeModal } from "@/components/premium-upgrade-modal";
@@ -82,6 +82,69 @@ function PricesPage() {
       toast.success("Ditambahkan ke produk favorit");
     }
     qc.invalidateQueries({ queryKey: ["fav-products"] });
+  }
+
+  const { data: wishlistBasket } = useQuery({
+    queryKey: ["wishlist-basket", user?.id],
+    enabled: !!user?.id,
+    queryFn: async () => {
+      const { data: existing } = await supabase
+        .from("smart_baskets")
+        .select("*")
+        .eq("user_id", user!.id)
+        .eq("name", "Daftar Belanja Pintar")
+        .maybeSingle();
+      if (existing) return existing;
+      const { data: created } = await supabase
+        .from("smart_baskets")
+        .insert({ user_id: user!.id, name: "Daftar Belanja Pintar" })
+        .select()
+        .single();
+      return created!;
+    },
+  });
+
+  const { data: wishlistItems } = useQuery({
+    queryKey: ["wishlist-items-list", wishlistBasket?.id],
+    enabled: !!wishlistBasket?.id,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("basket_items")
+        .select("id, product_id")
+        .eq("basket_id", wishlistBasket!.id);
+      return data ?? [];
+    },
+  });
+
+  const wishlistProductIds = useMemo(() => new Set((wishlistItems ?? []).map((wi: any) => wi.product_id)), [wishlistItems]);
+
+  async function toggleWishlistProduct(productId: string, unit: string) {
+    if (!user || !wishlistBasket) {
+      toast.error("Silakan masuk terlebih dahulu.");
+      return;
+    }
+    const existingItem = (wishlistItems ?? []).find((wi: any) => wi.product_id === productId);
+    if (existingItem) {
+      const { error } = await supabase.from("basket_items").delete().eq("id", existingItem.id);
+      if (error) {
+        toast.error("Gagal menghapus dari Daftar Belanja: " + error.message);
+      } else {
+        toast.success("Dihapus dari Daftar Belanja Pintar");
+      }
+    } else {
+      const { error } = await supabase.from("basket_items").insert({
+        basket_id: wishlistBasket.id,
+        product_id: productId,
+        unit: unit || "kg",
+        quantity: 1
+      });
+      if (error) {
+        toast.error("Gagal menambahkan ke Daftar Belanja: " + error.message);
+      } else {
+        toast.success("Ditambahkan ke Daftar Belanja Pintar");
+      }
+    }
+    qc.invalidateQueries({ queryKey: ["wishlist-items-list"] });
   }
 
   const { data: markets } = useQuery({
@@ -339,6 +402,19 @@ function PricesPage() {
                           favProductIds.has(r.product.id)
                             ? "fill-[var(--color-destructive)] text-[var(--color-destructive)] scale-110"
                             : "text-[var(--color-gray-300)] group-hover:text-[var(--color-destructive)]"
+                        }`}
+                      />
+                    </button>
+                    <button
+                      onClick={() => toggleWishlistProduct(r.product.id, r.product.unit)}
+                      className="focus:outline-none group p-1 rounded hover:bg-gray-50 transition-colors"
+                      title={wishlistProductIds.has(r.product.id) ? "Hapus dari Daftar Belanja Pintar" : "Tambah ke Daftar Belanja Pintar"}
+                    >
+                      <ListChecks
+                        className={`h-4 w-4 transition-all duration-200 ${
+                          wishlistProductIds.has(r.product.id)
+                            ? "text-[var(--color-brand-green)] scale-110"
+                            : "text-[var(--color-gray-300)] group-hover:text-[var(--color-brand-green)]"
                         }`}
                       />
                     </button>

@@ -1,7 +1,7 @@
 import { Link, useRouter, useRouterState } from "@tanstack/react-router";
 import {
   LayoutDashboard, TrendingUp, Scale, MapPin, ShoppingBasket,
-  Heart, Bell, User, Settings, LogOut, Shield, Menu, X, Crown, Clock,
+  Heart, Bell, User, Settings, LogOut, Shield, Menu, X, Crown, Clock, ListChecks,
 } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -15,6 +15,7 @@ const nav = [
   { to: "/compare", label: "Bandingkan", icon: Scale },
   { to: "/markets", label: "Pasar", icon: MapPin },
   { to: "/smart-basket", label: "Smart Basket", icon: ShoppingBasket },
+  { to: "/wishlist", label: "Daftar Belanja", icon: ListChecks },
   { to: "/favorites", label: "Favorit", icon: Heart },
   { to: "/orders", label: "Riwayat Pesanan", icon: Clock },
   { to: "/notifications", label: "Notifikasi", icon: Bell },

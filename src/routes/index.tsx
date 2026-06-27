@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
@@ -362,12 +362,12 @@ function Why() {
 function Features() {
   const { user } = useAuth();
   const features = [
-    { icon: BarChart3, tag: "Harga Hari Ini", title: "Harga Sembako Selalu Terbaru", desc: "Lihat harga beras, cabai, telur, ayam, minyak, gula, bawang, dan kebutuhan pokok lainnya — diperbarui harian." },
-    { icon: MapIcon, tag: "Lokasi", title: "Temukan Pasar Terdekat", desc: "Berbasis lokasi Anda, lihat pasar tradisional terdekat lengkap dengan jam buka dan rating." },
-    { icon: BarChart3, tag: "Perbandingan", title: "Bandingkan Harga Antar Pasar", desc: "Lihat harga komoditas yang sama di beberapa pasar sekaligus dalam satu tabel." },
-    { icon: ListChecks, tag: "Wishlist", title: "Daftar Belanja Pintar", desc: "Buat daftar kebutuhan sebelum berangkat agar belanja lebih terorganisir dan tidak boros." },
-    { icon: Bell, tag: "Notifikasi", title: "Notifikasi Harga Turun", desc: "Dapatkan pemberitahuan otomatis saat harga komoditas favorit Anda turun." },
-    { icon: Heart, tag: "Favorit", title: "Pasar Favorit", desc: "Simpan pasar favorit Anda untuk akses cepat ke harga dan promo terbaru." },
+    { icon: BarChart3, tag: "Harga Hari Ini", title: "Harga Sembako Selalu Terbaru", desc: "Lihat harga beras, cabai, telur, ayam, minyak, gula, bawang, dan kebutuhan pokok lainnya — diperbarui harian.", href: "/prices" },
+    { icon: MapIcon, tag: "Lokasi", title: "Temukan Pasar Terdekat", desc: "Berbasis lokasi Anda, lihat pasar tradisional terdekat lengkap dengan jam buka dan rating.", href: "/markets" },
+    { icon: BarChart3, tag: "Perbandingan", title: "Bandingkan Harga Antar Pasar", desc: "Lihat harga komoditas yang sama di beberapa pasar sekaligus dalam satu tabel.", href: "/compare" },
+    { icon: ListChecks, tag: "Wishlist", title: "Daftar Belanja Pintar", desc: "Buat daftar kebutuhan sebelum berangkat agar belanja lebih terorganisir dan tidak boros.", href: "/wishlist" },
+    { icon: Bell, tag: "Notifikasi", title: "Notifikasi Harga Turun", desc: "Dapatkan pemberitahuan otomatis saat harga komoditas favorit Anda turun.", href: "/notifications" },
+    { icon: Heart, tag: "Favorit", title: "Pasar Favorit", desc: "Simpan pasar favorit Anda untuk akses cepat ke harga dan promo terbaru.", href: "/favorites" },
   ];
   return (
     <section id="fitur" className="py-20">
@@ -378,16 +378,20 @@ function Features() {
         />
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
           {features.map(f => (
-            <div key={f.title} className="rounded-3xl bg-white border border-border p-6 hover:shadow-card transition-all">
+            <Link
+              key={f.title}
+              to={user ? f.href : "/auth?tab=register"}
+              className="block rounded-3xl bg-white border border-border p-6 hover:shadow-card hover:border-[var(--color-brand-blue)] transition-all cursor-pointer group"
+            >
               <div className="flex items-center gap-3 mb-4">
-                <div className="grid h-11 w-11 place-items-center rounded-xl bg-accent/10 text-accent">
+                <div className="grid h-11 w-11 place-items-center rounded-xl bg-accent/10 text-accent group-hover:bg-[var(--color-brand-blue)] group-hover:text-white transition-colors">
                   <f.icon className="h-5 w-5" />
                 </div>
                 <span className="text-xs font-semibold text-accent uppercase tracking-wider">{f.tag}</span>
               </div>
-              <h3 className="font-display font-semibold text-lg text-foreground">{f.title}</h3>
+              <h3 className="font-display font-semibold text-lg text-foreground group-hover:text-[var(--color-brand-blue)] transition-colors">{f.title}</h3>
               <p className="text-sm text-muted-foreground mt-2">{f.desc}</p>
-            </div>
+            </Link>
           ))}
         </div>
         <div className="mt-12 text-center">
