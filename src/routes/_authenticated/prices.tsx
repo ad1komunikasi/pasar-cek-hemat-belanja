@@ -132,6 +132,11 @@ function PricesPage() {
         toast.success("Dihapus dari Daftar Belanja Pintar");
       }
     } else {
+      if (!isPremium && wishlistItems && wishlistItems.length >= 3) {
+        setLockedFeatureName("Daftar Belanja Lengkap (Kapasitas > 3 Produk)");
+        setUpgradeModalOpen(true);
+        return;
+      }
       const { error } = await supabase.from("basket_items").insert({
         basket_id: wishlistBasket.id,
         product_id: productId,

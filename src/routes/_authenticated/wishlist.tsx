@@ -9,11 +9,12 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { idr } from "@/lib/format";
 import { getDeterministicBenchmarkPrices } from "@/lib/benchmark";
-import { Plus, Trash2, Trophy, Share2, Store, ShoppingBasket, ListChecks, MapPin, Compass, Navigation, ArrowRight } from "lucide-react";
+import { Plus, Trash2, Trophy, Share2, Store, ShoppingBasket, ListChecks, MapPin, Compass, Navigation, ArrowRight, Crown } from "lucide-react";
 import { toast } from "sonner";
 import cookingOilImg from "@/assets/cooking-oil.png";
 import shallotsImg from "@/assets/shallots.png";
 import { Wheat, Flame, Beef, Egg, Droplets } from "lucide-react";
+import { PremiumUpgradeModal } from "@/components/premium-upgrade-modal";
 
 // Haversine distance calculator
 function getDistance(lat1: number, lon1: number, lat2: number, lon2: number) {
@@ -78,7 +79,7 @@ export const Route = createFileRoute("/_authenticated/wishlist")({
 });
 
 function WishlistPage() {
-  const { user } = useAuth();
+  const { user, isPremium } = useAuth();
   const qc = useQueryClient();
   
   const [newProduct, setNewProduct] = useState<string>("");
@@ -86,6 +87,14 @@ function WishlistPage() {
   const [userCoords, setUserCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [locationLoading, setLocationLoading] = useState(false);
   const [locationDenied, setLocationDenied] = useState(false);
+
+  const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
+  const [lockedFeatureName, setLockedFeatureName] = useState("");
+
+  const handleOpenLock = (feature: string) => {
+    setLockedFeatureName(feature);
+    setUpgradeModalOpen(true);
+  };
 
   // Request user geolocation
   const requestLocation = () => {
@@ -314,6 +323,12 @@ function WishlistPage() {
   async function addItem() {
     if (!newProduct || !wishlistBasket) return;
     
+    // Check item limit for free users (max 3 items)
+    if (!isPremium && items && items.length >= 3) {
+      handleOpenLock("Daftar Belanja Lengkap (Kapasitas > 3 Produk)");
+      return;
+    }
+    
     const p = (products as any[]).find((x) => x.id === newProduct);
     const existing = (items ?? []).find((x: any) => x.product_id === newProduct);
     
@@ -485,25 +500,53 @@ function WishlistPage() {
                       {/* Top 2 Markets Prices for this product */}
                       <div className="border-t border-border/60 pt-3 space-y-1.5">
                         <div className="text-[9px] font-bold text-[var(--color-gray-500)] uppercase tracking-wider">Perbandingan Pasar:</div>
-                        {productPrices.slice(0, 2).map((row: any, idx: number) => (
-                          <div key={row.market.id} className="flex justify-between items-center text-xs py-1">
-                            <div className="flex flex-col">
-                              <span className="font-medium text-foreground/80">{row.market.name}</span>
-                              <span className="text-[8px] text-[var(--color-gray-500)]">{row.market.city}</span>
-                            </div>
-                            <div className="flex items-center gap-1.5">
-                              <div className="text-right">
-                                <span className="font-bold">{idr(Number(row.price))}</span>
-                                <span className="text-[9px] text-[var(--color-gray-500)] block">Total: {idr(Number(row.price) * it.quantity)}</span>
+                        {productPrices.slice(0, 2).map((row: any, idx: number) => {
+                          const isCheapest = idx === 0;
+                          const totalMarketPrice = Number(row.price) * it.quantity;
+
+                          if (!isPremium && !isCheapest) {
+                            return (
+                              <div key={row.market.id} className="flex justify-between items-center text-xs py-1 relative overflow-hidden select-none">
+                                <div className="flex flex-col blur-[1.5px]">
+                                  <span className="font-medium text-foreground/45">{row.market.name}</span>
+                                  <span className="text-[8px] text-[var(--color-gray-400)]">{row.market.city}</span>
+                                </div>
+                                <div className="flex items-center gap-1.5">
+                                  <div className="text-right blur-[1.5px] opacity-50">
+                                    <span className="font-bold">{idr(Number(row.price))}</span>
+                                    <span className="text-[9px] text-[var(--color-gray-400)] block">Total: {idr(totalMarketPrice)}</span>
+                                  </div>
+                                  <button
+                                    onClick={() => handleOpenLock("Detail Lintas Pasar")}
+                                    className="text-[8px] font-bold bg-amber-500/10 text-amber-600 border border-amber-500/20 px-1.5 py-0.5 rounded flex items-center gap-0.5 pointer-events-auto cursor-pointer"
+                                  >
+                                    <Crown className="h-2.5 w-2.5 fill-current" /> Lock
+                                  </button>
+                                </div>
                               </div>
-                              {idx === 0 && (
-                                <span className="text-[8px] font-extrabold bg-[var(--color-success)]/10 text-[var(--color-success)] px-1.5 py-0.5 rounded border border-[var(--color-success)]/20 uppercase tracking-wider">
-                                  Termurah
-                                </span>
-                              )}
+                            );
+                          }
+
+                          return (
+                            <div key={row.market.id} className="flex justify-between items-center text-xs py-1">
+                              <div className="flex flex-col">
+                                <span className="font-medium text-foreground/80">{row.market.name}</span>
+                                <span className="text-[8px] text-[var(--color-gray-500)]">{row.market.city}</span>
+                              </div>
+                              <div className="flex items-center gap-1.5">
+                                <div className="text-right">
+                                  <span className="font-bold">{idr(Number(row.price))}</span>
+                                  <span className="text-[9px] text-[var(--color-gray-500)] block">Total: {idr(totalMarketPrice)}</span>
+                                </div>
+                                {isCheapest && (
+                                  <span className="text-[8px] font-extrabold bg-[var(--color-success)]/10 text-[var(--color-success)] px-1.5 py-0.5 rounded border border-[var(--color-success)]/20 uppercase tracking-wider">
+                                    Termurah
+                                  </span>
+                                )}
+                              </div>
                             </div>
-                          </div>
-                        ))}
+                          );
+                        })}
                       </div>
                     </div>
                   );
@@ -588,7 +631,7 @@ function WishlistPage() {
               </p>
             ) : (
               <div className="space-y-3">
-                {recommendations.map((m, idx) => {
+                {recommendations.slice(0, isPremium ? undefined : 2).map((m, idx) => {
                   const isCheapest = idx === 0;
                   const isNearest = nearestMarket && nearestMarket.id === m.id;
                   
@@ -650,11 +693,34 @@ function WishlistPage() {
                     </div>
                   );
                 })}
+
+                {(!isPremium && recommendations.length > 2) && (
+                  <div className="rounded-xl border border-dashed border-amber-500/30 bg-amber-500/[0.02] p-4 text-center mt-3 relative overflow-hidden">
+                    <div className="mx-auto my-1.5 flex h-9 w-9 items-center justify-center rounded-full bg-amber-500/10 text-amber-500">
+                      <Crown className="h-4.5 w-4.5 fill-current" />
+                    </div>
+                    <p className="text-xs font-bold text-slate-800">+{recommendations.length - 2} Rekomendasi Pasar Lainnya Terkunci</p>
+                    <p className="text-[10px] text-slate-500 mt-1 max-w-xs mx-auto">
+                      Upgrade ke Premium untuk membuka semua rekomendasi pasar tradisional terdekat & terhemat.
+                    </p>
+                    <button
+                      onClick={() => handleOpenLock("Rekomendasi Pasar Lengkap")}
+                      className="mt-3 text-[10px] font-extrabold text-amber-600 bg-amber-500/10 hover:bg-amber-500/25 border border-amber-500/20 px-3 py-1.5 rounded-lg transition-colors cursor-pointer w-full"
+                    >
+                      Buka Semua Rekomendasi
+                    </button>
+                  </div>
+                )}
               </div>
             )}
           </div>
         </div>
       </div>
+      <PremiumUpgradeModal
+        isOpen={upgradeModalOpen}
+        onOpenChange={setUpgradeModalOpen}
+        featureName={lockedFeatureName}
+      />
     </AppShell>
   );
 }
