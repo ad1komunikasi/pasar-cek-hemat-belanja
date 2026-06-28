@@ -27,29 +27,61 @@ function OrdersPage() {
     queryKey: ["orders", user?.id],
     queryFn: async () => {
       if (!user?.id) return [];
-      return (await supabase.from("orders").select("*, package:packages(name)").eq("user_id", user.id).order("created_at", { ascending: false })).data ?? [];
+      return (
+        (
+          await supabase
+            .from("orders")
+            .select("*, package:packages(name)")
+            .eq("user_id", user.id)
+            .order("created_at", { ascending: false })
+        ).data ?? []
+      );
     },
     enabled: !!user?.id,
   });
   return (
     <AppShell>
       <PageHeader title="Riwayat Pesanan" description="Semua transaksi langganan Anda." />
-      {(!orders || orders.length === 0) ? (
-        <EmptyState title="Belum ada transaksi." description="Mulai berlangganan untuk mendapatkan fitur premium." />
+      {!orders || orders.length === 0 ? (
+        <EmptyState
+          title="Belum ada transaksi."
+          description="Mulai berlangganan untuk mendapatkan fitur premium."
+        />
       ) : (
         <div className="overflow-hidden rounded-lg border border-[var(--color-gray-100)] bg-white">
           <table className="w-full text-sm">
             <thead className="bg-[var(--color-gray-50)] text-left text-xs uppercase text-[var(--color-gray-500)]">
-              <tr><th className="px-4 py-3">No. Pesanan</th><th className="px-4 py-3">Tanggal</th><th className="px-4 py-3">Paket</th><th className="px-4 py-3 text-right">Nominal</th><th className="px-4 py-3">Status</th></tr>
+              <tr>
+                <th className="px-4 py-3">No. Pesanan</th>
+                <th className="px-4 py-3">Tanggal</th>
+                <th className="px-4 py-3">Paket</th>
+                <th className="px-4 py-3 text-right">Nominal</th>
+                <th className="px-4 py-3">Status</th>
+              </tr>
             </thead>
             <tbody>
               {orders.map((o: any) => (
-                <tr key={o.id} className="border-t border-[var(--color-gray-100)] hover:bg-[var(--color-gray-50)]">
-                  <td className="px-4 py-3 font-mono font-semibold"><Link to="/orders/$id" params={{ id: o.id }} className="text-[var(--color-brand-blue)] hover:underline">{o.order_number}</Link></td>
+                <tr
+                  key={o.id}
+                  className="border-t border-[var(--color-gray-100)] hover:bg-[var(--color-gray-50)]"
+                >
+                  <td className="px-4 py-3 font-mono font-semibold">
+                    <Link
+                      to="/orders/$id"
+                      params={{ id: o.id }}
+                      className="text-[var(--color-brand-blue)] hover:underline"
+                    >
+                      {o.order_number}
+                    </Link>
+                  </td>
                   <td className="px-4 py-3">{fmtDateTime(o.created_at)}</td>
                   <td className="px-4 py-3">{o.package?.name}</td>
                   <td className="px-4 py-3 text-right font-bold">{idr(Number(o.amount))}</td>
-                  <td className="px-4 py-3"><Badge className={statusLabel[o.status]?.cls}>{statusLabel[o.status]?.label}</Badge></td>
+                  <td className="px-4 py-3">
+                    <Badge className={statusLabel[o.status]?.cls}>
+                      {statusLabel[o.status]?.label}
+                    </Badge>
+                  </td>
                 </tr>
               ))}
             </tbody>

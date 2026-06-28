@@ -1,4 +1,10 @@
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Link } from "@tanstack/react-router";
 import { Crown, Check, Sparkles } from "lucide-react";
@@ -9,13 +15,32 @@ interface PremiumUpgradeModalProps {
   featureName?: string;
 }
 
-export function PremiumUpgradeModal({ isOpen, onOpenChange, featureName }: PremiumUpgradeModalProps) {
+export function PremiumUpgradeModal({
+  isOpen,
+  onOpenChange,
+  featureName,
+}: PremiumUpgradeModalProps) {
   const benefits = [
-    { title: "Alert Harga Tanpa Batas", desc: "Pantau harga komoditas penting di pasar favorit Anda secara real-time." },
-    { title: "Prediksi Harga AI", desc: "Ketahui tren kenaikan atau penurunan harga bahan pangan untuk 7 hari ke depan." },
-    { title: "Riwayat Penghematan 90 Hari", desc: "Lacak performa belanja hemat Anda dalam grafik yang interaktif." },
-    { title: "Analitik Tren 90 Hari", desc: "Analisis grafik histori pergerakan harga untuk strategi belanja optimal." },
-    { title: "Smart Basket Lengkap", desc: "Simulasikan belanja tanpa batas produk dan bandingkan lintas pasar sekaligus." },
+    {
+      title: "Alert Harga Tanpa Batas",
+      desc: "Pantau harga komoditas penting di pasar favorit Anda secara real-time.",
+    },
+    {
+      title: "Prediksi Harga AI",
+      desc: "Ketahui tren kenaikan atau penurunan harga bahan pangan untuk 7 hari ke depan.",
+    },
+    {
+      title: "Riwayat Penghematan 90 Hari",
+      desc: "Lacak performa belanja hemat Anda dalam grafik yang interaktif.",
+    },
+    {
+      title: "Analitik Tren 90 Hari",
+      desc: "Analisis grafik histori pergerakan harga untuk strategi belanja optimal.",
+    },
+    {
+      title: "Smart Basket Lengkap",
+      desc: "Simulasikan belanja tanpa batas produk dan bandingkan lintas pasar sekaligus.",
+    },
   ];
 
   return (
@@ -46,13 +71,18 @@ export function PremiumUpgradeModal({ isOpen, onOpenChange, featureName }: Premi
         <div className="p-6 overflow-y-auto flex-1 flex flex-col justify-between min-h-0">
           <div className="space-y-3 relative z-10">
             {benefits.map((b, idx) => (
-              <div key={idx} className="flex items-start gap-3 p-3 rounded-xl border border-[var(--color-gray-100)] bg-[var(--color-gray-50)] hover:bg-[var(--color-accent-soft)]/20 hover:border-[var(--color-brand-green)]/20 transition-all duration-200 group">
+              <div
+                key={idx}
+                className="flex items-start gap-3 p-3 rounded-xl border border-[var(--color-gray-100)] bg-[var(--color-gray-50)] hover:bg-[var(--color-accent-soft)]/20 hover:border-[var(--color-brand-green)]/20 transition-all duration-200 group"
+              >
                 <div className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[var(--color-brand-green)]/10 text-[var(--color-brand-green)] group-hover:scale-105 transition-transform duration-200">
                   <Check className="h-3.5 w-3.5 stroke-[2.5]" />
                 </div>
                 <div className="min-w-0">
                   <p className="text-xs font-black text-[var(--color-ink)]">{b.title}</p>
-                  <p className="text-[10px] text-[var(--color-gray-500)] mt-0.5 leading-normal">{b.desc}</p>
+                  <p className="text-[10px] text-[var(--color-gray-500)] mt-0.5 leading-normal">
+                    {b.desc}
+                  </p>
                 </div>
               </div>
             ))}
@@ -63,12 +93,17 @@ export function PremiumUpgradeModal({ isOpen, onOpenChange, featureName }: Premi
           </div>
 
           <div className="flex flex-col gap-2 relative z-10 shrink-0 mt-auto">
-            <Button asChild className="w-full h-11 bg-gradient-to-r from-[var(--color-brand-blue)] to-[var(--color-brand-green)] text-white hover:opacity-95 font-bold shadow-md rounded-xl transition-all duration-300 hover:scale-[1.01] border-0">
-              <Link to="/pricing">
-                Upgrade Sekarang
-              </Link>
+            <Button
+              asChild
+              className="w-full h-11 bg-gradient-to-r from-[var(--color-brand-blue)] to-[var(--color-brand-green)] text-white hover:opacity-95 font-bold shadow-md rounded-xl transition-all duration-300 hover:scale-[1.01] border-0"
+            >
+              <Link to="/pricing">Upgrade Sekarang</Link>
             </Button>
-            <Button variant="ghost" className="w-full text-[var(--color-gray-500)] hover:text-[var(--color-ink)] hover:bg-[var(--color-gray-50)]" onClick={() => onOpenChange(false)}>
+            <Button
+              variant="ghost"
+              className="w-full text-[var(--color-gray-500)] hover:text-[var(--color-ink)] hover:bg-[var(--color-gray-50)]"
+              onClick={() => onOpenChange(false)}
+            >
               Mungkin Nanti
             </Button>
           </div>

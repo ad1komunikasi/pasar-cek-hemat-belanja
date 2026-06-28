@@ -4,7 +4,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Trash2, Sparkles, Check, Pencil } from "lucide-react";
@@ -21,11 +27,20 @@ function AdminMarkets() {
 
   const { data: requests } = useQuery({
     queryKey: ["admin-market-requests"],
-    queryFn: async () => (await supabase.from("market_requests" as any).select("*").order("created_at", { ascending: false })).data ?? [],
+    queryFn: async () =>
+      (
+        await supabase
+          .from("market_requests" as any)
+          .select("*")
+          .order("created_at", { ascending: false })
+      ).data ?? [],
   });
 
   async function removeRequest(id: string) {
-    const { error } = await supabase.from("market_requests" as any).delete().eq("id", id);
+    const { error } = await supabase
+      .from("market_requests" as any)
+      .delete()
+      .eq("id", id);
     if (error) return toast.error(error.message);
     toast.success("Permintaan pengajuan dihapus");
     qc.invalidateQueries({ queryKey: ["admin-market-requests"] });
@@ -52,7 +67,11 @@ function AdminMarkets() {
     const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, "-");
     let sanitizedMapsUrl = googleMapsUrl.trim();
     // Normalize or auto-generate link to match pattern: https://www.google.com/maps?q=Nama+Pasar,++Nama+Kota
-    if (!sanitizedMapsUrl || sanitizedMapsUrl.includes("/place/") || sanitizedMapsUrl.includes("/search/")) {
+    if (
+      !sanitizedMapsUrl ||
+      sanitizedMapsUrl.includes("/place/") ||
+      sanitizedMapsUrl.includes("/search/")
+    ) {
       const queryName = encodeURIComponent(name).replace(/%20/g, "+");
       const queryCity = city ? `,++${encodeURIComponent(city).replace(/%20/g, "+")}` : "";
       sanitizedMapsUrl = `https://www.google.com/maps?q=${queryName}${queryCity}`;
@@ -80,10 +99,7 @@ function AdminMarkets() {
     };
 
     if (editingId) {
-      const { error } = await supabase
-        .from("markets")
-        .update(marketData)
-        .eq("id", editingId);
+      const { error } = await supabase.from("markets").update(marketData).eq("id", editingId);
       if (error) return toast.error(error.message);
       toast.success("Pasar diperbarui");
       setEditingId(null);
@@ -178,9 +194,13 @@ function AdminMarkets() {
                   <td className="px-4 py-3 font-semibold">
                     {m.name}
                     <br />
-                    <span className="text-xs font-normal text-[var(--color-gray-500)]">{m.address}</span>
+                    <span className="text-xs font-normal text-[var(--color-gray-500)]">
+                      {m.address}
+                    </span>
                     {m.province && (
-                      <span className="text-[10px] block text-[var(--color-gray-400)]">{m.province}</span>
+                      <span className="text-[10px] block text-[var(--color-gray-400)]">
+                        {m.province}
+                      </span>
                     )}
                   </td>
                   <td className="px-4 py-3">{m.city}</td>
@@ -254,21 +274,37 @@ function AdminMarkets() {
             </div>
             <div>
               <Label>Jam Operasional</Label>
-              <Input value={hours} onChange={(e) => setHours(e.target.value)} placeholder="05:00 - 17:00" />
+              <Input
+                value={hours}
+                onChange={(e) => setHours(e.target.value)}
+                placeholder="05:00 - 17:00"
+              />
             </div>
             <div className="grid grid-cols-2 gap-2">
               <div>
                 <Label>Latitude</Label>
-                <Input value={lat} onChange={(e) => setLat(e.target.value)} placeholder="-6.175..." />
+                <Input
+                  value={lat}
+                  onChange={(e) => setLat(e.target.value)}
+                  placeholder="-6.175..."
+                />
               </div>
               <div>
                 <Label>Longitude</Label>
-                <Input value={lng} onChange={(e) => setLng(e.target.value)} placeholder="106.827..." />
+                <Input
+                  value={lng}
+                  onChange={(e) => setLng(e.target.value)}
+                  placeholder="106.827..."
+                />
               </div>
             </div>
             <div>
               <Label>Tautan Google Maps</Label>
-              <Input value={googleMapsUrl} onChange={(e) => setGoogleMapsUrl(e.target.value)} placeholder="https://google.com/maps/..." />
+              <Input
+                value={googleMapsUrl}
+                onChange={(e) => setGoogleMapsUrl(e.target.value)}
+                placeholder="https://google.com/maps/..."
+              />
             </div>
             <Button onClick={create} className="w-full">
               {editingId ? "Simpan Perubahan" : "Simpan"}
@@ -301,12 +337,16 @@ function AdminMarkets() {
               <Sparkles className="h-5 w-5 text-[#127a79] animate-pulse" />
               <div>
                 <h3 className="text-sm font-semibold text-gray-900">Asisten AI PasarCek</h3>
-                <p className="text-[10px] text-[#127a79] font-medium">Pencarian & auto-isi data pasar baru</p>
+                <p className="text-[10px] text-[#127a79] font-medium">
+                  Pencarian & auto-isi data pasar baru
+                </p>
               </div>
             </div>
 
             <div className="space-y-2">
-              <Label className="text-xs font-semibold text-gray-800">Cari Pasar Belum Tersedia</Label>
+              <Label className="text-xs font-semibold text-gray-800">
+                Cari Pasar Belum Tersedia
+              </Label>
               <div className="flex gap-2">
                 <Input
                   placeholder="e.g., Pasar Tomang Barat, Pasar Baru..."
@@ -331,7 +371,9 @@ function AdminMarkets() {
             {/* AI Search Results */}
             {aiResults.length > 0 && (
               <div className="space-y-2 max-h-[320px] overflow-y-auto pr-1">
-                <p className="text-[10px] font-bold text-[#127a79] uppercase tracking-wider">Hasil Rekomendasi AI:</p>
+                <p className="text-[10px] font-bold text-[#127a79] uppercase tracking-wider">
+                  Hasil Rekomendasi AI:
+                </p>
                 <div className="space-y-2">
                   {aiResults.map((item, idx) => (
                     <div
@@ -381,9 +423,18 @@ function AdminMarkets() {
                       {/* Coordinates & Maps URL */}
                       {(item.lat || item.lng) && (
                         <div className="flex items-center gap-1 text-[10px] bg-blue-50 border border-blue-100 rounded px-1.5 py-1">
-                          <svg className="h-3 w-3 text-blue-500 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+                          <svg
+                            className="h-3 w-3 text-blue-500 shrink-0"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                          >
+                            <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" />
+                          </svg>
                           <span className="text-blue-700 font-mono">
-                            {item.lat != null ? item.lat.toFixed(6) : "—"}, {item.lng != null ? item.lng.toFixed(6) : "—"}
+                            {item.lat != null ? item.lat.toFixed(6) : "—"},{" "}
+                            {item.lng != null ? item.lng.toFixed(6) : "—"}
                           </span>
                         </div>
                       )}
@@ -395,12 +446,24 @@ function AdminMarkets() {
                           className="flex items-center gap-1 text-[10px] text-[#127a79] hover:underline truncate"
                           onClick={(e) => e.stopPropagation()}
                         >
-                          <svg className="h-3 w-3 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                          <svg
+                            className="h-3 w-3 shrink-0"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                          >
+                            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+                            <polyline points="15 3 21 3 21 9" />
+                            <line x1="10" y1="14" x2="21" y2="3" />
+                          </svg>
                           <span className="truncate">{item.google_maps_url}</span>
                         </a>
                       )}
                       {!item.lat && !item.lng && !item.google_maps_url && (
-                        <p className="text-[10px] text-amber-600 italic">⚠ Koordinat & link Maps tidak tersedia dari AI</p>
+                        <p className="text-[10px] text-amber-600 italic">
+                          ⚠ Koordinat & link Maps tidak tersedia dari AI
+                        </p>
                       )}
 
                       <Button
@@ -457,21 +520,28 @@ function AdminMarkets() {
               </thead>
               <tbody>
                 {requests.map((r: any) => (
-                  <tr key={r.id} className="border-t border-[var(--color-gray-100)] hover:bg-gray-55/20 transition-colors">
+                  <tr
+                    key={r.id}
+                    className="border-t border-[var(--color-gray-100)] hover:bg-gray-55/20 transition-colors"
+                  >
                     <td className="px-4 py-3 font-semibold text-gray-900">{r.market_name}</td>
                     <td className="px-4 py-3 text-gray-600">{r.address || "—"}</td>
                     <td className="px-4 py-3">
                       {r.city}
-                      {r.province && <span className="text-xs text-gray-400 block">{r.province}</span>}
+                      {r.province && (
+                        <span className="text-xs text-gray-400 block">{r.province}</span>
+                      )}
                     </td>
                     <td className="px-4 py-3">
-                      <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold ${
-                        r.status === "pending" 
-                          ? "bg-amber-50 text-amber-700 border border-amber-200" 
-                          : r.status === "approved" 
-                            ? "bg-green-50 text-green-700 border border-green-200" 
-                            : "bg-red-50 text-red-700 border border-red-200"
-                      }`}>
+                      <span
+                        className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold ${
+                          r.status === "pending"
+                            ? "bg-amber-50 text-amber-700 border border-amber-200"
+                            : r.status === "approved"
+                              ? "bg-green-50 text-green-700 border border-green-200"
+                              : "bg-red-50 text-red-700 border border-red-200"
+                        }`}
+                      >
                         {r.status}
                       </span>
                     </td>
@@ -511,4 +581,3 @@ function AdminMarkets() {
     </>
   );
 }
-

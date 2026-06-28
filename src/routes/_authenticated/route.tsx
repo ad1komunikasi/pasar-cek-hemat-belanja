@@ -4,12 +4,12 @@ import { supabase } from "@/integrations/supabase/client";
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
   beforeLoad: async () => {
-    const hasAuthParams = typeof window !== "undefined" && (
-      window.location.search.includes("code=") ||
-      window.location.hash.includes("access_token=") ||
-      window.location.hash.includes("refresh_token=") ||
-      window.location.hash.includes("error=")
-    );
+    const hasAuthParams =
+      typeof window !== "undefined" &&
+      (window.location.search.includes("code=") ||
+        window.location.hash.includes("access_token=") ||
+        window.location.hash.includes("refresh_token=") ||
+        window.location.hash.includes("error="));
 
     if (hasAuthParams) {
       for (let i = 0; i < 50; i++) {

@@ -19,14 +19,29 @@ function FavoritesPage() {
 
   const { data: products } = useQuery({
     queryKey: ["fav-products", user?.id],
-    queryFn: async () => (await supabase.from("favorites_products").select("id, product:products(id,name,category,unit)").eq("user_id", user!.id)).data ?? [],
+    queryFn: async () =>
+      (
+        await supabase
+          .from("favorites_products")
+          .select("id, product:products(id,name,category,unit)")
+          .eq("user_id", user!.id)
+      ).data ?? [],
   });
   const { data: markets } = useQuery({
     queryKey: ["fav-markets", user?.id],
-    queryFn: async () => (await supabase.from("favorites_markets").select("id, market:markets(id,name,city,address)").eq("user_id", user!.id)).data ?? [],
+    queryFn: async () =>
+      (
+        await supabase
+          .from("favorites_markets")
+          .select("id, market:markets(id,name,city,address)")
+          .eq("user_id", user!.id)
+      ).data ?? [],
   });
 
-  const validProducts = useMemo(() => (products ?? []).filter((r: any) => r && r.product), [products]);
+  const validProducts = useMemo(
+    () => (products ?? []).filter((r: any) => r && r.product),
+    [products],
+  );
   const validMarkets = useMemo(() => (markets ?? []).filter((r: any) => r && r.market), [markets]);
 
   async function unfavProduct(id: string) {
@@ -44,28 +59,60 @@ function FavoritesPage() {
     <AppShell>
       <PageHeader title="Favorit" description="Produk dan pasar yang Anda pantau." />
       <Section title="Produk Favorit">
-        {(!validProducts || validProducts.length === 0) ? (
-          <EmptyState title="Belum ada produk favorit." description="Tandai produk dari halaman Harga." action={<Button asChild><Link to="/prices">Lihat Harga</Link></Button>} />
+        {!validProducts || validProducts.length === 0 ? (
+          <EmptyState
+            title="Belum ada produk favorit."
+            description="Tandai produk dari halaman Harga."
+            action={
+              <Button asChild>
+                <Link to="/prices">Lihat Harga</Link>
+              </Button>
+            }
+          />
         ) : (
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {validProducts.map((r: any) => (
-              <div key={r.id} className="flex items-center justify-between rounded-lg border border-[var(--color-gray-100)] bg-white p-4">
-                <div><p className="font-semibold">{r.product.name}</p><p className="text-xs text-[var(--color-gray-500)]">{r.product.category}</p></div>
-                <Button size="icon" variant="ghost" onClick={() => unfavProduct(r.id)}><Heart className="h-4 w-4 fill-[var(--color-destructive)] text-[var(--color-destructive)]" /></Button>
+              <div
+                key={r.id}
+                className="flex items-center justify-between rounded-lg border border-[var(--color-gray-100)] bg-white p-4"
+              >
+                <div>
+                  <p className="font-semibold">{r.product.name}</p>
+                  <p className="text-xs text-[var(--color-gray-500)]">{r.product.category}</p>
+                </div>
+                <Button size="icon" variant="ghost" onClick={() => unfavProduct(r.id)}>
+                  <Heart className="h-4 w-4 fill-[var(--color-destructive)] text-[var(--color-destructive)]" />
+                </Button>
               </div>
             ))}
           </div>
         )}
       </Section>
       <Section title="Pasar Favorit">
-        {(!validMarkets || validMarkets.length === 0) ? (
-          <EmptyState title="Belum ada pasar favorit." description="Tambah dari halaman Pasar." action={<Button asChild><Link to="/markets">Cari Pasar</Link></Button>} />
+        {!validMarkets || validMarkets.length === 0 ? (
+          <EmptyState
+            title="Belum ada pasar favorit."
+            description="Tambah dari halaman Pasar."
+            action={
+              <Button asChild>
+                <Link to="/markets">Cari Pasar</Link>
+              </Button>
+            }
+          />
         ) : (
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {validMarkets.map((r: any) => (
-              <div key={r.id} className="flex items-center justify-between rounded-lg border border-[var(--color-gray-100)] bg-white p-4">
-                <div><p className="font-semibold">{r.market.name}</p><p className="text-xs text-[var(--color-gray-500)]">{r.market.city}</p></div>
-                <Button size="icon" variant="ghost" onClick={() => unfavMarket(r.id)}><Heart className="h-4 w-4 fill-[var(--color-destructive)] text-[var(--color-destructive)]" /></Button>
+              <div
+                key={r.id}
+                className="flex items-center justify-between rounded-lg border border-[var(--color-gray-100)] bg-white p-4"
+              >
+                <div>
+                  <p className="font-semibold">{r.market.name}</p>
+                  <p className="text-xs text-[var(--color-gray-500)]">{r.market.city}</p>
+                </div>
+                <Button size="icon" variant="ghost" onClick={() => unfavMarket(r.id)}>
+                  <Heart className="h-4 w-4 fill-[var(--color-destructive)] text-[var(--color-destructive)]" />
+                </Button>
               </div>
             ))}
           </div>

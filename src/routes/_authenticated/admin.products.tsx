@@ -9,7 +9,9 @@ import { toast } from "sonner";
 import { Trash2, Sparkles, Check } from "lucide-react";
 import { getAiProductSuggestions } from "@/lib/api/ai.functions";
 
-export const Route = createFileRoute("/_authenticated/admin/products")({ component: AdminProducts });
+export const Route = createFileRoute("/_authenticated/admin/products")({
+  component: AdminProducts,
+});
 
 function AdminProducts() {
   const qc = useQueryClient();
@@ -32,7 +34,8 @@ function AdminProducts() {
     const { error } = await supabase.from("products").insert({ name, slug, category, unit });
     if (error) return toast.error(error.message);
     toast.success("Produk ditambahkan");
-    setName(""); setCategory("");
+    setName("");
+    setCategory("");
     qc.invalidateQueries({ queryKey: ["admin-products"] });
   }
 
@@ -61,7 +64,7 @@ function AdminProducts() {
           query: aiQuery,
           existingProducts: existing,
           apiKey: localKey,
-        }
+        },
       });
 
       if (Array.isArray(results)) {
@@ -131,7 +134,9 @@ function AdminProducts() {
               <Label>Satuan</Label>
               <Input value={unit} onChange={(e) => setUnit(e.target.value)} />
             </div>
-            <Button onClick={create} className="w-full">Simpan</Button>
+            <Button onClick={create} className="w-full">
+              Simpan
+            </Button>
           </div>
 
           {/* Asisten AI Pencarian & Auto-Kategori */}
@@ -140,12 +145,16 @@ function AdminProducts() {
               <Sparkles className="h-5 w-5 text-[#127a79] animate-pulse" />
               <div>
                 <h3 className="text-sm font-semibold text-gray-900">Asisten AI PasarCek</h3>
-                <p className="text-[10px] text-[#127a79] font-medium">Pencarian & auto-kategori produk baru</p>
+                <p className="text-[10px] text-[#127a79] font-medium">
+                  Pencarian & auto-kategori produk baru
+                </p>
               </div>
             </div>
 
             <div className="space-y-2">
-              <Label className="text-xs font-semibold text-gray-800">Cari Produk Belum Tersedia</Label>
+              <Label className="text-xs font-semibold text-gray-800">
+                Cari Produk Belum Tersedia
+              </Label>
               <div className="flex gap-2">
                 <Input
                   placeholder="e.g., Susu Oat, Telur Puyuh..."
@@ -170,17 +179,24 @@ function AdminProducts() {
             {/* Hasil Pencarian AI */}
             {aiResults.length > 0 && (
               <div className="space-y-2 max-h-[320px] overflow-y-auto pr-1">
-                <p className="text-[10px] font-bold text-[#127a79] uppercase tracking-wider">Hasil Rekomendasi AI:</p>
+                <p className="text-[10px] font-bold text-[#127a79] uppercase tracking-wider">
+                  Hasil Rekomendasi AI:
+                </p>
                 <div className="space-y-2">
                   {aiResults.map((item, idx) => (
-                    <div key={idx} className="rounded-md border border-gray-100 bg-white p-2.5 shadow-sm text-xs space-y-1.5 hover:border-[#127a79]/30 transition-colors">
+                    <div
+                      key={idx}
+                      className="rounded-md border border-gray-100 bg-white p-2.5 shadow-sm text-xs space-y-1.5 hover:border-[#127a79]/30 transition-colors"
+                    >
                       <div className="flex items-start justify-between gap-2">
                         <span className="font-semibold text-gray-900">{item.name}</span>
-                        <span className={`inline-flex items-center rounded-full px-1.5 py-0.5 text-[9px] font-medium ${
-                          item.status === "Belum Tersedia"
-                            ? "bg-green-50 text-green-700 border border-green-200"
-                            : "bg-amber-50 text-amber-700 border border-amber-200"
-                        }`}>
+                        <span
+                          className={`inline-flex items-center rounded-full px-1.5 py-0.5 text-[9px] font-medium ${
+                            item.status === "Belum Tersedia"
+                              ? "bg-green-50 text-green-700 border border-green-200"
+                              : "bg-amber-50 text-amber-700 border border-amber-200"
+                          }`}
+                        >
                           {item.status}
                         </span>
                       </div>
@@ -200,7 +216,9 @@ function AdminProducts() {
                         </span>
                       </div>
 
-                      <p className="text-[10px] text-gray-500 italic leading-relaxed">{item.description}</p>
+                      <p className="text-[10px] text-gray-500 italic leading-relaxed">
+                        {item.description}
+                      </p>
 
                       <Button
                         size="sm"

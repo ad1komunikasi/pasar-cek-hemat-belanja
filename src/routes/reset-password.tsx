@@ -13,7 +13,8 @@ export const Route = createFileRoute("/reset-password")({
 
 function ResetPage() {
   const navigate = useNavigate();
-  const [password, setPassword] = useState(""); const [busy, setBusy] = useState(false);
+  const [password, setPassword] = useState("");
+  const [busy, setBusy] = useState(false);
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     if (password.length < 6) return toast.error("Password minimal 6 karakter");
@@ -26,10 +27,24 @@ function ResetPage() {
   }
   return (
     <div className="flex min-h-screen items-center justify-center bg-[var(--color-gray-50)] px-4">
-      <form onSubmit={submit} className="w-full max-w-sm space-y-4 rounded-lg border border-[var(--color-gray-100)] bg-white p-6">
+      <form
+        onSubmit={submit}
+        className="w-full max-w-sm space-y-4 rounded-lg border border-[var(--color-gray-100)] bg-white p-6"
+      >
         <h1 className="text-2xl font-black">Atur ulang password</h1>
-        <div><Label>Password baru</Label><Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} /></div>
-        <Button type="submit" className="w-full" disabled={busy}>{busy ? "Menyimpan..." : "Simpan password"}</Button>
+        <div>
+          <Label>Password baru</Label>
+          <Input
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+            minLength={6}
+          />
+        </div>
+        <Button type="submit" className="w-full" disabled={busy}>
+          {busy ? "Menyimpan..." : "Simpan password"}
+        </Button>
       </form>
     </div>
   );

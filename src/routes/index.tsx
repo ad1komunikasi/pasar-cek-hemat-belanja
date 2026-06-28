@@ -4,10 +4,29 @@ import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
-  ShoppingBasket, MapPin, BarChart3, Bell, Heart, ListChecks,
-  Check, Sparkles, TrendingDown, Clock, Wallet, Brain,
-  Menu, X, ChevronDown, Store, Users, Database, PiggyBank,
-  Frown, Search, Map as MapIcon, Package,
+  ShoppingBasket,
+  MapPin,
+  BarChart3,
+  Bell,
+  Heart,
+  ListChecks,
+  Check,
+  Sparkles,
+  TrendingDown,
+  Clock,
+  Wallet,
+  Brain,
+  Menu,
+  X,
+  ChevronDown,
+  Store,
+  Users,
+  Database,
+  PiggyBank,
+  Frown,
+  Search,
+  Map as MapIcon,
+  Package,
 } from "lucide-react";
 import heroImg from "@/assets/hero-illustration.png";
 import problemImg from "@/assets/problem-illustration.png";
@@ -20,17 +39,33 @@ export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
       { title: "PasarCek — Cek & Bandingkan Harga Sembako Terdekat | Gratis" },
-      { name: "description", content: "Cek harga sembako terbaru dan bandingkan antar pasar terdekat. Hemat waktu & uang belanja harian keluarga. Akses aplikasi PasarCek gratis!" },
-      { name: "keywords", content: "cek harga sembako, harga beras hari ini, bandingkan harga pasar, aplikasi belanja hemat, harga cabai, harga telur terdekat, pasar tradisional" },
+      {
+        name: "description",
+        content:
+          "Cek harga sembako terbaru dan bandingkan antar pasar terdekat. Hemat waktu & uang belanja harian keluarga. Akses aplikasi PasarCek gratis!",
+      },
+      {
+        name: "keywords",
+        content:
+          "cek harga sembako, harga beras hari ini, bandingkan harga pasar, aplikasi belanja hemat, harga cabai, harga telur terdekat, pasar tradisional",
+      },
       { property: "og:title", content: "PasarCek — Cek & Bandingkan Harga Sembako Terdekat" },
-      { property: "og:description", content: "Cek harga sembako terbaru dan bandingkan antar pasar terdekat. Hemat waktu & uang belanja harian keluarga." },
+      {
+        property: "og:description",
+        content:
+          "Cek harga sembako terbaru dan bandingkan antar pasar terdekat. Hemat waktu & uang belanja harian keluarga.",
+      },
       { property: "og:url", content: "/" },
       { property: "og:image", content: "/og-image.jpg" },
       { property: "og:image:alt", content: "PasarCek — Aplikasi cek harga sembako terbaru" },
       { property: "og:image:width", content: "1200" },
       { property: "og:image:height", content: "630" },
       { name: "twitter:title", content: "PasarCek — Cek & Bandingkan Harga Sembako Terdekat" },
-      { name: "twitter:description", content: "Cek harga sembako terbaru dan bandingkan antar pasar terdekat. Hemat waktu & uang belanja harian keluarga." },
+      {
+        name: "twitter:description",
+        content:
+          "Cek harga sembako terbaru dan bandingkan antar pasar terdekat. Hemat waktu & uang belanja harian keluarga.",
+      },
       { name: "twitter:image", content: "/twitter-image.jpg" },
       { name: "twitter:image:alt", content: "PasarCek — Aplikasi cek harga sembako terbaru" },
     ],
@@ -49,7 +84,8 @@ export const Route = createFileRoute("/")({
             price: "0",
             priceCurrency: "IDR",
           },
-          description: "Aplikasi cek harga sembako terbaru dan bandingkan antar pasar terdekat untuk belanja lebih hemat.",
+          description:
+            "Aplikasi cek harga sembako terbaru dan bandingkan antar pasar terdekat untuk belanja lebih hemat.",
           aggregateRating: {
             "@type": "AggregateRating",
             ratingValue: "4.8",
@@ -83,26 +119,55 @@ function Logo() {
 }
 
 function CTAButton({
-  children, variant = "primary", href = "#cta", className = "", onClick,
-}: { children: React.ReactNode; variant?: "primary" | "secondary" | "white"; href?: string; className?: string; onClick?: () => void }) {
-  const base = "inline-flex items-center justify-center gap-2 rounded-2xl px-6 py-3 text-sm font-semibold transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0";
+  children,
+  variant = "primary",
+  href = "#cta",
+  className = "",
+  onClick,
+}: {
+  children: React.ReactNode;
+  variant?: "primary" | "secondary" | "white";
+  href?: string;
+  className?: string;
+  onClick?: () => void;
+}) {
+  const base =
+    "inline-flex items-center justify-center gap-2 rounded-2xl px-6 py-3 text-sm font-semibold transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0";
   const styles = {
     primary: "bg-gradient-primary text-primary-foreground shadow-card hover:shadow-elevated",
     secondary: "bg-surface text-primary border border-border hover:border-accent hover:text-accent",
     white: "bg-white text-primary shadow-card hover:shadow-elevated",
   } as const;
-  return <a href={href} onClick={onClick} className={`${base} ${styles[variant]} ${className}`}>{children}</a>;
+  return (
+    <a href={href} onClick={onClick} className={`${base} ${styles[variant]} ${className}`}>
+      {children}
+    </a>
+  );
 }
 
-function SectionTitle({ eyebrow, title, subtitle, center = true }: { eyebrow?: string; title: string; subtitle?: string; center?: boolean }) {
+function SectionTitle({
+  eyebrow,
+  title,
+  subtitle,
+  center = true,
+}: {
+  eyebrow?: string;
+  title: string;
+  subtitle?: string;
+  center?: boolean;
+}) {
   return (
     <div className={`${center ? "text-center mx-auto" : ""} max-w-3xl mb-12`}>
       {eyebrow && (
-        <div className={`inline-flex items-center gap-2 rounded-full bg-accent/10 px-4 py-1.5 text-xs font-semibold text-accent mb-4`}>
+        <div
+          className={`inline-flex items-center gap-2 rounded-full bg-accent/10 px-4 py-1.5 text-xs font-semibold text-accent mb-4`}
+        >
           <Sparkles className="h-3.5 w-3.5" /> {eyebrow}
         </div>
       )}
-      <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-foreground leading-tight">{title}</h2>
+      <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-foreground leading-tight">
+        {title}
+      </h2>
       {subtitle && <p className="mt-4 text-base md:text-lg text-muted-foreground">{subtitle}</p>}
     </div>
   );
@@ -125,9 +190,14 @@ function Navbar() {
       <nav className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
         <Logo />
         <ul className="hidden md:flex items-center gap-8">
-          {links.map(l => (
+          {links.map((l) => (
             <li key={l.href}>
-              <a href={l.href} className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors">{l.label}</a>
+              <a
+                href={l.href}
+                className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
+              >
+                {l.label}
+              </a>
             </li>
           ))}
         </ul>
@@ -138,7 +208,12 @@ function Navbar() {
             <CTAButton href="/dashboard">Buka Aplikasi</CTAButton>
           ) : (
             <>
-              <a href="/auth?tab=login" className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors">Masuk</a>
+              <a
+                href="/auth?tab=login"
+                className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
+              >
+                Masuk
+              </a>
               <CTAButton href="/dashboard">Buka Aplikasi</CTAButton>
             </>
           )}
@@ -169,7 +244,11 @@ function Navbar() {
               </a>
             </>
           )}
-          <button onClick={() => setOpen(!open)} aria-label="Menu" className="p-2 rounded-lg hover:bg-muted">
+          <button
+            onClick={() => setOpen(!open)}
+            aria-label="Menu"
+            className="p-2 rounded-lg hover:bg-muted"
+          >
             {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
         </div>
@@ -179,8 +258,15 @@ function Navbar() {
       {open && (
         <div className="md:hidden border-t border-border bg-white px-4 py-6 space-y-6">
           <div className="space-y-1">
-            {links.map(l => (
-              <a key={l.href} href={l.href} onClick={() => setOpen(false)} className="block text-base font-semibold text-foreground py-2.5 px-3 rounded-xl hover:bg-muted/50 transition-colors">{l.label}</a>
+            {links.map((l) => (
+              <a
+                key={l.href}
+                href={l.href}
+                onClick={() => setOpen(false)}
+                className="block text-base font-semibold text-foreground py-2.5 px-3 rounded-xl hover:bg-muted/50 transition-colors"
+              >
+                {l.label}
+              </a>
             ))}
           </div>
           <div className="pt-6 border-t border-border flex flex-col gap-3">
@@ -197,11 +283,7 @@ function Navbar() {
                 >
                   Masuk
                 </a>
-                <CTAButton
-                  href="/dashboard"
-                  className="w-full"
-                  onClick={() => setOpen(false)}
-                >
+                <CTAButton href="/dashboard" className="w-full" onClick={() => setOpen(false)}>
                   Buka Aplikasi
                 </CTAButton>
               </>
@@ -235,10 +317,12 @@ function Hero() {
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
             <CTAButton href={user ? "/dashboard" : "/auth?tab=register"}>Coba Gratis</CTAButton>
-            <CTAButton href="#cara-kerja" variant="secondary">Lihat Cara Kerja</CTAButton>
+            <CTAButton href="#cara-kerja" variant="secondary">
+              Lihat Cara Kerja
+            </CTAButton>
           </div>
           <ul className="mt-8 flex flex-wrap gap-x-6 gap-y-3">
-            {["Data Harga Harian", "Pasar Terdekat", "Gratis Digunakan"].map(t => (
+            {["Data Harga Harian", "Pasar Terdekat", "Gratis Digunakan"].map((t) => (
               <li key={t} className="flex items-center gap-2 text-sm text-foreground/80">
                 <span className="grid h-5 w-5 place-items-center rounded-full bg-success/15 text-success">
                   <Check className="h-3 w-3" strokeWidth={3} />
@@ -275,12 +359,17 @@ function Stats() {
   return (
     <section className="bg-white py-14">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {stats.map(s => (
-          <div key={s.label} className="rounded-2xl bg-secondary/60 border border-border p-6 text-center hover:shadow-card transition-shadow">
+        {stats.map((s) => (
+          <div
+            key={s.label}
+            className="rounded-2xl bg-secondary/60 border border-border p-6 text-center hover:shadow-card transition-shadow"
+          >
             <div className="mx-auto grid h-12 w-12 place-items-center rounded-xl bg-gradient-primary text-primary-foreground mb-3">
               <s.icon className="h-6 w-6" />
             </div>
-            <div className="text-2xl md:text-3xl font-bold font-display text-primary">{s.value}</div>
+            <div className="text-2xl md:text-3xl font-bold font-display text-primary">
+              {s.value}
+            </div>
             <div className="text-xs md:text-sm text-muted-foreground mt-1">{s.label}</div>
           </div>
         ))}
@@ -293,10 +382,26 @@ function Stats() {
 
 function Problems() {
   const problems = [
-    { icon: TrendingDown, title: "Harga berubah setiap hari", desc: "Tidak ada acuan harga yang jelas dari satu hari ke hari berikutnya." },
-    { icon: Search, title: "Harus survei pasar satu per satu", desc: "Buang waktu dan tenaga keliling pasar hanya untuk cek harga." },
-    { icon: Frown, title: "Tidak tahu pasar termurah", desc: "Akhirnya belanja di tempat yang sama meski belum tentu paling murah." },
-    { icon: Wallet, title: "Pengeluaran membengkak", desc: "Tanpa data harga, anggaran rumah tangga sulit dikontrol." },
+    {
+      icon: TrendingDown,
+      title: "Harga berubah setiap hari",
+      desc: "Tidak ada acuan harga yang jelas dari satu hari ke hari berikutnya.",
+    },
+    {
+      icon: Search,
+      title: "Harus survei pasar satu per satu",
+      desc: "Buang waktu dan tenaga keliling pasar hanya untuk cek harga.",
+    },
+    {
+      icon: Frown,
+      title: "Tidak tahu pasar termurah",
+      desc: "Akhirnya belanja di tempat yang sama meski belum tentu paling murah.",
+    },
+    {
+      icon: Wallet,
+      title: "Pengeluaran membengkak",
+      desc: "Tanpa data harga, anggaran rumah tangga sulit dikontrol.",
+    },
   ];
   return (
     <section className="py-20">
@@ -307,10 +412,20 @@ function Problems() {
           subtitle="Sebagian besar keluarga Indonesia membuang uang lebih banyak karena kurangnya informasi harga."
         />
         <div className="grid lg:grid-cols-2 gap-10 items-center">
-          <img src={problemImg} alt="Frustrasi saat belanja di pasar" width={900} height={900} loading="lazy" className="w-full max-w-md mx-auto" />
+          <img
+            src={problemImg}
+            alt="Frustrasi saat belanja di pasar"
+            width={900}
+            height={900}
+            loading="lazy"
+            className="w-full max-w-md mx-auto"
+          />
           <div className="grid sm:grid-cols-2 gap-4">
-            {problems.map(p => (
-              <div key={p.title} className="rounded-2xl bg-white border border-border p-6 hover:shadow-card hover:-translate-y-1 transition-all">
+            {problems.map((p) => (
+              <div
+                key={p.title}
+                className="rounded-2xl bg-white border border-border p-6 hover:shadow-card hover:-translate-y-1 transition-all"
+              >
                 <div className="grid h-10 w-10 place-items-center rounded-xl bg-destructive/10 text-destructive mb-3">
                   <p.icon className="h-5 w-5" />
                 </div>
@@ -329,10 +444,26 @@ function Problems() {
 
 function Why() {
   const items = [
-    { icon: BarChart3, title: "Data Real-time", desc: "Harga sembako diperbarui setiap hari dari pasar tradisional terverifikasi." },
-    { icon: Store, title: "Bandingkan Banyak Pasar", desc: "Lihat harga komoditas yang sama di berbagai pasar dalam satu layar." },
-    { icon: Clock, title: "Hemat Waktu & Transport", desc: "Tidak perlu keliling — cukup buka aplikasi sebelum berangkat." },
-    { icon: Brain, title: "Keputusan Belanja Cerdas", desc: "Belanja berdasarkan data, bukan tebakan. Anggaran lebih terkontrol." },
+    {
+      icon: BarChart3,
+      title: "Data Real-time",
+      desc: "Harga sembako diperbarui setiap hari dari pasar tradisional terverifikasi.",
+    },
+    {
+      icon: Store,
+      title: "Bandingkan Banyak Pasar",
+      desc: "Lihat harga komoditas yang sama di berbagai pasar dalam satu layar.",
+    },
+    {
+      icon: Clock,
+      title: "Hemat Waktu & Transport",
+      desc: "Tidak perlu keliling — cukup buka aplikasi sebelum berangkat.",
+    },
+    {
+      icon: Brain,
+      title: "Keputusan Belanja Cerdas",
+      desc: "Belanja berdasarkan data, bukan tebakan. Anggaran lebih terkontrol.",
+    },
   ];
   return (
     <section className="py-20 bg-secondary/40">
@@ -343,8 +474,11 @@ function Why() {
           subtitle="Dirancang untuk membantu ibu rumah tangga Indonesia berbelanja lebih cerdas setiap hari."
         />
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
-          {items.map(i => (
-            <div key={i.title} className="group rounded-3xl bg-white border border-border p-6 hover:shadow-elevated hover:-translate-y-2 transition-all">
+          {items.map((i) => (
+            <div
+              key={i.title}
+              className="group rounded-3xl bg-white border border-border p-6 hover:shadow-elevated hover:-translate-y-2 transition-all"
+            >
               <div className="grid h-14 w-14 place-items-center rounded-2xl bg-gradient-primary text-primary-foreground mb-4 group-hover:scale-110 transition-transform">
                 <i.icon className="h-7 w-7" />
               </div>
@@ -363,12 +497,48 @@ function Why() {
 function Features() {
   const { user } = useAuth();
   const features = [
-    { icon: BarChart3, tag: "Harga Hari Ini", title: "Harga Sembako Selalu Terbaru", desc: "Lihat harga beras, cabai, telur, ayam, minyak, gula, bawang, dan kebutuhan pokok lainnya — diperbarui harian.", href: "/prices" },
-    { icon: MapIcon, tag: "Lokasi", title: "Temukan Pasar Terdekat", desc: "Berbasis lokasi Anda, lihat pasar tradisional terdekat lengkap dengan jam buka dan rating.", href: "/markets" },
-    { icon: BarChart3, tag: "Perbandingan", title: "Bandingkan Harga Antar Pasar", desc: "Lihat harga komoditas yang sama di beberapa pasar sekaligus dalam satu tabel.", href: "/compare" },
-    { icon: ListChecks, tag: "Wishlist", title: "Daftar Belanja Pintar", desc: "Buat daftar kebutuhan sebelum berangkat agar belanja lebih terorganisir dan tidak boros.", href: "/wishlist" },
-    { icon: Bell, tag: "Notifikasi", title: "Notifikasi Harga Turun", desc: "Dapatkan pemberitahuan otomatis saat harga komoditas favorit Anda turun.", href: "/notifications" },
-    { icon: Heart, tag: "Favorit", title: "Pasar Favorit", desc: "Simpan pasar favorit Anda untuk akses cepat ke harga dan promo terbaru.", href: "/favorites" },
+    {
+      icon: BarChart3,
+      tag: "Harga Hari Ini",
+      title: "Harga Sembako Selalu Terbaru",
+      desc: "Lihat harga beras, cabai, telur, ayam, minyak, gula, bawang, dan kebutuhan pokok lainnya — diperbarui harian.",
+      href: "/prices",
+    },
+    {
+      icon: MapIcon,
+      tag: "Lokasi",
+      title: "Temukan Pasar Terdekat",
+      desc: "Berbasis lokasi Anda, lihat pasar tradisional terdekat lengkap dengan jam buka dan rating.",
+      href: "/markets",
+    },
+    {
+      icon: BarChart3,
+      tag: "Perbandingan",
+      title: "Bandingkan Harga Antar Pasar",
+      desc: "Lihat harga komoditas yang sama di beberapa pasar sekaligus dalam satu tabel.",
+      href: "/compare",
+    },
+    {
+      icon: ListChecks,
+      tag: "Wishlist",
+      title: "Daftar Belanja Pintar",
+      desc: "Buat daftar kebutuhan sebelum berangkat agar belanja lebih terorganisir dan tidak boros.",
+      href: "/wishlist",
+    },
+    {
+      icon: Bell,
+      tag: "Notifikasi",
+      title: "Notifikasi Harga Turun",
+      desc: "Dapatkan pemberitahuan otomatis saat harga komoditas favorit Anda turun.",
+      href: "/notifications",
+    },
+    {
+      icon: Heart,
+      tag: "Favorit",
+      title: "Pasar Favorit",
+      desc: "Simpan pasar favorit Anda untuk akses cepat ke harga dan promo terbaru.",
+      href: "/favorites",
+    },
   ];
   return (
     <section id="fitur" className="py-20">
@@ -378,7 +548,7 @@ function Features() {
           title="Semua yang Anda Butuhkan Untuk Belanja Lebih Hemat"
         />
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
-          {features.map(f => (
+          {features.map((f) => (
             <Link
               key={f.title}
               to={user ? f.href : "/auth?tab=register"}
@@ -388,15 +558,21 @@ function Features() {
                 <div className="grid h-11 w-11 place-items-center rounded-xl bg-accent/10 text-accent group-hover:bg-[var(--color-brand-blue)] group-hover:text-white transition-colors">
                   <f.icon className="h-5 w-5" />
                 </div>
-                <span className="text-xs font-semibold text-accent uppercase tracking-wider">{f.tag}</span>
+                <span className="text-xs font-semibold text-accent uppercase tracking-wider">
+                  {f.tag}
+                </span>
               </div>
-              <h3 className="font-display font-semibold text-lg text-foreground group-hover:text-[var(--color-brand-blue)] transition-colors">{f.title}</h3>
+              <h3 className="font-display font-semibold text-lg text-foreground group-hover:text-[var(--color-brand-blue)] transition-colors">
+                {f.title}
+              </h3>
               <p className="text-sm text-muted-foreground mt-2">{f.desc}</p>
             </Link>
           ))}
         </div>
         <div className="mt-12 text-center">
-          <CTAButton href={user ? "/dashboard" : "/auth?tab=register"}>Coba Semua Fitur Gratis</CTAButton>
+          <CTAButton href={user ? "/dashboard" : "/auth?tab=register"}>
+            Coba Semua Fitur Gratis
+          </CTAButton>
         </div>
       </div>
     </section>
@@ -407,9 +583,21 @@ function Features() {
 
 function HowItWorks() {
   const steps = [
-    { icon: MapPin, title: "Pilih Lokasi", desc: "Aktifkan GPS atau pilih area belanja Anda secara manual." },
-    { icon: BarChart3, title: "Bandingkan Harga", desc: "Lihat harga komoditas yang Anda butuhkan di berbagai pasar terdekat." },
-    { icon: ShoppingBasket, title: "Belanja di Pasar Termurah", desc: "Berangkat ke pasar dengan total belanja paling hemat." },
+    {
+      icon: MapPin,
+      title: "Pilih Lokasi",
+      desc: "Aktifkan GPS atau pilih area belanja Anda secara manual.",
+    },
+    {
+      icon: BarChart3,
+      title: "Bandingkan Harga",
+      desc: "Lihat harga komoditas yang Anda butuhkan di berbagai pasar terdekat.",
+    },
+    {
+      icon: ShoppingBasket,
+      title: "Belanja di Pasar Termurah",
+      desc: "Berangkat ke pasar dengan total belanja paling hemat.",
+    },
   ];
   return (
     <section id="cara-kerja" className="py-20 bg-secondary/40">
@@ -417,7 +605,10 @@ function HowItWorks() {
         <SectionTitle eyebrow="Cara Kerja" title="Hanya 3 Langkah Untuk Belanja Lebih Hemat" />
         <div className="grid md:grid-cols-3 gap-6 relative">
           {steps.map((s, i) => (
-            <div key={s.title} className="relative rounded-3xl bg-white border border-border p-8 text-center hover:shadow-card transition-all">
+            <div
+              key={s.title}
+              className="relative rounded-3xl bg-white border border-border p-8 text-center hover:shadow-card transition-all"
+            >
               <div className="absolute -top-4 left-1/2 -translate-x-1/2 grid h-8 w-8 place-items-center rounded-full bg-gradient-primary text-primary-foreground text-sm font-bold shadow-card">
                 {i + 1}
               </div>
@@ -437,18 +628,28 @@ function HowItWorks() {
 /* ---------------- App Preview ---------------- */
 
 function AppPreview() {
-  const screens = ["Home", "Harga Hari Ini", "Pasar Terdekat", "Bandingkan Harga", "Smart Basket", "Profil"];
+  const screens = [
+    "Home",
+    "Harga Hari Ini",
+    "Pasar Terdekat",
+    "Bandingkan Harga",
+    "Smart Basket",
+    "Profil",
+  ];
   return (
     <section className="py-20">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <SectionTitle eyebrow="Preview Aplikasi" title="Lihat Tampilan Aplikasi" subtitle="Antarmuka yang bersih, ramah, dan mudah dipahami siapa saja." />
+        <SectionTitle
+          eyebrow="Preview Aplikasi"
+          title="Lihat Tampilan Aplikasi"
+          subtitle="Antarmuka yang bersih, ramah, dan mudah dipahami siapa saja."
+        />
         <div className="relative rounded-3xl bg-gradient-hero p-8 md:p-12 border border-border overflow-hidden">
           <div className="absolute -top-20 -right-20 h-72 w-72 rounded-full bg-accent/20 blur-3xl" />
-          
+
           <div className="relative flex items-center justify-center animate-float">
             {/* Phone Simulator Frame */}
             <div className="relative w-full max-w-[325px] h-[600px] rounded-[3rem] border-[10px] border-slate-900 bg-background shadow-elevated overflow-hidden select-none flex flex-col text-left">
-              
               {/* Phone Speaker & Camera (Notch) */}
               <div className="absolute top-2 left-1/2 -translate-x-1/2 w-28 h-5 bg-slate-900 rounded-full z-30 flex items-center justify-center">
                 <div className="w-2.5 h-2.5 bg-slate-800 rounded-full ml-auto mr-4" />
@@ -480,8 +681,10 @@ function AppPreview() {
               </div>
 
               {/* Scrollable Simulator App Content */}
-              <div className="flex-1 overflow-y-auto px-3.5 py-4 space-y-4 bg-secondary/35" style={{ scrollbarWidth: 'none' }}>
-                
+              <div
+                className="flex-1 overflow-y-auto px-3.5 py-4 space-y-4 bg-secondary/35"
+                style={{ scrollbarWidth: "none" }}
+              >
                 {/* Search Bar */}
                 <div className="relative shadow-soft rounded-2xl">
                   <Search className="absolute left-3.5 top-3 h-4 w-4 text-muted-foreground/60" />
@@ -494,7 +697,7 @@ function AppPreview() {
                 </div>
 
                 {/* Categories Tab */}
-                <div className="flex gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
+                <div className="flex gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: "none" }}>
                   {["Semua", "Minyak", "Bawang", "Beras", "Cabai"].map((cat, idx) => (
                     <span
                       key={cat}
@@ -511,7 +714,9 @@ function AppPreview() {
 
                 {/* Section Title */}
                 <div className="flex items-center justify-between px-1">
-                  <span className="text-[10px] font-extrabold text-muted-foreground/80 uppercase tracking-wider">Harga Hari Ini</span>
+                  <span className="text-[10px] font-extrabold text-muted-foreground/80 uppercase tracking-wider">
+                    Harga Hari Ini
+                  </span>
                   <span className="text-[9px] font-bold text-accent">Lihat Semua</span>
                 </div>
 
@@ -519,19 +724,27 @@ function AppPreview() {
                 <div className="bg-white rounded-2xl border border-border/80 p-3.5 shadow-soft flex flex-col gap-3 hover:shadow-card transition-shadow">
                   <div className="flex items-center gap-3">
                     <div className="w-14 h-14 shrink-0 rounded-xl bg-slate-50 border border-border/60 flex items-center justify-center overflow-hidden">
-                      <img src={cookingOilImg} alt="Minyak Goreng" className="w-full h-full object-contain p-0.5" />
+                      <img
+                        src={cookingOilImg}
+                        alt="Minyak Goreng"
+                        className="w-full h-full object-contain p-0.5"
+                      />
                     </div>
                     <div>
                       <span className="inline-block px-1.5 py-0.5 rounded bg-accent/10 text-accent text-[8px] font-extrabold uppercase tracking-wider mb-1">
                         Minyak Goreng
                       </span>
-                      <h4 className="font-display font-bold text-xs text-foreground leading-tight">Minyak Goreng Premium 2L</h4>
+                      <h4 className="font-display font-bold text-xs text-foreground leading-tight">
+                        Minyak Goreng Premium 2L
+                      </h4>
                     </div>
                   </div>
-                  
+
                   <div className="border-t border-border/60 pt-3 space-y-2">
-                    <div className="text-[9px] font-bold text-muted-foreground/60 uppercase tracking-wider">Bandingkan Pasar:</div>
-                    
+                    <div className="text-[9px] font-bold text-muted-foreground/60 uppercase tracking-wider">
+                      Bandingkan Pasar:
+                    </div>
+
                     <div className="flex items-center justify-between text-xs py-1.5 px-2.5 rounded-xl bg-accent/5 border border-accent/10 text-foreground">
                       <span className="font-medium text-foreground/80">Pasar Santa</span>
                       <div className="flex items-center gap-1.5">
@@ -558,19 +771,27 @@ function AppPreview() {
                 <div className="bg-white rounded-2xl border border-border/80 p-3.5 shadow-soft flex flex-col gap-3 hover:shadow-card transition-shadow">
                   <div className="flex items-center gap-3">
                     <div className="w-14 h-14 shrink-0 rounded-xl bg-slate-50 border border-border/60 flex items-center justify-center overflow-hidden">
-                      <img src={shallotsImg} alt="Bawang Merah" className="w-full h-full object-contain p-0.5" />
+                      <img
+                        src={shallotsImg}
+                        alt="Bawang Merah"
+                        className="w-full h-full object-contain p-0.5"
+                      />
                     </div>
                     <div>
                       <span className="inline-block px-1.5 py-0.5 rounded bg-accent/10 text-accent text-[8px] font-extrabold uppercase tracking-wider mb-1">
                         Bumbu Dapur
                       </span>
-                      <h4 className="font-display font-bold text-xs text-foreground leading-tight">Bawang Merah Brebes 1kg</h4>
+                      <h4 className="font-display font-bold text-xs text-foreground leading-tight">
+                        Bawang Merah Brebes 1kg
+                      </h4>
                     </div>
                   </div>
-                  
+
                   <div className="border-t border-border/60 pt-3 space-y-2">
-                    <div className="text-[9px] font-bold text-muted-foreground/60 uppercase tracking-wider">Bandingkan Pasar:</div>
-                    
+                    <div className="text-[9px] font-bold text-muted-foreground/60 uppercase tracking-wider">
+                      Bandingkan Pasar:
+                    </div>
+
                     <div className="flex items-center justify-between text-xs py-1.5 px-2.5 rounded-xl bg-accent/5 border border-accent/10 text-foreground">
                       <span className="font-medium text-foreground/80">Pasar Kebayoran</span>
                       <div className="flex items-center gap-1.5">
@@ -592,7 +813,6 @@ function AppPreview() {
                     </div>
                   </div>
                 </div>
-
               </div>
 
               {/* Bottom Navigation Bar */}
@@ -610,13 +830,17 @@ function AppPreview() {
                   <span>Produk</span>
                 </div>
               </div>
-
             </div>
           </div>
-          
+
           <div className="relative mt-8 flex flex-wrap justify-center gap-2">
-            {screens.map(s => (
-              <span key={s} className="rounded-full bg-white/70 backdrop-blur px-4 py-1.5 text-xs font-semibold text-primary border border-border">{s}</span>
+            {screens.map((s) => (
+              <span
+                key={s}
+                className="rounded-full bg-white/70 backdrop-blur px-4 py-1.5 text-xs font-semibold text-primary border border-border"
+              >
+                {s}
+              </span>
             ))}
           </div>
         </div>
@@ -647,25 +871,38 @@ function SmartBasket() {
             Smart Basket: Temukan Pasar Paling Hemat Secara Otomatis
           </h2>
           <p className="mt-5 text-white/80 text-base md:text-lg">
-            Masukkan daftar belanja Anda dan PasarCek akan menghitung pasar mana yang memberikan total biaya paling murah.
+            Masukkan daftar belanja Anda dan PasarCek akan menghitung pasar mana yang memberikan
+            total biaya paling murah.
           </p>
           <div className="mt-8">
-            <CTAButton href={user ? "/smart-basket" : "/auth?tab=register"} variant="white">Coba Smart Basket</CTAButton>
+            <CTAButton href={user ? "/smart-basket" : "/auth?tab=register"} variant="white">
+              Coba Smart Basket
+            </CTAButton>
           </div>
         </div>
         <div className="rounded-3xl bg-white/10 backdrop-blur-xl border border-white/20 p-6 md:p-8 shadow-elevated">
-          <div className="text-xs uppercase tracking-wider text-white/60 font-semibold mb-3">Daftar Belanja</div>
+          <div className="text-xs uppercase tracking-wider text-white/60 font-semibold mb-3">
+            Daftar Belanja
+          </div>
           <ul className="space-y-2 mb-6">
-            {["Beras 5 kg", "Telur 2 kg", "Cabai 1 kg"].map(i => (
-              <li key={i} className="flex items-center gap-3 rounded-xl bg-white/10 px-4 py-3 text-sm">
+            {["Beras 5 kg", "Telur 2 kg", "Cabai 1 kg"].map((i) => (
+              <li
+                key={i}
+                className="flex items-center gap-3 rounded-xl bg-white/10 px-4 py-3 text-sm"
+              >
                 <Check className="h-4 w-4 text-success" strokeWidth={3} /> {i}
               </li>
             ))}
           </ul>
-          <div className="text-xs uppercase tracking-wider text-white/60 font-semibold mb-3">Hasil Perbandingan</div>
+          <div className="text-xs uppercase tracking-wider text-white/60 font-semibold mb-3">
+            Hasil Perbandingan
+          </div>
           <div className="space-y-2">
-            {markets.map(m => (
-              <div key={m.name} className={`flex items-center justify-between rounded-xl px-4 py-3 ${m.best ? "bg-success text-white" : "bg-white/10"}`}>
+            {markets.map((m) => (
+              <div
+                key={m.name}
+                className={`flex items-center justify-between rounded-xl px-4 py-3 ${m.best ? "bg-success text-white" : "bg-white/10"}`}
+              >
                 <span className="font-semibold text-sm">{m.name}</span>
                 <span className="font-display font-bold flex items-center gap-2">
                   {m.price} {m.best && <Check className="h-4 w-4" strokeWidth={3} />}
@@ -687,18 +924,37 @@ function SmartBasket() {
 
 function UseCases() {
   const personas = [
-    { emoji: "👩‍🍳", title: "Ibu Rumah Tangga", desc: "Atur anggaran belanja harian dengan lebih percaya diri." },
-    { emoji: "👨‍👩‍👧", title: "Keluarga Muda", desc: "Optimalkan pengeluaran rumah tangga di awal pernikahan." },
-    { emoji: "💼", title: "Pekerja Sibuk", desc: "Belanja efisien tanpa harus survei keliling pasar." },
-    { emoji: "🎓", title: "Mahasiswa & Anak Kost", desc: "Hemat uang jajan & belanja bulanan dengan harga termurah." },
+    {
+      emoji: "👩‍🍳",
+      title: "Ibu Rumah Tangga",
+      desc: "Atur anggaran belanja harian dengan lebih percaya diri.",
+    },
+    {
+      emoji: "👨‍👩‍👧",
+      title: "Keluarga Muda",
+      desc: "Optimalkan pengeluaran rumah tangga di awal pernikahan.",
+    },
+    {
+      emoji: "💼",
+      title: "Pekerja Sibuk",
+      desc: "Belanja efisien tanpa harus survei keliling pasar.",
+    },
+    {
+      emoji: "🎓",
+      title: "Mahasiswa & Anak Kost",
+      desc: "Hemat uang jajan & belanja bulanan dengan harga termurah.",
+    },
   ];
   return (
     <section className="py-20">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <SectionTitle eyebrow="Untuk Siapa?" title="Siapa yang Cocok Menggunakan PasarCek?" />
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
-          {personas.map(p => (
-            <div key={p.title} className="rounded-3xl bg-white border border-border p-6 text-center hover:shadow-card hover:-translate-y-1 transition-all">
+          {personas.map((p) => (
+            <div
+              key={p.title}
+              className="rounded-3xl bg-white border border-border p-6 text-center hover:shadow-card hover:-translate-y-1 transition-all"
+            >
               <div className="text-5xl mb-3">{p.emoji}</div>
               <h3 className="font-display font-semibold text-lg text-foreground">{p.title}</h3>
               <p className="text-sm text-muted-foreground mt-2">{p.desc}</p>
@@ -727,8 +983,11 @@ function Benefits() {
         <div>
           <SectionTitle eyebrow="Manfaat" title="Apa yang Akan Anda Dapatkan?" center={false} />
           <ul className="grid sm:grid-cols-2 gap-3">
-            {list.map(b => (
-              <li key={b} className="flex items-start gap-3 rounded-2xl bg-white border border-border p-4">
+            {list.map((b) => (
+              <li
+                key={b}
+                className="flex items-start gap-3 rounded-2xl bg-white border border-border p-4"
+              >
                 <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-success text-white">
                   <Check className="h-3.5 w-3.5" strokeWidth={3} />
                 </span>
@@ -739,16 +998,26 @@ function Benefits() {
         </div>
         <div className="grid sm:grid-cols-2 gap-4">
           <div className="rounded-3xl bg-destructive/5 border border-destructive/20 p-6">
-            <div className="text-xs font-semibold uppercase tracking-wider text-destructive mb-2">Sebelum</div>
+            <div className="text-xs font-semibold uppercase tracking-wider text-destructive mb-2">
+              Sebelum
+            </div>
             <div className="text-3xl mb-3">😩</div>
             <h4 className="font-display font-semibold text-foreground">Bingung memilih pasar</h4>
-            <p className="text-sm text-muted-foreground mt-1">Belanja tanpa data, pengeluaran tak terkontrol.</p>
+            <p className="text-sm text-muted-foreground mt-1">
+              Belanja tanpa data, pengeluaran tak terkontrol.
+            </p>
           </div>
           <div className="rounded-3xl bg-success/5 border border-success/30 p-6">
-            <div className="text-xs font-semibold uppercase tracking-wider text-success mb-2">Sesudah</div>
+            <div className="text-xs font-semibold uppercase tracking-wider text-success mb-2">
+              Sesudah
+            </div>
             <div className="text-3xl mb-3">🎉</div>
-            <h4 className="font-display font-semibold text-foreground">Langsung tahu pasar terbaik</h4>
-            <p className="text-sm text-muted-foreground mt-1">Belanja cerdas, hemat hingga 20% tiap bulan.</p>
+            <h4 className="font-display font-semibold text-foreground">
+              Langsung tahu pasar terbaik
+            </h4>
+            <p className="text-sm text-muted-foreground mt-1">
+              Belanja cerdas, hemat hingga 20% tiap bulan.
+            </p>
           </div>
         </div>
       </div>
@@ -763,41 +1032,74 @@ function Pricing() {
   return (
     <section id="harga" className="py-20">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <SectionTitle eyebrow="Harga" title="Pilih Paket yang Sesuai" subtitle="Mulai gratis, upgrade kapan saja untuk fitur lengkap." />
+        <SectionTitle
+          eyebrow="Harga"
+          title="Pilih Paket yang Sesuai"
+          subtitle="Mulai gratis, upgrade kapan saja untuk fitur lengkap."
+        />
         <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
           <div className="rounded-3xl bg-white border border-border p-8 hover:shadow-card transition-all">
-            <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Free</div>
+            <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              Free
+            </div>
             <div className="mt-3 flex items-baseline gap-1">
               <span className="text-5xl font-display font-bold text-foreground">Rp0</span>
             </div>
-            <p className="text-sm text-muted-foreground mt-2">Untuk memulai perjalanan hemat Anda.</p>
+            <p className="text-sm text-muted-foreground mt-2">
+              Untuk memulai perjalanan hemat Anda.
+            </p>
             <ul className="mt-6 space-y-3">
-              {["Harga harian", "Bandingkan pasar", "Smart Basket dasar", "Notifikasi terbatas"].map(f => (
+              {[
+                "Harga harian",
+                "Bandingkan pasar",
+                "Smart Basket dasar",
+                "Notifikasi terbatas",
+              ].map((f) => (
                 <li key={f} className="flex items-center gap-2 text-sm">
                   <Check className="h-4 w-4 text-success" strokeWidth={3} /> {f}
                 </li>
               ))}
             </ul>
-            <CTAButton href={user ? "/dashboard" : "/auth?tab=register"} variant="secondary" className="w-full mt-8">Mulai Gratis</CTAButton>
+            <CTAButton
+              href={user ? "/dashboard" : "/auth?tab=register"}
+              variant="secondary"
+              className="w-full mt-8"
+            >
+              Mulai Gratis
+            </CTAButton>
           </div>
           <div className="relative rounded-3xl bg-gradient-navy text-white p-8 shadow-elevated">
             <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-warning px-4 py-1 text-xs font-bold text-warning-foreground shadow-card">
               Paling Populer
             </div>
-            <div className="text-xs font-semibold uppercase tracking-wider text-white/70">Premium</div>
+            <div className="text-xs font-semibold uppercase tracking-wider text-white/70">
+              Premium
+            </div>
             <div className="mt-3 flex items-baseline gap-1">
               <span className="text-5xl font-display font-bold">Rp9.900</span>
               <span className="text-white/70">/bulan</span>
             </div>
             <p className="text-sm text-white/80 mt-2">Semua fitur untuk hemat maksimal.</p>
             <ul className="mt-6 space-y-3">
-              {["Alert harga tanpa batas", "Prediksi harga AI", "Riwayat penghematan", "Analitik 90 hari", "Smart Basket lengkap"].map(f => (
+              {[
+                "Alert harga tanpa batas",
+                "Prediksi harga AI",
+                "Riwayat penghematan",
+                "Analitik 90 hari",
+                "Smart Basket lengkap",
+              ].map((f) => (
                 <li key={f} className="flex items-center gap-2 text-sm">
                   <Check className="h-4 w-4 text-success" strokeWidth={3} /> {f}
                 </li>
               ))}
             </ul>
-            <CTAButton href={user ? "/checkout?package=premium" : "/auth?tab=register"} variant="white" className="w-full mt-8">Upgrade Premium</CTAButton>
+            <CTAButton
+              href={user ? "/checkout?package=premium" : "/auth?tab=register"}
+              variant="white"
+              className="w-full mt-8"
+            >
+              Upgrade Premium
+            </CTAButton>
           </div>
         </div>
       </div>
@@ -809,12 +1111,30 @@ function Pricing() {
 
 function FAQ() {
   const items = [
-    { q: "Apakah PasarCek gratis?", a: "Ya, fitur dasar PasarCek 100% gratis. Anda bisa upgrade ke Premium kapan saja untuk fitur lanjutan." },
-    { q: "Data harga berasal dari mana?", a: "Data dikumpulkan dari mitra pasar tradisional, surveyor lokal terverifikasi, dan kontribusi komunitas pengguna." },
-    { q: "Seberapa sering data diperbarui?", a: "Harga sembako diperbarui setiap hari, dengan beberapa komoditas utama diperbarui beberapa kali sehari." },
-    { q: "Apakah tersedia di seluruh Indonesia?", a: "Saat ini tersedia di kota-kota besar Jawa & Sumatera, dan terus berkembang ke kota lainnya." },
-    { q: "Bagaimana Smart Basket bekerja?", a: "Anda memasukkan daftar belanja, lalu PasarCek menghitung total harga di setiap pasar terdekat dan menampilkan yang paling hemat." },
-    { q: "Apakah saya bisa menyimpan pasar favorit?", a: "Tentu. Anda bisa menyimpan pasar favorit untuk akses cepat dan menerima notifikasi khusus dari pasar tersebut." },
+    {
+      q: "Apakah PasarCek gratis?",
+      a: "Ya, fitur dasar PasarCek 100% gratis. Anda bisa upgrade ke Premium kapan saja untuk fitur lanjutan.",
+    },
+    {
+      q: "Data harga berasal dari mana?",
+      a: "Data dikumpulkan dari mitra pasar tradisional, surveyor lokal terverifikasi, dan kontribusi komunitas pengguna.",
+    },
+    {
+      q: "Seberapa sering data diperbarui?",
+      a: "Harga sembako diperbarui setiap hari, dengan beberapa komoditas utama diperbarui beberapa kali sehari.",
+    },
+    {
+      q: "Apakah tersedia di seluruh Indonesia?",
+      a: "Saat ini tersedia di kota-kota besar Jawa & Sumatera, dan terus berkembang ke kota lainnya.",
+    },
+    {
+      q: "Bagaimana Smart Basket bekerja?",
+      a: "Anda memasukkan daftar belanja, lalu PasarCek menghitung total harga di setiap pasar terdekat dan menampilkan yang paling hemat.",
+    },
+    {
+      q: "Apakah saya bisa menyimpan pasar favorit?",
+      a: "Tentu. Anda bisa menyimpan pasar favorit untuk akses cepat dan menerima notifikasi khusus dari pasar tersebut.",
+    },
   ];
   const [open, setOpen] = useState<number | null>(0);
   return (
@@ -829,10 +1149,14 @@ function FAQ() {
                 className="w-full flex items-center justify-between p-5 text-left"
               >
                 <span className="font-display font-semibold text-foreground">{it.q}</span>
-                <ChevronDown className={`h-5 w-5 text-muted-foreground transition-transform ${open === i ? "rotate-180" : ""}`} />
+                <ChevronDown
+                  className={`h-5 w-5 text-muted-foreground transition-transform ${open === i ? "rotate-180" : ""}`}
+                />
               </button>
               {open === i && (
-                <div className="px-5 pb-5 text-sm text-muted-foreground animate-fade-up">{it.a}</div>
+                <div className="px-5 pb-5 text-sm text-muted-foreground animate-fade-up">
+                  {it.a}
+                </div>
               )}
             </div>
           ))}
@@ -860,7 +1184,9 @@ function FinalCTA() {
       if (error) {
         toast.error("Gagal mendaftar antrean prioritas: " + error.message);
       } else {
-        toast.success("Terima kasih! Akun Anda telah dimasukkan ke daftar prioritas antrean PasarCek.");
+        toast.success(
+          "Terima kasih! Akun Anda telah dimasukkan ke daftar prioritas antrean PasarCek.",
+        );
       }
     } else {
       localStorage.setItem("waitlist_priority_signup", "true");
@@ -880,10 +1206,13 @@ function FinalCTA() {
             Mulai Hemat Pengeluaran Belanja Mulai Hari Ini
           </h2>
           <p className="mt-5 text-white/80 text-base md:text-lg max-w-xl">
-            Ribuan keluarga sudah menggunakan PasarCek untuk membuat keputusan belanja yang lebih cerdas.
+            Ribuan keluarga sudah menggunakan PasarCek untuk membuat keputusan belanja yang lebih
+            cerdas.
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
-            <CTAButton href={user ? "/dashboard" : "/auth?tab=register"} variant="white">Akses Gratis</CTAButton>
+            <CTAButton href={user ? "/dashboard" : "/auth?tab=register"} variant="white">
+              Akses Gratis
+            </CTAButton>
             <button
               onClick={handleWaitlist}
               disabled={busy}
@@ -894,7 +1223,14 @@ function FinalCTA() {
           </div>
         </div>
         <div className="flex justify-center">
-          <img src={familyImg} alt="Keluarga bahagia menghemat belanja dengan PasarCek" width={1024} height={800} loading="lazy" className="w-full max-w-md animate-float" />
+          <img
+            src={familyImg}
+            alt="Keluarga bahagia menghemat belanja dengan PasarCek"
+            width={1024}
+            height={800}
+            loading="lazy"
+            className="w-full max-w-md animate-float"
+          />
         </div>
       </div>
     </section>
@@ -906,7 +1242,9 @@ function FinalCTA() {
 function Footer() {
   const handleUnderDev = (name: string) => (e: React.MouseEvent) => {
     e.preventDefault();
-    toast.info(`Fitur/Halaman ${name} sedang dalam pengembangan. Hubungi kami via email jika ada pertanyaan!`);
+    toast.info(
+      `Fitur/Halaman ${name} sedang dalam pengembangan. Hubungi kami via email jika ada pertanyaan!`,
+    );
   };
 
   const cols = [
@@ -941,14 +1279,15 @@ function Footer() {
         <div>
           <Logo />
           <p className="mt-4 text-sm text-muted-foreground max-w-xs">
-            Cek harga sembako terbaru & bandingkan pasar terdekat. Belanja lebih hemat untuk keluarga Indonesia.
+            Cek harga sembako terbaru & bandingkan pasar terdekat. Belanja lebih hemat untuk
+            keluarga Indonesia.
           </p>
         </div>
-        {cols.map(c => (
+        {cols.map((c) => (
           <div key={c.title}>
             <div className="font-display font-semibold text-foreground mb-3">{c.title}</div>
             <ul className="space-y-2">
-              {c.links.map(l => (
+              {c.links.map((l) => (
                 <li key={l.label}>
                   <a
                     href={l.href}

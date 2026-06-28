@@ -46,9 +46,16 @@ export const Route = createFileRoute("/markets/")({
   head: () => ({
     meta: [
       { title: "Lokasi Pasar Tradisional Terdekat — PasarCek" },
-      { name: "description", content: "Temukan pasar tradisional terdekat di Jakarta dan sekitarnya. Cek alamat, jam buka, dan harga sembako di tiap pasar." },
+      {
+        name: "description",
+        content:
+          "Temukan pasar tradisional terdekat di Jakarta dan sekitarnya. Cek alamat, jam buka, dan harga sembako di tiap pasar.",
+      },
       { property: "og:title", content: "Lokasi Pasar Tradisional Terdekat — PasarCek" },
-      { property: "og:description", content: "Daftar lengkap pasar dengan peta, alamat, dan jam operasional." },
+      {
+        property: "og:description",
+        content: "Daftar lengkap pasar dengan peta, alamat, dan jam operasional.",
+      },
     ],
   }),
   component: MarketsPage,
@@ -61,7 +68,7 @@ function MarketsPage() {
 
   const searchRef = useRef<HTMLDivElement>(null);
   const [showDropdown, setShowDropdown] = useState(false);
-  
+
   // New Market Request states
   const [showRequestModal, setShowRequestModal] = useState(false);
   const [reqName, setReqName] = useState("");
@@ -83,7 +90,8 @@ function MarketsPage() {
 
   const { data: markets } = useQuery({
     queryKey: ["markets-public"],
-    queryFn: async () => (await supabase.from("markets").select("*").eq("is_active", true).order("name")).data ?? [],
+    queryFn: async () =>
+      (await supabase.from("markets").select("*").eq("is_active", true).order("name")).data ?? [],
   });
 
   // Extract unique cities from active markets
@@ -98,13 +106,15 @@ function MarketsPage() {
   // Matches for cities based on q
   const matchedCities = useMemo(() => {
     if (!q.trim()) return [];
-    return allCities.filter(city => city.toLowerCase().includes(q.toLowerCase())).slice(0, 3);
+    return allCities.filter((city) => city.toLowerCase().includes(q.toLowerCase())).slice(0, 3);
   }, [allCities, q]);
 
   // Matches for markets based on q
   const matchedMarkets = useMemo(() => {
     if (!q.trim()) return [];
-    return (markets ?? []).filter(m => m.name.toLowerCase().includes(q.toLowerCase())).slice(0, 5);
+    return (markets ?? [])
+      .filter((m) => m.name.toLowerCase().includes(q.toLowerCase()))
+      .slice(0, 5);
   }, [markets, q]);
 
   async function submitRequest(e: React.FormEvent) {
@@ -121,7 +131,7 @@ function MarketsPage() {
         address: reqAddress,
         city: reqCity,
         province: reqProvince,
-        status: "pending"
+        status: "pending",
       });
       if (error) throw error;
 
@@ -143,12 +153,18 @@ function MarketsPage() {
     queryKey: ["fav-markets", user?.id],
     queryFn: async () => {
       if (!user) return [];
-      return (await supabase.from("favorites_markets").select("market_id").eq("user_id", user.id)).data ?? [];
+      return (
+        (await supabase.from("favorites_markets").select("market_id").eq("user_id", user.id))
+          .data ?? []
+      );
     },
     enabled: !!user,
   });
 
-  const favMarketIds = useMemo(() => new Set((favMarkets ?? []).map((fm: any) => fm.market_id)), [favMarkets]);
+  const favMarketIds = useMemo(
+    () => new Set((favMarkets ?? []).map((fm: any) => fm.market_id)),
+    [favMarkets],
+  );
 
   async function toggleFavMarket(marketId: string) {
     if (!user) {
@@ -157,7 +173,12 @@ function MarketsPage() {
     }
     const isFav = favMarketIds.has(marketId);
     if (isFav) {
-      const { data } = await supabase.from("favorites_markets").select("id").eq("user_id", user.id).eq("market_id", marketId).maybeSingle();
+      const { data } = await supabase
+        .from("favorites_markets")
+        .select("id")
+        .eq("user_id", user.id)
+        .eq("market_id", marketId)
+        .maybeSingle();
       if (data) {
         await supabase.from("favorites_markets").delete().eq("id", data.id);
         toast.success("Dihapus dari pasar favorit");
@@ -165,7 +186,7 @@ function MarketsPage() {
     } else {
       await supabase.from("favorites_markets").insert({
         user_id: user.id,
-        market_id: marketId
+        market_id: marketId,
       });
       toast.success("Ditambahkan ke pasar favorit");
     }
@@ -189,26 +210,33 @@ function MarketsPage() {
   useEffect(() => {
     // Register global Google Maps authentication failure callback
     (window as any).gm_authFailure = () => {
-      console.warn("Google Maps authentication failed (e.g. invalid key or domain restrictions). Falling back to Leaflet.");
+      console.warn(
+        "Google Maps authentication failed (e.g. invalid key or domain restrictions). Falling back to Leaflet.",
+      );
       setUseLeafletFallback(true);
     };
 
-    const isLocalhost = typeof window !== "undefined" && 
-      (window.location.hostname === "localhost" || 
-       window.location.hostname === "127.0.0.1" || 
-       window.location.hostname.includes("192.168."));
+    const isLocalhost =
+      typeof window !== "undefined" &&
+      (window.location.hostname === "localhost" ||
+        window.location.hostname === "127.0.0.1" ||
+        window.location.hostname.includes("192.168."));
 
     const hasCustomKey = !!import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
 
     // If on production Vercel and NO custom key is provided:
     // We immediately fallback to Leaflet to prevent loading the restricted Lovable key
     if (!isLocalhost && !hasCustomKey) {
-      console.info("Production Vercel environment detected without custom Google Maps key. Defaulting to Leaflet.");
+      console.info(
+        "Production Vercel environment detected without custom Google Maps key. Defaulting to Leaflet.",
+      );
       setUseLeafletFallback(true);
       return;
     }
 
-    const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || import.meta.env.VITE_LOVABLE_CONNECTOR_GOOGLE_MAPS_BROWSER_KEY;
+    const apiKey =
+      import.meta.env.VITE_GOOGLE_MAPS_API_KEY ||
+      import.meta.env.VITE_LOVABLE_CONNECTOR_GOOGLE_MAPS_BROWSER_KEY;
     if (!apiKey) {
       console.warn("Google Maps API Key is missing. Falling back to Leaflet.");
       setUseLeafletFallback(true);
@@ -289,7 +317,12 @@ function MarketsPage() {
     }
   }, [mapsLoaded, useLeafletFallback]);
 
-  const filtered = (markets ?? []).filter((m: any) => !q || m.name.toLowerCase().includes(q.toLowerCase()) || m.city.toLowerCase().includes(q.toLowerCase()));
+  const filtered = (markets ?? []).filter(
+    (m: any) =>
+      !q ||
+      m.name.toLowerCase().includes(q.toLowerCase()) ||
+      m.city.toLowerCase().includes(q.toLowerCase()),
+  );
 
   // Update Google Maps markers when filtered list or map instance changes
   useEffect(() => {
@@ -373,64 +406,69 @@ function MarketsPage() {
       Promise.all([
         import("leaflet"),
         // @ts-ignore
-        import("leaflet/dist/leaflet.css")
-      ]).then(([leafletModule]) => {
-        const L = leafletModule.default || leafletModule;
-        if (!container) return;
+        import("leaflet/dist/leaflet.css"),
+      ])
+        .then(([leafletModule]) => {
+          const L = leafletModule.default || leafletModule;
+          if (!container) return;
 
-        if (!leafletMapInstance.current) {
-          leafletMapInstance.current = L.map(container, {
-            center: [-6.21, 106.84],
-            zoom: 11,
-            zoomControl: false,
+          if (!leafletMapInstance.current) {
+            leafletMapInstance.current = L.map(container, {
+              center: [-6.21, 106.84],
+              zoom: 11,
+              zoomControl: false,
+            });
+
+            L.control.zoom({ position: "bottomright" }).addTo(leafletMapInstance.current);
+
+            // Light themed clean Voyager tiles
+            L.tileLayer(
+              "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png",
+              {
+                attribution:
+                  '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+                subdomains: "abcd",
+                maxZoom: 20,
+              },
+            ).addTo(leafletMapInstance.current);
+
+            leafletMarkersGroupRef.current = L.layerGroup().addTo(leafletMapInstance.current);
+          }
+
+          // Force size recalculation after init (key fix for blank map on nav)
+          requestAnimationFrame(() => {
+            leafletMapInstance.current?.invalidateSize({ animate: false });
           });
 
-          L.control.zoom({ position: "bottomright" }).addTo(leafletMapInstance.current);
+          if (leafletMarkersGroupRef.current) {
+            leafletMarkersGroupRef.current.clearLayers();
+          }
 
-          // Light themed clean Voyager tiles
-          L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png", {
-            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
-            subdomains: "abcd",
-            maxZoom: 20,
-          }).addTo(leafletMapInstance.current);
-
-          leafletMarkersGroupRef.current = L.layerGroup().addTo(leafletMapInstance.current);
-        }
-
-        // Force size recalculation after init (key fix for blank map on nav)
-        requestAnimationFrame(() => {
-          leafletMapInstance.current?.invalidateSize({ animate: false });
-        });
-
-        if (leafletMarkersGroupRef.current) {
-          leafletMarkersGroupRef.current.clearLayers();
-        }
-
-        const customIcon = L.divIcon({
-          className: "custom-leaflet-icon",
-          html: `
+          const customIcon = L.divIcon({
+            className: "custom-leaflet-icon",
+            html: `
             <div class="flex items-center justify-center w-8 h-8 rounded-full bg-[#1e3a8a] text-white shadow-lg border-2 border-white transform transition-transform hover:scale-110 hover:bg-[#127a79]">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4 text-white">
                 <path fill-rule="evenodd" d="M11.54 22.351l.07.04.028.016a.76.76 0 00.723 0l.028-.015.071-.041a16.975 16.975 0 001.144-.742 19.58 19.58 0 002.683-2.282c1.944-1.99 3.963-4.98 3.963-8.827a8.25 8.25 0 00-16.5 0c0 3.846 2.02 6.837 3.963 8.827a19.58 19.58 0 002.682 2.282 16.975 16.975 0 001.145.742zM12 13.5a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd" />
               </svg>
             </div>
           `,
-          iconSize: [32, 32],
-          iconAnchor: [16, 32],
-          popupAnchor: [0, -32],
-        });
+            iconSize: [32, 32],
+            iconAnchor: [16, 32],
+            popupAnchor: [0, -32],
+          });
 
-        const coords: [number, number][] = [];
+          const coords: [number, number][] = [];
 
-        filtered.forEach((m: any) => {
-          if (m.lat && m.lng) {
-            const lat = Number(m.lat);
-            const lng = Number(m.lng);
-            coords.push([lat, lng]);
+          filtered.forEach((m: any) => {
+            if (m.lat && m.lng) {
+              const lat = Number(m.lat);
+              const lng = Number(m.lng);
+              coords.push([lat, lng]);
 
-            const marker = L.marker([lat, lng], { icon: customIcon });
+              const marker = L.marker([lat, lng], { icon: customIcon });
 
-            const popupContent = `
+              const popupContent = `
               <div class="p-1 font-sans">
                 <h3 class="font-bold text-sm text-[#1e3a8a]">${m.name}</h3>
                 <p class="text-xs text-gray-600 mt-1">${m.address}, ${m.city}</p>
@@ -441,31 +479,32 @@ function MarketsPage() {
               </div>
             `;
 
-            marker.bindPopup(popupContent, {
-              maxWidth: 220,
-              className: "custom-leaflet-popup",
-            });
+              marker.bindPopup(popupContent, {
+                maxWidth: 220,
+                className: "custom-leaflet-popup",
+              });
 
-            leafletMarkersGroupRef.current?.addLayer(marker);
-          }
-        });
-
-        if (coords.length > 0 && leafletMapInstance.current) {
-          const bounds = L.latLngBounds(coords);
-          leafletMapInstance.current.fitBounds(bounds, { padding: [50, 50], maxZoom: 14 });
-        } else if (leafletMapInstance.current) {
-          leafletMapInstance.current.setView([-6.21, 106.84], 11);
-        }
-
-        // Force Leaflet to recalculate tile layout after container renders
-        if (leafletMapInstance.current) {
-          requestAnimationFrame(() => {
-            leafletMapInstance.current?.invalidateSize({ animate: false });
+              leafletMarkersGroupRef.current?.addLayer(marker);
+            }
           });
-        }
-      }).catch(err => {
-        console.error("Failed to load leaflet modules dynamically", err);
-      });
+
+          if (coords.length > 0 && leafletMapInstance.current) {
+            const bounds = L.latLngBounds(coords);
+            leafletMapInstance.current.fitBounds(bounds, { padding: [50, 50], maxZoom: 14 });
+          } else if (leafletMapInstance.current) {
+            leafletMapInstance.current.setView([-6.21, 106.84], 11);
+          }
+
+          // Force Leaflet to recalculate tile layout after container renders
+          if (leafletMapInstance.current) {
+            requestAnimationFrame(() => {
+              leafletMapInstance.current?.invalidateSize({ animate: false });
+            });
+          }
+        })
+        .catch((err) => {
+          console.error("Failed to load leaflet modules dynamically", err);
+        });
     };
 
     // Wait until container has real pixel dimensions before initializing
@@ -525,23 +564,28 @@ function MarketsPage() {
     const checkForGmapsError = () => {
       if (googleMapRef.current) {
         // 1. Check for the error documentation link (language-independent and cannot be obfuscated!)
-        const hasErrorLink = findInShadowDOM(googleMapRef.current, 'a[href*="error-messages"]') ||
-                             findInShadowDOM(googleMapRef.current, 'a[href*="staticmaperror"]') ||
-                             findInShadowDOM(googleMapRef.current, 'a[href*="developers.google.com/maps"]');
+        const hasErrorLink =
+          findInShadowDOM(googleMapRef.current, 'a[href*="error-messages"]') ||
+          findInShadowDOM(googleMapRef.current, 'a[href*="staticmaperror"]') ||
+          findInShadowDOM(googleMapRef.current, 'a[href*="developers.google.com/maps"]');
 
         // 2. Check for localized error texts (English and Indonesian)
-        const hasErrorText = findTextInShadowDOM(googleMapRef.current, "Oops!") ||
-                             findTextInShadowDOM(googleMapRef.current, "Something went wrong") ||
-                             findTextInShadowDOM(googleMapRef.current, "Maaf!") ||
-                             findTextInShadowDOM(googleMapRef.current, "Terjadi kesalahan") ||
-                             findTextInShadowDOM(googleMapRef.current, "tidak memuat Google Maps dengan benar");
+        const hasErrorText =
+          findTextInShadowDOM(googleMapRef.current, "Oops!") ||
+          findTextInShadowDOM(googleMapRef.current, "Something went wrong") ||
+          findTextInShadowDOM(googleMapRef.current, "Maaf!") ||
+          findTextInShadowDOM(googleMapRef.current, "Terjadi kesalahan") ||
+          findTextInShadowDOM(googleMapRef.current, "tidak memuat Google Maps dengan benar");
 
         // 3. Check for typical class names
-        const hasErrorClass = findInShadowDOM(googleMapRef.current, ".gm-err-container") || 
-                              findInShadowDOM(googleMapRef.current, ".gm-err-content");
-        
+        const hasErrorClass =
+          findInShadowDOM(googleMapRef.current, ".gm-err-container") ||
+          findInShadowDOM(googleMapRef.current, ".gm-err-content");
+
         if (hasErrorLink || hasErrorText || hasErrorClass) {
-          console.warn("Google Maps error detected via DOM/Shadow DOM scanning. Triggering Leaflet fallback.");
+          console.warn(
+            "Google Maps error detected via DOM/Shadow DOM scanning. Triggering Leaflet fallback.",
+          );
           setUseLeafletFallback(true);
           return true;
         }
@@ -612,7 +656,9 @@ function MarketsPage() {
                 <div className="absolute left-0 right-0 mt-1 z-50 max-h-[300px] overflow-y-auto rounded-md border border-gray-200 bg-white p-2 shadow-lg space-y-3">
                   {matchedCities.length > 0 && (
                     <div className="space-y-1">
-                      <p className="text-[9px] font-bold text-gray-400 uppercase tracking-wider px-1">Kota</p>
+                      <p className="text-[9px] font-bold text-gray-400 uppercase tracking-wider px-1">
+                        Kota
+                      </p>
                       <div className="space-y-0.5">
                         {matchedCities.map((city) => (
                           <button
@@ -634,7 +680,9 @@ function MarketsPage() {
 
                   {matchedMarkets.length > 0 && (
                     <div className="space-y-1">
-                      <p className="text-[9px] font-bold text-gray-400 uppercase tracking-wider px-1">Pasar</p>
+                      <p className="text-[9px] font-bold text-gray-400 uppercase tracking-wider px-1">
+                        Pasar
+                      </p>
                       <div className="space-y-0.5">
                         {matchedMarkets.map((m) => (
                           <Link
@@ -646,7 +694,9 @@ function MarketsPage() {
                           >
                             <span className="inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500 shrink-0" />
                             <span className="truncate">{m.name}</span>
-                            <span className="text-[10px] text-gray-400 font-normal ml-auto truncate max-w-[120px]">{m.city}</span>
+                            <span className="text-[10px] text-gray-400 font-normal ml-auto truncate max-w-[120px]">
+                              {m.city}
+                            </span>
                           </Link>
                         ))}
                       </div>
@@ -655,7 +705,9 @@ function MarketsPage() {
 
                   {matchedCities.length === 0 && matchedMarkets.length === 0 ? (
                     <div className="py-3 text-center space-y-2">
-                      <p className="text-xs text-gray-500 italic">Pasar/kota "{q}" tidak ditemukan.</p>
+                      <p className="text-xs text-gray-500 italic">
+                        Pasar/kota "{q}" tidak ditemukan.
+                      </p>
                       <Button
                         size="sm"
                         type="button"
@@ -718,7 +770,9 @@ function MarketsPage() {
                   </div>
                   <p className="mt-1 flex items-start gap-1 text-xs text-[var(--color-gray-500)]">
                     <MapPin className="h-3 w-3 shrink-0 mt-0.5" />
-                    <span>{m.address}, {m.city}</span>
+                    <span>
+                      {m.address}, {m.city}
+                    </span>
                   </p>
                   <div className="mt-2 flex items-center gap-3 text-xs text-[var(--color-gray-500)]">
                     {m.hours && (
@@ -747,7 +801,7 @@ function MarketsPage() {
           <div className="w-full max-w-md rounded-xl border border-gray-100 bg-white p-6 shadow-xl space-y-4 animate-in zoom-in-95 duration-200">
             <div className="flex items-center justify-between border-b border-gray-100 pb-3">
               <h3 className="text-lg font-bold text-gray-900">Ajukan Pasar Baru</h3>
-              <button 
+              <button
                 onClick={() => setShowRequestModal(false)}
                 className="text-gray-400 hover:text-gray-600 font-semibold text-lg"
               >
@@ -757,18 +811,18 @@ function MarketsPage() {
             <form onSubmit={submitRequest} className="space-y-4">
               <div className="space-y-1">
                 <label className="text-xs font-bold text-gray-700">Nama Pasar</label>
-                <Input 
-                  value={reqName} 
-                  onChange={(e) => setReqName(e.target.value)} 
+                <Input
+                  value={reqName}
+                  onChange={(e) => setReqName(e.target.value)}
                   placeholder="e.g. Pasar Jaya Tebet"
                   required
                 />
               </div>
               <div className="space-y-1">
                 <label className="text-xs font-bold text-gray-700">Alamat Lengkap</label>
-                <Input 
-                  value={reqAddress} 
-                  onChange={(e) => setReqAddress(e.target.value)} 
+                <Input
+                  value={reqAddress}
+                  onChange={(e) => setReqAddress(e.target.value)}
                   placeholder="e.g. Jl. Tebet Barat Raya No. 1"
                   required
                 />
@@ -776,34 +830,34 @@ function MarketsPage() {
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1">
                   <label className="text-xs font-bold text-gray-700">Kota</label>
-                  <Input 
-                    value={reqCity} 
-                    onChange={(e) => setReqCity(e.target.value)} 
+                  <Input
+                    value={reqCity}
+                    onChange={(e) => setReqCity(e.target.value)}
                     placeholder="e.g. Jakarta Selatan"
                     required
                   />
                 </div>
                 <div className="space-y-1">
                   <label className="text-xs font-bold text-gray-700">Provinsi</label>
-                  <Input 
-                    value={reqProvince} 
-                    onChange={(e) => setReqProvince(e.target.value)} 
+                  <Input
+                    value={reqProvince}
+                    onChange={(e) => setReqProvince(e.target.value)}
                     placeholder="e.g. DKI Jakarta"
                     required
                   />
                 </div>
               </div>
               <div className="flex gap-2 pt-2">
-                <Button 
-                  type="button" 
-                  variant="outline" 
+                <Button
+                  type="button"
+                  variant="outline"
                   onClick={() => setShowRequestModal(false)}
                   className="flex-1"
                 >
                   Batal
                 </Button>
-                <Button 
-                  type="submit" 
+                <Button
+                  type="submit"
                   disabled={isSubmittingReq}
                   className="flex-1 bg-[var(--color-brand-blue)] hover:bg-[var(--color-brand-blue)]/90 text-white"
                 >

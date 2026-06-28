@@ -3,7 +3,17 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { StatCard } from "@/components/app-shell";
 import { idr } from "@/lib/format";
-import { LineChart, Line, ResponsiveContainer, XAxis, YAxis, Tooltip, BarChart, Bar, CartesianGrid } from "recharts";
+import {
+  LineChart,
+  Line,
+  ResponsiveContainer,
+  XAxis,
+  YAxis,
+  Tooltip,
+  BarChart,
+  Bar,
+  CartesianGrid,
+} from "recharts";
 import { Badge } from "@/components/ui/badge";
 import { useState, useRef, useEffect, useMemo } from "react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
@@ -11,7 +21,29 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Sparkles, Send, Brain, Bot, User, Loader2, HelpCircle, RefreshCw, BarChart2, Save, Download, ChevronDown, FileText, Clipboard, Printer, Trash2, Key, AlertTriangle, Copy, Check, ShieldAlert } from "lucide-react";
+import {
+  Sparkles,
+  Send,
+  Brain,
+  Bot,
+  User,
+  Loader2,
+  HelpCircle,
+  RefreshCw,
+  BarChart2,
+  Save,
+  Download,
+  ChevronDown,
+  FileText,
+  Clipboard,
+  Printer,
+  Trash2,
+  Key,
+  AlertTriangle,
+  Copy,
+  Check,
+  ShieldAlert,
+} from "lucide-react";
 import { getAiAnalysis } from "@/lib/api/ai.functions";
 import { toast } from "sonner";
 import {
@@ -74,7 +106,10 @@ function AdminReports() {
       const activeSubsCountByPackage = new Map<string, number>();
       const activeSubscribedUsers = new Set<string>();
       (activeSubs ?? []).forEach((sub: any) => {
-        activeSubsCountByPackage.set(sub.package_id, (activeSubsCountByPackage.get(sub.package_id) ?? 0) + 1);
+        activeSubsCountByPackage.set(
+          sub.package_id,
+          (activeSubsCountByPackage.get(sub.package_id) ?? 0) + 1,
+        );
         activeSubscribedUsers.add(sub.user_id);
       });
 
@@ -83,11 +118,18 @@ function AdminReports() {
       const activeFreeCount = Math.max(0, totalUsersCount - activePremiumCount);
 
       // Aggregate order statistics by package_id
-      const statsByPackage = new Map<string, { totalOrders: number; successOrders: number; revenue: number }>();
+      const statsByPackage = new Map<
+        string,
+        { totalOrders: number; successOrders: number; revenue: number }
+      >();
       (orders ?? []).forEach((order: any) => {
         const pkgId = order.package_id;
         if (!pkgId) return;
-        const current = statsByPackage.get(pkgId) ?? { totalOrders: 0, successOrders: 0, revenue: 0 };
+        const current = statsByPackage.get(pkgId) ?? {
+          totalOrders: 0,
+          successOrders: 0,
+          revenue: 0,
+        };
         current.totalOrders += 1;
         if (order.status === "active" || order.status === "paid") {
           current.successOrders += 1;
@@ -99,7 +141,11 @@ function AdminReports() {
       // Map to package rows (include free package, premium bulanan, premium tahunan)
       const packageRows = (packages ?? []).map((pkg: any) => {
         const isFree = pkg.price === 0 || pkg.slug === "free";
-        const pkgStats = statsByPackage.get(pkg.id) ?? { totalOrders: 0, successOrders: 0, revenue: 0 };
+        const pkgStats = statsByPackage.get(pkg.id) ?? {
+          totalOrders: 0,
+          successOrders: 0,
+          revenue: 0,
+        };
 
         let activeUsers = 0;
         if (isFree) {
@@ -121,9 +167,7 @@ function AdminReports() {
       });
 
       // 5. Fetch all profiles and calculate user role distributions
-      const { data: userRoles } = await supabase
-        .from("user_roles")
-        .select("role");
+      const { data: userRoles } = await supabase.from("user_roles").select("role");
 
       // 6. Fetch total smart baskets count
       const { count: totalBaskets } = await supabase
@@ -136,7 +180,10 @@ function AdminReports() {
         .select("product_id, quantity, product:products(name, category)");
 
       // Aggregate popular products
-      const productCounts: Record<string, { name: string; category: string; count: number; quantity: number }> = {};
+      const productCounts: Record<
+        string,
+        { name: string; category: string; count: number; quantity: number }
+      > = {};
       (basketItems ?? []).forEach((item: any) => {
         if (!item.product) return;
         const key = item.product_id;
@@ -145,7 +192,7 @@ function AdminReports() {
             name: item.product.name,
             category: item.product.category,
             count: 0,
-            quantity: 0
+            quantity: 0,
           };
         }
         productCounts[key].count += 1;
@@ -162,7 +209,7 @@ function AdminReports() {
         amount: Number(s.savings_amount),
         query: s.search_query,
         date: s.created_at,
-        userType: premiumUserIds.has(s.user_id) ? "premium" : "free"
+        userType: premiumUserIds.has(s.user_id) ? "premium" : "free",
       }));
 
       return {
@@ -175,20 +222,23 @@ function AdminReports() {
           totalUsers: totalUsersCount,
           freeUsers: activeFreeCount,
           premiumUsers: activePremiumCount,
-          adminUsers: (userRoles ?? []).filter((r: any) => r.role === "admin" || r.role === "super_admin").length,
+          adminUsers: (userRoles ?? []).filter(
+            (r: any) => r.role === "admin" || r.role === "super_admin",
+          ).length,
           totalRevenue: total,
-          totalOrders: orders?.filter((o: any) => o.status === "active" || o.status === "paid").length ?? 0,
-          packageSummary: packageRows.map(row => ({
+          totalOrders:
+            orders?.filter((o: any) => o.status === "active" || o.status === "paid").length ?? 0,
+          packageSummary: packageRows.map((row) => ({
             name: row.name,
             price: row.price,
             activeUsers: row.activeUsers,
             totalOrders: row.totalOrders,
             successOrders: row.successOrders,
-            revenue: row.revenue
+            revenue: row.revenue,
           })),
           totalBaskets: totalBaskets ?? 0,
           popularProducts: popularProducts,
-        }
+        },
       };
     },
   });
@@ -198,12 +248,12 @@ function AdminReports() {
 
   const filteredSavings = useMemo(() => {
     if (!data?.processedSavings) return [];
-    
+
     return data.processedSavings.filter((s: any) => {
       if (savingsUserFilter !== "all" && s.userType !== savingsUserFilter) {
         return false;
       }
-      
+
       if (savingsDateFilter !== "all") {
         const limitDays = Number(savingsDateFilter);
         const recordDate = new Date(s.date);
@@ -213,7 +263,7 @@ function AdminReports() {
           return false;
         }
       }
-      
+
       return true;
     });
   }, [data?.processedSavings, savingsDateFilter, savingsUserFilter]);
@@ -232,7 +282,7 @@ function AdminReports() {
 
   const savingsChartData = useMemo(() => {
     const groups: Record<string, number> = {};
-    
+
     const daysToSeed = savingsDateFilter === "7" ? 7 : savingsDateFilter === "30" ? 30 : 15;
     for (let i = daysToSeed - 1; i >= 0; i--) {
       const d = new Date();
@@ -240,22 +290,25 @@ function AdminReports() {
       const label = d.toLocaleDateString("id-ID", { day: "numeric", month: "short" });
       groups[label] = 0;
     }
-    
+
     filteredSavings.forEach((s: any) => {
-      const label = new Date(s.date).toLocaleDateString("id-ID", { day: "numeric", month: "short" });
+      const label = new Date(s.date).toLocaleDateString("id-ID", {
+        day: "numeric",
+        month: "short",
+      });
       if (groups[label] !== undefined) {
         groups[label] = Number(groups[label]) + Number(s.amount);
       } else if (savingsDateFilter === "all" || savingsDateFilter === "90") {
         groups[label] = Number(groups[label] ?? 0) + Number(s.amount);
       }
     });
-    
+
     return Object.entries(groups).map(([date, savings]) => ({ date, savings }));
   }, [filteredSavings, savingsDateFilter]);
 
   const popularKeywords = useMemo(() => {
     const counts: Record<string, number> = {};
-    
+
     filteredSavings.forEach((s: any) => {
       if (!s.query) return;
       const itemsList = s.query.split(",");
@@ -266,7 +319,7 @@ function AdminReports() {
         }
       });
     });
-    
+
     return Object.entries(counts)
       .map(([name, count]) => ({ name, count }))
       .sort((a, b) => b.count - a.count)
@@ -296,7 +349,11 @@ function AdminReports() {
     const trimmed = key.trim();
     localStorage.setItem("pasardeck_gemini_api_key", trimmed);
     setLocalApiKey(trimmed);
-    toast.success(trimmed ? "Kunci API Gemini berhasil disimpan secara lokal!" : "Kunci API lokal dihapus. Menggunakan environment variable server.");
+    toast.success(
+      trimmed
+        ? "Kunci API Gemini berhasil disimpan secara lokal!"
+        : "Kunci API lokal dihapus. Menggunakan environment variable server.",
+    );
     setShowKeyInput(false);
   }
 
@@ -314,7 +371,7 @@ function AdminReports() {
   async function autoSaveChatHistory(updatedHistory: any[]) {
     try {
       const { data: userData } = await supabase.auth.getUser();
-      
+
       if (selectedReportId) {
         // Update existing report
         if (userData?.user) {
@@ -322,7 +379,7 @@ function AdminReports() {
             .from("ai_reports")
             .update({ chat_history: updatedHistory })
             .eq("id", selectedReportId);
-            
+
           if (error) {
             console.warn("Gagal auto-save ke database, mencoba lokal:", error.message);
             updateLocalStorageHistory(selectedReportId, updatedHistory);
@@ -334,9 +391,11 @@ function AdminReports() {
         }
       } else {
         // Auto-create new report because they started chatting
-        const reportId = crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2, 15);
-        const defaultTitle = `Diskusi Konsultasi ${new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' })}`;
-        
+        const reportId = crypto.randomUUID
+          ? crypto.randomUUID()
+          : Math.random().toString(36).substring(2, 15);
+        const defaultTitle = `Diskusi Konsultasi ${new Date().toLocaleDateString("id-ID", { day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" })}`;
+
         const newReport = {
           id: reportId,
           created_at: new Date().toISOString(),
@@ -345,19 +404,17 @@ function AdminReports() {
           chat_history: updatedHistory,
           metrics_snapshot: data?.aiMetrics || {},
         };
-        
+
         if (userData?.user) {
-          const { error } = await supabase
-            .from("ai_reports")
-            .insert({
-              id: reportId,
-              title: defaultTitle,
-              report_text: reportText || "Sesi tanya jawab konsultan AI.",
-              chat_history: updatedHistory,
-              metrics_snapshot: data?.aiMetrics || {},
-              user_id: userData.user.id
-            });
-            
+          const { error } = await supabase.from("ai_reports").insert({
+            id: reportId,
+            title: defaultTitle,
+            report_text: reportText || "Sesi tanya jawab konsultan AI.",
+            chat_history: updatedHistory,
+            metrics_snapshot: data?.aiMetrics || {},
+            user_id: userData.user.id,
+          });
+
           if (error) {
             console.warn("Gagal auto-create ke database, mencoba lokal:", error.message);
             saveToLocalStorageQuietly(newReport);
@@ -425,7 +482,7 @@ function AdminReports() {
             return JSON.parse(local).map((r: any) => ({
               id: r.id,
               created_at: r.created_at,
-              title: r.title
+              title: r.title,
             }));
           } catch (e) {
             return [];
@@ -433,7 +490,7 @@ function AdminReports() {
         }
         return [];
       }
-    }
+    },
   });
 
   const savedReports = savedReportsList ?? [];
@@ -447,7 +504,7 @@ function AdminReports() {
   useEffect(() => {
     if (!isAnalyzing) return;
     setAnalysisStep(1);
-    
+
     const timers = [
       setTimeout(() => setAnalysisStep(2), 1000),
       setTimeout(() => setAnalysisStep(3), 2000),
@@ -466,15 +523,15 @@ function AdminReports() {
     setIsAnalyzing(true);
     setReportText("");
     setSelectedReportId("");
-    
+
     try {
       const response = await getAiAnalysis({
         data: {
           metricsData: data.aiMetrics,
           apiKey: localApiKey || undefined,
-        }
+        },
       });
-      
+
       // Wait for steps to complete before showing the report
       setTimeout(() => {
         setReportText(response.text);
@@ -484,7 +541,6 @@ function AdminReports() {
         setActiveTab("laporan");
         toast.success("Analisis AI berhasil dirumuskan!");
       }, 4500);
-
     } catch (err: any) {
       setIsAnalyzing(false);
       if (err.message?.includes("GEMINI_API_KEY")) {
@@ -503,13 +559,13 @@ function AdminReports() {
     const userMsg = chatInput.trim();
     setChatInput("");
     setIsReplying(true);
-    
+
     const newHistory = [
       ...chatHistory,
       {
         role: "user" as const,
-        parts: [{ text: userMsg }]
-      }
+        parts: [{ text: userMsg }],
+      },
     ];
     setChatHistory(newHistory);
     // Auto-save the user message immediately so it's persisted
@@ -519,13 +575,13 @@ function AdminReports() {
       const response = await getAiAnalysis({
         data: {
           customPrompt: userMsg,
-          history: chatHistory.map(h => ({
+          history: chatHistory.map((h) => ({
             role: h.role,
-            parts: h.parts
+            parts: h.parts,
           })),
           metricsData: data.aiMetrics,
           apiKey: localApiKey || undefined,
-        }
+        },
       });
 
       const updatedHistory = response.updatedHistory || [];
@@ -551,7 +607,7 @@ function AdminReports() {
       setSelectedReportId("");
       return;
     }
-    
+
     try {
       // First try from Supabase
       const { data: report, error } = await supabase
@@ -559,7 +615,7 @@ function AdminReports() {
         .select("*")
         .eq("id", id)
         .maybeSingle();
-      
+
       if (!error && report) {
         setReportText(report.report_text);
         setChatHistory((report.chat_history as any[]) || []);
@@ -568,7 +624,7 @@ function AdminReports() {
         toast.success("Laporan berhasil dimuat!");
         return;
       }
-      
+
       // Try from localStorage fallback
       const local = localStorage.getItem("pasardeck_ai_reports");
       if (local) {
@@ -583,7 +639,7 @@ function AdminReports() {
           return;
         }
       }
-      
+
       toast.error("Laporan tidak ditemukan.");
     } catch (err: any) {
       toast.error("Terjadi kesalahan: " + err.message);
@@ -609,15 +665,17 @@ function AdminReports() {
       toast.error("Tidak ada laporan untuk disimpan.");
       return;
     }
-    
-    const defaultTitle = `Laporan Analisis ${new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })}`;
+
+    const defaultTitle = `Laporan Analisis ${new Date().toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" })}`;
     const title = prompt("Masukkan judul laporan:", defaultTitle);
     if (title === null) return; // User cancelled
-    
+
     const finalTitle = title.trim() || defaultTitle;
     setIsSaving(true);
-    
-    const reportId = crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2, 15);
+
+    const reportId = crypto.randomUUID
+      ? crypto.randomUUID()
+      : Math.random().toString(36).substring(2, 15);
     const newReport = {
       id: reportId,
       created_at: new Date().toISOString(),
@@ -626,7 +684,7 @@ function AdminReports() {
       chat_history: chatHistory,
       metrics_snapshot: data?.aiMetrics || {},
     };
-    
+
     try {
       const { data: userData } = await supabase.auth.getUser();
       if (!userData?.user) {
@@ -634,16 +692,14 @@ function AdminReports() {
         return;
       }
 
-      const { error } = await supabase
-        .from("ai_reports")
-        .insert({
-          id: reportId,
-          title: finalTitle,
-          report_text: reportText,
-          chat_history: chatHistory,
-          metrics_snapshot: data?.aiMetrics || {},
-          user_id: userData.user.id
-        });
+      const { error } = await supabase.from("ai_reports").insert({
+        id: reportId,
+        title: finalTitle,
+        report_text: reportText,
+        chat_history: chatHistory,
+        metrics_snapshot: data?.aiMetrics || {},
+        user_id: userData.user.id,
+      });
 
       if (error) {
         console.warn("Database save failed, using local fallback:", error.message);
@@ -664,14 +720,11 @@ function AdminReports() {
   async function handleDeleteReport(id: string, e: React.MouseEvent) {
     e.stopPropagation(); // Prevent select
     if (!confirm("Apakah Anda yakin ingin menghapus laporan ini?")) return;
-    
+
     try {
       // Attempt database deletion (won't throw if table is missing, just returns error)
-      await supabase
-        .from("ai_reports")
-        .delete()
-        .eq("id", id);
-      
+      await supabase.from("ai_reports").delete().eq("id", id);
+
       // Delete from localStorage
       const local = localStorage.getItem("pasardeck_ai_reports");
       if (local) {
@@ -679,7 +732,7 @@ function AdminReports() {
         const filtered = list.filter((r: any) => r.id !== id);
         localStorage.setItem("pasardeck_ai_reports", JSON.stringify(filtered));
       }
-      
+
       toast.success("Laporan berhasil dihapus!");
       if (selectedReportId === id) {
         setReportText("");
@@ -695,13 +748,13 @@ function AdminReports() {
   function exportToPDF() {
     const printContent = document.getElementById("ai-report-print-area");
     if (!printContent) return;
-    
+
     const printWindow = window.open("", "_blank");
     if (!printWindow) {
       toast.error("Pop-up diblokir. Harap izinkan pop-up untuk mencetak.");
       return;
     }
-    
+
     printWindow.document.write(`
       <html>
         <head>
@@ -721,7 +774,7 @@ function AdminReports() {
         <body>
           <h1>Laporan Analisis Bisnis & Strategi Pemasaran PasarCek</h1>
           <div style="font-size: 11px; color: #555; margin-bottom: 30px;">
-            Dicetak pada: ${new Date().toLocaleString('id-ID')} | PasarCek Admin AI Assistant
+            Dicetak pada: ${new Date().toLocaleString("id-ID")} | PasarCek Admin AI Assistant
           </div>
           ${printContent.innerHTML}
           <div class="footer">Laporan Rahasia Internal PasarCek - Dibuat oleh Asisten AI & Konsultan Penjualan</div>
@@ -739,20 +792,21 @@ function AdminReports() {
   function exportToWord() {
     const printContent = document.getElementById("ai-report-print-area");
     if (!printContent) return;
-    
+
     const html = printContent.innerHTML;
-    const header = "<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'><head><title>Laporan Analisa AI PasarCek</title><style>body { font-family: Arial, sans-serif; }</style></head><body>";
+    const header =
+      "<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'><head><title>Laporan Analisa AI PasarCek</title><style>body { font-family: Arial, sans-serif; }</style></head><body>";
     const footer = "</body></html>";
     const sourceHTML = header + html + footer;
-    
-    const blob = new Blob(['\\ufeff' + sourceHTML], {
-      type: 'application/msword'
+
+    const blob = new Blob(["\\ufeff" + sourceHTML], {
+      type: "application/msword",
     });
-    
+
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `Laporan_Analisis_AI_PasarCek_${new Date().toISOString().slice(0,10)}.doc`;
+    a.download = `Laporan_Analisis_AI_PasarCek_${new Date().toISOString().slice(0, 10)}.doc`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -763,7 +817,7 @@ function AdminReports() {
   async function copyToGoogleDocs() {
     const printContent = document.getElementById("ai-report-print-area");
     if (!printContent) return;
-    
+
     try {
       const type = "text/html";
       const blob = new Blob([printContent.innerHTML], { type });
@@ -782,7 +836,10 @@ function AdminReports() {
       const trimmed = line.trim();
       if (trimmed.startsWith("### ")) {
         return (
-          <h3 key={i} className="text-xs font-bold mt-4 mb-2 text-indigo-950 flex items-center gap-1.5 border-b pb-1 border-blue-100">
+          <h3
+            key={i}
+            className="text-xs font-bold mt-4 mb-2 text-indigo-950 flex items-center gap-1.5 border-b pb-1 border-blue-100"
+          >
             <Brain className="h-3.5 w-3.5 shrink-0 text-blue-600" />
             {trimmed.slice(4)}
           </h3>
@@ -790,7 +847,10 @@ function AdminReports() {
       }
       if (trimmed.startsWith("## ")) {
         return (
-          <h2 key={i} className="text-sm font-extrabold mt-6 mb-3 text-indigo-950 flex items-center gap-1.5 border-b pb-1 border-blue-200">
+          <h2
+            key={i}
+            className="text-sm font-extrabold mt-6 mb-3 text-indigo-950 flex items-center gap-1.5 border-b pb-1 border-blue-200"
+          >
             <Bot className="h-4 w-4 shrink-0 text-blue-600" />
             {trimmed.slice(3)}
           </h2>
@@ -805,16 +865,20 @@ function AdminReports() {
       }
 
       // Bold text parsing
-      let parts: React.ReactNode[] = [];
+      const parts: React.ReactNode[] = [];
       let remaining = line;
       let idx = 0;
       while (remaining.includes("**")) {
         const start = remaining.indexOf("**");
         const end = remaining.indexOf("**", start + 2);
         if (end === -1) break;
-        
+
         parts.push(remaining.slice(0, start));
-        parts.push(<strong key={idx++} className="font-semibold text-indigo-950 bg-amber-50 px-0.5 rounded">{remaining.slice(start + 2, end)}</strong>);
+        parts.push(
+          <strong key={idx++} className="font-semibold text-indigo-950 bg-amber-50 px-0.5 rounded">
+            {remaining.slice(start + 2, end)}
+          </strong>,
+        );
         remaining = remaining.slice(end + 2);
       }
       parts.push(remaining);
@@ -822,7 +886,7 @@ function AdminReports() {
       // List item parsing
       if (trimmed.startsWith("- ") || trimmed.startsWith("* ")) {
         const innerText = line.replace(/^\s*[-*]\s+/, "");
-        let innerParts: React.ReactNode[] = [];
+        const innerParts: React.ReactNode[] = [];
         let innerRemaining = innerText;
         let innerIdx = 0;
         while (innerRemaining.includes("**")) {
@@ -830,7 +894,14 @@ function AdminReports() {
           const end = innerRemaining.indexOf("**", start + 2);
           if (end === -1) break;
           innerParts.push(innerRemaining.slice(0, start));
-          innerParts.push(<strong key={innerIdx++} className="font-semibold text-indigo-950 bg-amber-50 px-0.5 rounded">{innerRemaining.slice(start + 2, end)}</strong>);
+          innerParts.push(
+            <strong
+              key={innerIdx++}
+              className="font-semibold text-indigo-950 bg-amber-50 px-0.5 rounded"
+            >
+              {innerRemaining.slice(start + 2, end)}
+            </strong>,
+          );
           innerRemaining = innerRemaining.slice(end + 2);
         }
         innerParts.push(innerRemaining);
@@ -860,14 +931,22 @@ function AdminReports() {
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-3xl font-black">Laporan</h1>
       </div>
-      
+
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 items-start">
         {/* Left Side: Stats and charts */}
         <div className="xl:col-span-2 space-y-6">
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             <StatCard label="Total Pendapatan" value={idr(data?.total ?? 0)} accent="green" />
             <StatCard label="Total Pesanan" value={data?.count ?? 0} accent="blue" />
-            <StatCard label="Pesanan Hari Ini" value={(data?.series ?? []).slice(-1)[0]?.revenue ? idr((data?.series ?? []).slice(-1)[0].revenue) : idr(0)} accent="warning" />
+            <StatCard
+              label="Pesanan Hari Ini"
+              value={
+                (data?.series ?? []).slice(-1)[0]?.revenue
+                  ? idr((data?.series ?? []).slice(-1)[0].revenue)
+                  : idr(0)
+              }
+              accent="warning"
+            />
           </div>
 
           <div className="rounded-lg border border-[var(--color-gray-100)] bg-white p-6">
@@ -892,9 +971,11 @@ function AdminReports() {
                   <BarChart2 className="h-5 w-5 text-indigo-600" />
                   Laporan Penghematan Belanja Pengguna
                 </h3>
-                <p className="text-xs text-zinc-500 mt-1">Ringkasan penggunaan fitur Potensi Hemat Belanja Pintar oleh pengguna.</p>
+                <p className="text-xs text-zinc-500 mt-1">
+                  Ringkasan penggunaan fitur Potensi Hemat Belanja Pintar oleh pengguna.
+                </p>
               </div>
-              
+
               {/* Filter Toolbar */}
               <div className="flex flex-wrap items-center gap-2">
                 <div className="flex items-center gap-1 bg-zinc-100 p-0.5 rounded-md text-[10px]">
@@ -939,38 +1020,61 @@ function AdminReports() {
             {/* Metrics */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="p-4 rounded-lg bg-zinc-50 border border-zinc-100 flex flex-col justify-between">
-                <span className="text-[10px] uppercase font-black tracking-wider text-zinc-500">Total Akumulasi Hemat</span>
-                <span className="text-xl font-extrabold text-emerald-600 mt-1">{idr(totalSavings)}</span>
+                <span className="text-[10px] uppercase font-black tracking-wider text-zinc-500">
+                  Total Akumulasi Hemat
+                </span>
+                <span className="text-xl font-extrabold text-emerald-600 mt-1">
+                  {idr(totalSavings)}
+                </span>
               </div>
               <div className="p-4 rounded-lg bg-zinc-50 border border-zinc-100 flex flex-col justify-between">
-                <span className="text-[10px] uppercase font-black tracking-wider text-zinc-500">Rata-rata Hemat per Pencarian</span>
-                <span className="text-xl font-extrabold text-indigo-600 mt-1">{idr(avgSavings)}</span>
+                <span className="text-[10px] uppercase font-black tracking-wider text-zinc-500">
+                  Rata-rata Hemat per Pencarian
+                </span>
+                <span className="text-xl font-extrabold text-indigo-600 mt-1">
+                  {idr(avgSavings)}
+                </span>
               </div>
               <div className="p-4 rounded-lg bg-zinc-50 border border-zinc-100 flex flex-col justify-between">
-                <span className="text-[10px] uppercase font-black tracking-wider text-zinc-500">Frekuensi Penyimpanan</span>
-                <span className="text-xl font-extrabold text-zinc-800 mt-1">{totalSavesCount} Kali</span>
+                <span className="text-[10px] uppercase font-black tracking-wider text-zinc-500">
+                  Frekuensi Penyimpanan
+                </span>
+                <span className="text-xl font-extrabold text-zinc-800 mt-1">
+                  {totalSavesCount} Kali
+                </span>
               </div>
             </div>
 
             {/* Charts & Popular Keywords */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               <div className="lg:col-span-2 space-y-2">
-                <h4 className="text-xs font-black uppercase tracking-wider text-zinc-500">Tren Penghematan Harian</h4>
+                <h4 className="text-xs font-black uppercase tracking-wider text-zinc-500">
+                  Tren Penghematan Harian
+                </h4>
                 <div className="h-56 bg-zinc-50/50 rounded-lg p-2 border border-zinc-100">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={savingsChartData}>
                       <CartesianGrid strokeDasharray="0" vertical={false} stroke="#e4e4e7" />
-                      <XAxis dataKey="date" tick={{ fontSize: 9, fill: "#71717a", fontWeight: "bold" }} tickLine={false} />
-                      <YAxis tick={{ fontSize: 9, fill: "#71717a", fontWeight: "bold" }} tickLine={false} />
+                      <XAxis
+                        dataKey="date"
+                        tick={{ fontSize: 9, fill: "#71717a", fontWeight: "bold" }}
+                        tickLine={false}
+                      />
+                      <YAxis
+                        tick={{ fontSize: 9, fill: "#71717a", fontWeight: "bold" }}
+                        tickLine={false}
+                      />
                       <Tooltip formatter={(value) => idr(Number(value))} />
                       <Bar dataKey="savings" fill="#0f766e" radius={[4, 4, 0, 0]} />
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
               </div>
-              
+
               <div className="space-y-2">
-                <h4 className="text-xs font-black uppercase tracking-wider text-zinc-500">Produk Terpopuler (Tersimpan)</h4>
+                <h4 className="text-xs font-black uppercase tracking-wider text-zinc-500">
+                  Produk Terpopuler (Tersimpan)
+                </h4>
                 <div className="bg-zinc-50/50 rounded-lg p-4 border border-zinc-100 h-56 flex flex-col justify-between">
                   {popularKeywords.length === 0 ? (
                     <div className="h-full flex items-center justify-center text-xs text-zinc-400 italic">
@@ -979,7 +1083,10 @@ function AdminReports() {
                   ) : (
                     <div className="space-y-2">
                       {popularKeywords.map((keyword, idx) => (
-                        <div key={keyword.name} className="flex items-center justify-between text-[11px]">
+                        <div
+                          key={keyword.name}
+                          className="flex items-center justify-between text-[11px]"
+                        >
                           <div className="flex items-center gap-1.5 min-w-0">
                             <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-zinc-200 text-[9px] font-black text-zinc-700">
                               {idx + 1}
@@ -993,12 +1100,13 @@ function AdminReports() {
                       ))}
                     </div>
                   )}
-                  
+
                   {/* Privacy note conforming to terms */}
                   <div className="flex items-start gap-1 border-t border-zinc-200/60 pt-2.5 text-[9px] text-zinc-400 leading-normal mt-2">
                     <ShieldAlert className="h-3 w-3 text-indigo-500 shrink-0 mt-0.5" />
                     <span>
-                      <strong>Privasi Terjaga:</strong> Data di atas dianonimkan secara ketat untuk melindungi data pribadi pengguna sesuai T&C.
+                      <strong>Privasi Terjaga:</strong> Data di atas dianonimkan secara ketat untuk
+                      melindungi data pribadi pengguna sesuai T&C.
                     </span>
                   </div>
                 </div>
@@ -1015,7 +1123,9 @@ function AdminReports() {
                 <div className="flex items-center gap-2">
                   <Sparkles className="h-5 w-5 text-amber-300 animate-pulse" />
                   <div>
-                    <CardTitle className="text-sm font-bold">Asisten AI & Konsultan Penjualan</CardTitle>
+                    <CardTitle className="text-sm font-bold">
+                      Asisten AI & Konsultan Penjualan
+                    </CardTitle>
                     <CardDescription className="text-[10px] text-blue-200">
                       Business Analyst, Marketing & Consumer Insight
                     </CardDescription>
@@ -1026,7 +1136,7 @@ function AdminReports() {
                     onClick={() => setShowKeyInput(!showKeyInput)}
                     variant="ghost"
                     size="icon"
-                    className={`h-7 w-7 transition-colors ${showKeyInput ? 'text-amber-300 bg-white/10' : 'text-blue-200 hover:text-white hover:bg-white/10'}`}
+                    className={`h-7 w-7 transition-colors ${showKeyInput ? "text-amber-300 bg-white/10" : "text-blue-200 hover:text-white hover:bg-white/10"}`}
                     title="Konfigurasi API Key"
                   >
                     <Key className="h-3.5 w-3.5" />
@@ -1054,11 +1164,12 @@ function AdminReports() {
                       <span>Konfigurasi Gemini API Key</span>
                     </div>
                     <p className="text-xs text-gray-500 leading-relaxed">
-                      Fitur konsultasi bisnis AI memerlukan <strong>GEMINI_API_KEY</strong>. 
-                      Anda bisa menambahkannya secara permanen di environment variables Vercel (direkomendasikan) 
-                      atau menyimpannya secara lokal di browser ini untuk penggunaan sementara.
+                      Fitur konsultasi bisnis AI memerlukan <strong>GEMINI_API_KEY</strong>. Anda
+                      bisa menambahkannya secara permanen di environment variables Vercel
+                      (direkomendasikan) atau menyimpannya secara lokal di browser ini untuk
+                      penggunaan sementara.
                     </p>
-                    
+
                     <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 space-y-2 text-[11px] text-amber-900 leading-normal">
                       <div className="flex gap-1.5 items-center font-bold">
                         <AlertTriangle className="h-3.5 w-3.5 text-amber-600 shrink-0" />
@@ -1066,15 +1177,27 @@ function AdminReports() {
                       </div>
                       <ol className="list-decimal list-inside space-y-1 ml-1 text-gray-700">
                         <li>Buka dashboard Vercel &gt; Proyek Anda.</li>
-                        <li>Pilih tab <strong>Settings</strong> &gt; <strong>Environment Variables</strong>.</li>
-                        <li>Tambahkan key: <code className="bg-amber-100 px-1 rounded font-mono text-[10px] font-semibold text-amber-950">GEMINI_API_KEY</code></li>
+                        <li>
+                          Pilih tab <strong>Settings</strong> &gt;{" "}
+                          <strong>Environment Variables</strong>.
+                        </li>
+                        <li>
+                          Tambahkan key:{" "}
+                          <code className="bg-amber-100 px-1 rounded font-mono text-[10px] font-semibold text-amber-950">
+                            GEMINI_API_KEY
+                          </code>
+                        </li>
                         <li>Masukkan nilai API Key Gemini Anda lalu simpan.</li>
-                        <li>Lakukan <strong>Redeploy</strong> pada deployment terakhir.</li>
+                        <li>
+                          Lakukan <strong>Redeploy</strong> pada deployment terakhir.
+                        </li>
                       </ol>
                     </div>
 
                     <div className="space-y-1.5">
-                      <label className="text-[11px] font-bold text-gray-700">API Key Lokal (Simpan di Browser):</label>
+                      <label className="text-[11px] font-bold text-gray-700">
+                        API Key Lokal (Simpan di Browser):
+                      </label>
                       <Input
                         type="password"
                         value={localApiKey}
@@ -1083,7 +1206,8 @@ function AdminReports() {
                         className="text-xs h-9 focus-visible:ring-blue-600"
                       />
                       <p className="text-[10px] text-gray-400">
-                        Kunci disimpan secara lokal di browser Anda dan dikirim dengan aman ke server function.
+                        Kunci disimpan secara lokal di browser Anda dan dikirim dengan aman ke
+                        server function.
                       </p>
                     </div>
                   </div>
@@ -1110,7 +1234,9 @@ function AdminReports() {
               {/* Saved Reports Dropdown */}
               {savedReports && savedReports.length > 0 && (
                 <div className="mb-3 flex items-center gap-2 shrink-0">
-                  <span className="text-[9px] font-bold text-gray-500 uppercase tracking-wider shrink-0">Riwayat:</span>
+                  <span className="text-[9px] font-bold text-gray-500 uppercase tracking-wider shrink-0">
+                    Riwayat:
+                  </span>
                   <select
                     value={selectedReportId}
                     onChange={(e) => handleLoadSavedReport(e.target.value)}
@@ -1163,16 +1289,28 @@ function AdminReports() {
                         <ChevronDown className="h-3.5 w-3.5 ml-auto opacity-50" />
                       </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-48 bg-white border border-gray-100 rounded-md shadow-lg p-1 text-xs">
-                      <DropdownMenuItem onClick={exportToPDF} className="flex items-center gap-2 px-2.5 py-2 hover:bg-gray-50 rounded-md cursor-pointer text-gray-700 font-semibold focus:bg-gray-50 focus:text-gray-900">
+                    <DropdownMenuContent
+                      align="end"
+                      className="w-48 bg-white border border-gray-100 rounded-md shadow-lg p-1 text-xs"
+                    >
+                      <DropdownMenuItem
+                        onClick={exportToPDF}
+                        className="flex items-center gap-2 px-2.5 py-2 hover:bg-gray-50 rounded-md cursor-pointer text-gray-700 font-semibold focus:bg-gray-50 focus:text-gray-900"
+                      >
                         <Printer className="h-3.5 w-3.5 text-red-500" />
                         Ekspor ke PDF
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={exportToWord} className="flex items-center gap-2 px-2.5 py-2 hover:bg-gray-50 rounded-md cursor-pointer text-gray-700 font-semibold focus:bg-gray-50 focus:text-gray-900">
+                      <DropdownMenuItem
+                        onClick={exportToWord}
+                        className="flex items-center gap-2 px-2.5 py-2 hover:bg-gray-50 rounded-md cursor-pointer text-gray-700 font-semibold focus:bg-gray-50 focus:text-gray-900"
+                      >
                         <FileText className="h-3.5 w-3.5 text-blue-500" />
                         Ekspor ke Word (.doc)
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={copyToGoogleDocs} className="flex items-center gap-2 px-2.5 py-2 hover:bg-gray-50 rounded-md cursor-pointer text-gray-700 font-semibold focus:bg-gray-50 focus:text-gray-900">
+                      <DropdownMenuItem
+                        onClick={copyToGoogleDocs}
+                        className="flex items-center gap-2 px-2.5 py-2 hover:bg-gray-50 rounded-md cursor-pointer text-gray-700 font-semibold focus:bg-gray-50 focus:text-gray-900"
+                      >
                         <Clipboard className="h-3.5 w-3.5 text-green-500" />
                         Salin untuk Google Docs
                       </DropdownMenuItem>
@@ -1187,12 +1325,15 @@ function AdminReports() {
                     <Brain className="h-8 w-8 animate-pulse" />
                   </div>
                   <div className="space-y-2">
-                    <h4 className="text-sm font-bold text-gray-900">Analisis AI Bisnis & Marketing</h4>
+                    <h4 className="text-sm font-bold text-gray-900">
+                      Analisis AI Bisnis & Marketing
+                    </h4>
                     <p className="text-xs text-gray-500 leading-relaxed">
-                      Analisis kinerja penjualan, perilaku Smart Basket pengguna, dan konversi pemasaran berdasarkan data terkini aplikasi PasarCek.
+                      Analisis kinerja penjualan, perilaku Smart Basket pengguna, dan konversi
+                      pemasaran berdasarkan data terkini aplikasi PasarCek.
                     </p>
                   </div>
-                  <Button 
+                  <Button
                     onClick={handleStartAnalysis}
                     className="w-full bg-gradient-to-r from-blue-700 to-indigo-800 hover:from-blue-800 hover:to-indigo-950 text-white shadow-soft transition-all duration-300 font-semibold text-xs py-2 rounded-md"
                   >
@@ -1212,36 +1353,56 @@ function AdminReports() {
                       Menyusun Strategi Bisnis...
                     </p>
                     <div className="space-y-1">
-                      <div className={`flex items-center gap-2 text-[10px] transition-opacity duration-300 ${analysisStep >= 1 ? 'opacity-100 text-green-600 font-semibold' : 'opacity-30'}`}>
-                        <span>{analysisStep > 1 ? '✓' : '•'}</span>
+                      <div
+                        className={`flex items-center gap-2 text-[10px] transition-opacity duration-300 ${analysisStep >= 1 ? "opacity-100 text-green-600 font-semibold" : "opacity-30"}`}
+                      >
+                        <span>{analysisStep > 1 ? "✓" : "•"}</span>
                         <span>Menghubungkan ke basis data...</span>
                       </div>
-                      <div className={`flex items-center gap-2 text-[10px] transition-opacity duration-300 ${analysisStep >= 2 ? 'opacity-100 text-green-600 font-semibold' : 'opacity-30'}`}>
-                        <span>{analysisStep > 2 ? '✓' : '•'}</span>
+                      <div
+                        className={`flex items-center gap-2 text-[10px] transition-opacity duration-300 ${analysisStep >= 2 ? "opacity-100 text-green-600 font-semibold" : "opacity-30"}`}
+                      >
+                        <span>{analysisStep > 2 ? "✓" : "•"}</span>
                         <span>Menganalisis penjualan & peran...</span>
                       </div>
-                      <div className={`flex items-center gap-2 text-[10px] transition-opacity duration-300 ${analysisStep >= 3 ? 'opacity-100 text-green-600 font-semibold' : 'opacity-30'}`}>
-                        <span>{analysisStep > 3 ? '✓' : '•'}</span>
+                      <div
+                        className={`flex items-center gap-2 text-[10px] transition-opacity duration-300 ${analysisStep >= 3 ? "opacity-100 text-green-600 font-semibold" : "opacity-30"}`}
+                      >
+                        <span>{analysisStep > 3 ? "✓" : "•"}</span>
                         <span>Mengevaluasi simulasi Smart Basket...</span>
                       </div>
-                      <div className={`flex items-center gap-2 text-[10px] transition-opacity duration-300 ${analysisStep >= 4 ? 'opacity-100 text-green-600 font-semibold' : 'opacity-30'}`}>
-                        <span>{analysisStep > 4 ? '✓' : '•'}</span>
+                      <div
+                        className={`flex items-center gap-2 text-[10px] transition-opacity duration-300 ${analysisStep >= 4 ? "opacity-100 text-green-600 font-semibold" : "opacity-30"}`}
+                      >
+                        <span>{analysisStep > 4 ? "✓" : "•"}</span>
                         <span>Merumuskan strategi pemasaran...</span>
                       </div>
-                      <div className={`flex items-center gap-2 text-[10px] transition-opacity duration-300 ${analysisStep >= 5 ? 'opacity-100 text-blue-700 font-semibold' : 'opacity-30'}`}>
-                        <span className={analysisStep === 5 ? 'animate-bounce' : ''}>•</span>
+                      <div
+                        className={`flex items-center gap-2 text-[10px] transition-opacity duration-300 ${analysisStep >= 5 ? "opacity-100 text-blue-700 font-semibold" : "opacity-30"}`}
+                      >
+                        <span className={analysisStep === 5 ? "animate-bounce" : ""}>•</span>
                         <span>Menulis laporan konsultan...</span>
                       </div>
                     </div>
                   </div>
                 </div>
               ) : (
-                <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col h-full min-h-0">
+                <Tabs
+                  value={activeTab}
+                  onValueChange={setActiveTab}
+                  className="flex-1 flex flex-col h-full min-h-0"
+                >
                   <TabsList className="grid grid-cols-2 mb-3 bg-gray-50 border border-gray-100 p-0.5 rounded-lg shrink-0">
-                    <TabsTrigger value="laporan" className="text-xs py-1.5 data-[state=active]:bg-white data-[state=active]:shadow-sm rounded-md font-semibold">
+                    <TabsTrigger
+                      value="laporan"
+                      className="text-xs py-1.5 data-[state=active]:bg-white data-[state=active]:shadow-sm rounded-md font-semibold"
+                    >
                       Laporan Konsultasi
                     </TabsTrigger>
-                    <TabsTrigger value="tanya" className="text-xs py-1.5 data-[state=active]:bg-white data-[state=active]:shadow-sm rounded-md font-semibold">
+                    <TabsTrigger
+                      value="tanya"
+                      className="text-xs py-1.5 data-[state=active]:bg-white data-[state=active]:shadow-sm rounded-md font-semibold"
+                    >
                       Tanya Konsultan
                     </TabsTrigger>
                   </TabsList>
@@ -1250,7 +1411,10 @@ function AdminReports() {
                     <ScrollArea className="h-[500px] pr-3 border border-gray-50 rounded-lg p-3 bg-gray-50/30">
                       <div className="space-y-4">
                         <div className="bg-blue-50 border border-blue-100 rounded-lg p-3 text-[11px] text-blue-900 leading-relaxed print:hidden">
-                          <strong>💡 Info Konsultan:</strong> Laporan ini dirumuskan berdasarkan data real-time PasarCek oleh tim virtual Business Analyst, Marketing Insight Strategist, Consumer Insight, IT Consultant, dan Strategic Planner.
+                          <strong>💡 Info Konsultan:</strong> Laporan ini dirumuskan berdasarkan
+                          data real-time PasarCek oleh tim virtual Business Analyst, Marketing
+                          Insight Strategist, Consumer Insight, IT Consultant, dan Strategic
+                          Planner.
                         </div>
                         <div id="ai-report-print-area" className="prose max-w-none">
                           {renderMarkdown(reportText)}
@@ -1259,48 +1423,64 @@ function AdminReports() {
                     </ScrollArea>
                   </TabsContent>
 
-                  <TabsContent value="tanya" className="flex-1 min-h-0 mt-0 flex flex-col justify-between">
+                  <TabsContent
+                    value="tanya"
+                    className="flex-1 min-h-0 mt-0 flex flex-col justify-between"
+                  >
                     <ScrollArea className="flex-1 pr-3 border border-gray-50 rounded-lg p-3 bg-gray-50/30 mb-3 h-[420px]">
                       <div className="space-y-3">
-                        {chatHistory.filter(h => h.role !== "user" || !h.parts[0].text.includes("Anda adalah tim konsultan")).map((msg, idx) => {
-                          const isUser = msg.role === "user";
-                          return (
-                            <div key={idx} className={`flex items-start gap-2 ${isUser ? 'justify-end' : 'justify-start'}`}>
-                              {!isUser && (
-                                <div className="h-6 w-6 rounded-full bg-blue-900 flex items-center justify-center text-white text-[10px] shrink-0 font-bold mt-1">
-                                  AI
-                                </div>
-                              )}
-                              <div className="relative group max-w-[85%] flex flex-col">
-                                <div className={`rounded-lg px-3 py-2 text-xs leading-relaxed ${isUser ? 'bg-blue-600 text-white rounded-tr-none' : 'bg-gray-100 text-gray-800 rounded-tl-none border border-gray-200/50'}`}>
-                                  {isUser ? msg.parts[0].text : renderMarkdown(msg.parts[0].text)}
-                                </div>
+                        {chatHistory
+                          .filter(
+                            (h) =>
+                              h.role !== "user" ||
+                              !h.parts[0].text.includes("Anda adalah tim konsultan"),
+                          )
+                          .map((msg, idx) => {
+                            const isUser = msg.role === "user";
+                            return (
+                              <div
+                                key={idx}
+                                className={`flex items-start gap-2 ${isUser ? "justify-end" : "justify-start"}`}
+                              >
                                 {!isUser && (
-                                  <div className="mt-1 flex items-center justify-end gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                                    <button
-                                      type="button"
-                                      onClick={() => handleCopyText(msg.parts[0].text, idx)}
-                                      className="flex items-center gap-1 text-[10px] text-gray-400 hover:text-blue-600 focus:outline-none transition-colors cursor-pointer"
-                                      title="Salin jawaban ini"
-                                    >
-                                      {copiedIndex === idx ? (
-                                        <>
-                                          <Check className="h-3 w-3 text-green-600" />
-                                          <span className="text-green-600 font-semibold">Tersalin!</span>
-                                        </>
-                                      ) : (
-                                        <>
-                                          <Copy className="h-3 w-3" />
-                                          <span>Salin</span>
-                                        </>
-                                      )}
-                                    </button>
+                                  <div className="h-6 w-6 rounded-full bg-blue-900 flex items-center justify-center text-white text-[10px] shrink-0 font-bold mt-1">
+                                    AI
                                   </div>
                                 )}
+                                <div className="relative group max-w-[85%] flex flex-col">
+                                  <div
+                                    className={`rounded-lg px-3 py-2 text-xs leading-relaxed ${isUser ? "bg-blue-600 text-white rounded-tr-none" : "bg-gray-100 text-gray-800 rounded-tl-none border border-gray-200/50"}`}
+                                  >
+                                    {isUser ? msg.parts[0].text : renderMarkdown(msg.parts[0].text)}
+                                  </div>
+                                  {!isUser && (
+                                    <div className="mt-1 flex items-center justify-end gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                                      <button
+                                        type="button"
+                                        onClick={() => handleCopyText(msg.parts[0].text, idx)}
+                                        className="flex items-center gap-1 text-[10px] text-gray-400 hover:text-blue-600 focus:outline-none transition-colors cursor-pointer"
+                                        title="Salin jawaban ini"
+                                      >
+                                        {copiedIndex === idx ? (
+                                          <>
+                                            <Check className="h-3 w-3 text-green-600" />
+                                            <span className="text-green-600 font-semibold">
+                                              Tersalin!
+                                            </span>
+                                          </>
+                                        ) : (
+                                          <>
+                                            <Copy className="h-3 w-3" />
+                                            <span>Salin</span>
+                                          </>
+                                        )}
+                                      </button>
+                                    </div>
+                                  )}
+                                </div>
                               </div>
-                            </div>
-                          );
-                        })}
+                            );
+                          })}
                         {isReplying && (
                           <div className="flex items-start gap-2 justify-start">
                             <div className="h-6 w-6 rounded-full bg-blue-900 flex items-center justify-center text-white text-[10px] shrink-0 font-bold animate-pulse">
@@ -1323,8 +1503,8 @@ function AdminReports() {
                         disabled={isReplying}
                         className="text-xs h-9 focus-visible:ring-blue-600"
                       />
-                      <Button 
-                        type="submit" 
+                      <Button
+                        type="submit"
                         disabled={isReplying || !chatInput.trim()}
                         className="h-9 w-9 bg-blue-700 hover:bg-blue-800 text-white p-0 flex items-center justify-center shrink-0 rounded-md"
                       >
@@ -1336,8 +1516,8 @@ function AdminReports() {
               )}
             </CardContent>
           </Card>
+        </div>
       </div>
-    </div>
 
       <div className="mt-6 rounded-lg border border-[var(--color-gray-100)] bg-white p-6">
         <h3 className="mb-4 text-lg font-bold">Informasi Penggunaan & Penjualan Paket</h3>
@@ -1357,7 +1537,8 @@ function AdminReports() {
             <tbody className="divide-y divide-[var(--color-gray-100)]">
               {(data?.packageRows ?? []).map((row: any) => {
                 const totalRevenue = data?.total ?? 1;
-                const pct = row.revenue > 0 ? ((row.revenue / totalRevenue) * 100).toFixed(1) : "0.0";
+                const pct =
+                  row.revenue > 0 ? ((row.revenue / totalRevenue) * 100).toFixed(1) : "0.0";
                 return (
                   <tr key={row.id} className="hover:bg-[var(--color-gray-50)] transition-colors">
                     <td className="px-3 py-3 font-semibold text-[var(--color-gray-900)]">
@@ -1393,7 +1574,9 @@ function AdminReports() {
                       {row.successOrders === "-" ? (
                         <span className="text-[var(--color-gray-600)]">-</span>
                       ) : (
-                        <span className="font-semibold text-[var(--color-success)]">{row.successOrders}</span>
+                        <span className="font-semibold text-[var(--color-success)]">
+                          {row.successOrders}
+                        </span>
                       )}
                     </td>
                     <td className="px-3 py-3 text-right font-medium text-[var(--color-gray-900)]">

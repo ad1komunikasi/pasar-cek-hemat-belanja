@@ -51,7 +51,9 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
         </p>
         <div className="my-4 p-3 bg-red-50 border border-red-200 text-red-700 text-xs rounded-md text-left overflow-auto max-h-40">
           <p className="font-bold mb-1">Error Details:</p>
-          <pre className="whitespace-pre-wrap">{error instanceof Error ? error.message : String(error)}</pre>
+          <pre className="whitespace-pre-wrap">
+            {error instanceof Error ? error.message : String(error)}
+          </pre>
           {error?.stack && (
             <details className="mt-2">
               <summary className="cursor-pointer font-bold">Stack Trace</summary>
@@ -95,16 +97,31 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { title: "PasarCek-Hemat Harga" },
       { property: "og:title", content: "PasarCek-Hemat Harga" },
       { name: "twitter:title", content: "PasarCek-Hemat Harga" },
-      { name: "description", content: "PasarCek helps users find the cheapest groceries by comparing prices across nearby markets." },
-      { property: "og:description", content: "PasarCek helps users find the cheapest groceries by comparing prices across nearby markets." },
-      { name: "twitter:description", content: "PasarCek helps users find the cheapest groceries by comparing prices across nearby markets." },
+      {
+        name: "description",
+        content:
+          "PasarCek helps users find the cheapest groceries by comparing prices across nearby markets.",
+      },
+      {
+        property: "og:description",
+        content:
+          "PasarCek helps users find the cheapest groceries by comparing prices across nearby markets.",
+      },
+      {
+        name: "twitter:description",
+        content:
+          "PasarCek helps users find the cheapest groceries by comparing prices across nearby markets.",
+      },
       { property: "og:image", content: "/og-image.jpg" },
       { name: "twitter:image", content: "/twitter-image.jpg" },
     ],
     links: [
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
-      { rel: "stylesheet", href: "https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" },
+      {
+        rel: "stylesheet",
+        href: "https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap",
+      },
       { rel: "stylesheet", href: appCss },
     ],
     scripts: [
@@ -118,7 +135,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
               name: "PasarCek",
               url: "/",
               logo: "/og-image.jpg",
-              description: "Aplikasi cek dan bandingkan harga sembako antar pasar terdekat untuk keluarga Indonesia",
+              description:
+                "Aplikasi cek dan bandingkan harga sembako antar pasar terdekat untuk keluarga Indonesia",
             },
             {
               "@type": "WebSite",

@@ -20,7 +20,7 @@ const originalConsoleError = console.error;
 console.error = (...args) => {
   originalConsoleError(...args);
   const firstError = args.find(
-    (arg) => arg instanceof Error || (arg && typeof arg === "object" && "stack" in arg)
+    (arg) => arg instanceof Error || (arg && typeof arg === "object" && "stack" in arg),
   );
   if (firstError) {
     record(firstError);

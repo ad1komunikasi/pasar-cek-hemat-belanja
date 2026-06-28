@@ -6,13 +6,19 @@ const getItemKey = (item: any) => {
   return `${item.product_id}:${mId}`;
 };
 
-export function useRealTimePrices<T extends { id?: string; price: number; prev?: number | null; product_id?: string; market_id?: string; market?: any }>(
-  initialPrices: T[] | undefined,
-  dateStr: string
-) {
+export function useRealTimePrices<
+  T extends {
+    id?: string;
+    price: number;
+    prev?: number | null;
+    product_id?: string;
+    market_id?: string;
+    market?: any;
+  },
+>(initialPrices: T[] | undefined, dateStr: string) {
   const [prices, setPrices] = useState<T[]>([]);
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
-  
+
   // Track previous initialPrices to avoid unnecessary resets
   const initialPricesRef = useRef<T[] | undefined>(initialPrices);
 
@@ -28,7 +34,7 @@ export function useRealTimePrices<T extends { id?: string; price: number; prev?:
   }, [initialPrices]);
 
   useEffect(() => {
-    const todayStr = new Date().toLocaleDateString('en-CA');
+    const todayStr = new Date().toLocaleDateString("en-CA");
     // Only run live fluctuation if the selected date is today
     if (dateStr !== todayStr || !prices.length) return;
 
@@ -48,7 +54,9 @@ export function useRealTimePrices<T extends { id?: string; price: number; prev?:
           if (item && typeof item.price === "number") {
             // Fluctuate by -0.8% to +0.8%
             const percent = (Math.random() * 1.6 - 0.8) / 100;
-            const originalItem = initialPricesRef.current?.find((x) => getItemKey(x) === getItemKey(item));
+            const originalItem = initialPricesRef.current?.find(
+              (x) => getItemKey(x) === getItemKey(item),
+            );
             const basePrice = originalItem ? originalItem.price : item.price;
 
             let newPrice = Math.round((item.price * (1 + percent)) / 100) * 100;

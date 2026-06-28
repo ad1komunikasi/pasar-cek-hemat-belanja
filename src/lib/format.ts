@@ -1,5 +1,11 @@
 export const idr = (n: number | null | undefined) =>
-  n == null ? "—" : new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(n);
+  n == null
+    ? "—"
+    : new Intl.NumberFormat("id-ID", {
+        style: "currency",
+        currency: "IDR",
+        maximumFractionDigits: 0,
+      }).format(n);
 
 export const num = (n: number | null | undefined) =>
   n == null ? "—" : new Intl.NumberFormat("id-ID").format(n);
@@ -7,14 +13,22 @@ export const num = (n: number | null | undefined) =>
 export const fmtDate = (d: string | Date | null | undefined) => {
   if (!d) return "—";
   const dt = typeof d === "string" ? new Date(d) : d;
-  return new Intl.DateTimeFormat("id-ID", { day: "2-digit", month: "short", year: "numeric" }).format(dt);
+  return new Intl.DateTimeFormat("id-ID", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  }).format(dt);
 };
 
 export const fmtDateTime = (d: string | Date | null | undefined) => {
   if (!d) return "—";
   const dt = typeof d === "string" ? new Date(d) : d;
   return new Intl.DateTimeFormat("id-ID", {
-    day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit",
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
   }).format(dt);
 };
 
@@ -22,7 +36,12 @@ export const fmtDateTimeWithSeconds = (d: string | Date | null | undefined) => {
   if (!d) return "—";
   const dt = typeof d === "string" ? new Date(d) : d;
   return new Intl.DateTimeFormat("id-ID", {
-    day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit", second: "2-digit",
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
   }).format(dt);
 };
 
@@ -31,7 +50,10 @@ export function deltaPct(now: number, prev: number | null | undefined): number |
   return ((now - prev) / prev) * 100;
 }
 
-export function haversineKm(a: { lat: number; lng: number }, b: { lat: number; lng: number }): number {
+export function haversineKm(
+  a: { lat: number; lng: number },
+  b: { lat: number; lng: number },
+): number {
   const R = 6371;
   const dLat = ((b.lat - a.lat) * Math.PI) / 180;
   const dLng = ((b.lng - a.lng) * Math.PI) / 180;

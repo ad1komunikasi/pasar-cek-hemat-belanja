@@ -16,7 +16,13 @@ function AdminOrders() {
   const qc = useQueryClient();
   const { data: orders } = useQuery({
     queryKey: ["admin-orders"],
-    queryFn: async () => (await supabase.from("orders").select("*, package:packages(name,duration_days), profile:profiles(full_name,email)").order("created_at", { ascending: false })).data ?? [],
+    queryFn: async () =>
+      (
+        await supabase
+          .from("orders")
+          .select("*, package:packages(name,duration_days), profile:profiles(full_name,email)")
+          .order("created_at", { ascending: false })
+      ).data ?? [],
   });
   const [selected, setSelected] = useState<any>(null);
   const [note, setNote] = useState("");
@@ -47,11 +53,31 @@ function AdminOrders() {
   async function approve(o: any) {
     const expires = new Date();
     expires.setDate(expires.getDate() + (o.package?.duration_days ?? 30));
-    const { error } = await supabase.from("orders").update({ status: "active", paid_at: new Date().toISOString(), expires_at: expires.toISOString(), admin_note: note || null }).eq("id", o.id);
+    const { error } = await supabase
+      .from("orders")
+      .update({
+        status: "active",
+        paid_at: new Date().toISOString(),
+        expires_at: expires.toISOString(),
+        admin_note: note || null,
+      })
+      .eq("id", o.id);
     if (error) return toast.error(error.message);
-    await supabase.from("subscriptions").insert({ user_id: o.user_id, package_id: o.package_id, order_id: o.id, started_at: new Date().toISOString(), expires_at: expires.toISOString(), status: "active" });
-    await supabase.from("notifications").insert({ user_id: o.user_id, type: "subscription", title: "Paket aktif", body: `Paket ${o.package?.name} berhasil diaktifkan.` });
-    
+    await supabase.from("subscriptions").insert({
+      user_id: o.user_id,
+      package_id: o.package_id,
+      order_id: o.id,
+      started_at: new Date().toISOString(),
+      expires_at: expires.toISOString(),
+      status: "active",
+    });
+    await supabase.from("notifications").insert({
+      user_id: o.user_id,
+      type: "subscription",
+      title: "Paket aktif",
+      body: `Paket ${o.package?.name} berhasil diaktifkan.`,
+    });
+
     // Send actual email notification
     try {
       const emailOrder = {
@@ -75,7 +101,9 @@ function AdminOrders() {
   async function reject(o: any) {
     if (!note.trim()) return toast.error("Tulis alasan penolakan");
     await supabase.from("orders").update({ status: "rejected", admin_note: note }).eq("id", o.id);
-    await supabase.from("notifications").insert({ user_id: o.user_id, type: "payment", title: "Pembayaran ditolak", body: note });
+    await supabase
+      .from("notifications")
+      .insert({ user_id: o.user_id, type: "payment", title: "Pembayaran ditolak", body: note });
 
     // Send actual email notification
     try {
@@ -97,11 +125,14 @@ function AdminOrders() {
     setSelected(null);
   }
 
-  const waitingCount = (orders ?? []).filter((o: any) => o.status === "proof_uploaded" || o.status === "verifying").length;
+  const waitingCount = (orders ?? []).filter(
+    (o: any) => o.status === "proof_uploaded" || o.status === "verifying",
+  ).length;
 
   const filteredOrders = (orders ?? []).filter((o: any) => {
     if (filter === "all") return true;
-    if (filter === "pending_verification") return o.status === "proof_uploaded" || o.status === "verifying";
+    if (filter === "pending_verification")
+      return o.status === "proof_uploaded" || o.status === "verifying";
     if (filter === "pending_payment") return o.status === "pending_payment";
     if (filter === "active") return o.status === "active" || o.status === "paid";
     if (filter === "rejected") return o.status === "rejected";
@@ -115,9 +146,15 @@ function AdminOrders() {
         return <Badge className="bg-[var(--color-success)] text-white border-0">Aktif</Badge>;
       case "proof_uploaded":
       case "verifying":
-        return <Badge className="bg-[var(--color-info)] text-white border-0">Menunggu Verifikasi</Badge>;
+        return (
+          <Badge className="bg-[var(--color-info)] text-white border-0">Menunggu Verifikasi</Badge>
+        );
       case "pending_payment":
-        return <Badge className="bg-[oklch(0.78_0.15_75)] text-[oklch(0.25_0.05_70)] border-0">Menunggu Pembayaran</Badge>;
+        return (
+          <Badge className="bg-[oklch(0.78_0.15_75)] text-[oklch(0.25_0.05_70)] border-0">
+            Menunggu Pembayaran
+          </Badge>
+        );
       case "rejected":
         return <Badge className="bg-[var(--color-destructive)] text-white border-0">Ditolak</Badge>;
       default:
@@ -132,7 +169,9 @@ function AdminOrders() {
       <div className="mb-6 flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div>
           <h1 className="text-3xl font-black">Pesanan Paket</h1>
-          <p className="text-sm text-[var(--color-gray-500)]">Kelola pesanan langganan premium dan lakukan verifikasi pembayaran.</p>
+          <p className="text-sm text-[var(--color-gray-500)]">
+            Kelola pesanan langganan premium dan lakukan verifikasi pembayaran.
+          </p>
         </div>
       </div>
 
@@ -140,10 +179,15 @@ function AdminOrders() {
       <div className="mb-6 flex flex-wrap gap-2 border-b border-[var(--color-gray-100)] pb-px">
         {[
           { key: "all", label: "Semua Pesanan" },
-          { key: "pending_verification", label: "Menunggu Verifikasi", count: waitingCount, highlight: waitingCount > 0 },
+          {
+            key: "pending_verification",
+            label: "Menunggu Verifikasi",
+            count: waitingCount,
+            highlight: waitingCount > 0,
+          },
           { key: "pending_payment", label: "Belum Bayar" },
           { key: "active", label: "Aktif" },
-          { key: "rejected", label: "Ditolak" }
+          { key: "rejected", label: "Ditolak" },
         ].map((tab) => (
           <button
             key={tab.key}
@@ -156,7 +200,9 @@ function AdminOrders() {
           >
             {tab.label}
             {tab.count !== undefined && tab.count > 0 && (
-              <span className={`rounded-full px-1.5 py-0.5 text-2xs font-bold leading-none ${tab.highlight ? "bg-[var(--color-destructive)] text-white animate-pulse" : "bg-[var(--color-gray-200)] text-[var(--color-gray-700)]"}`}>
+              <span
+                className={`rounded-full px-1.5 py-0.5 text-2xs font-bold leading-none ${tab.highlight ? "bg-[var(--color-destructive)] text-white animate-pulse" : "bg-[var(--color-gray-200)] text-[var(--color-gray-700)]"}`}
+              >
                 {tab.count}
               </span>
             )}
@@ -186,23 +232,39 @@ function AdminOrders() {
               </tr>
             ) : (
               filteredOrders.map((o: any) => (
-                <tr key={o.id} className="border-t border-[var(--color-gray-100)] hover:bg-[var(--color-gray-50)] transition-colors duration-150">
-                  <td className="px-4 py-3 font-mono font-bold text-[var(--color-ink)]">{o.order_number}</td>
+                <tr
+                  key={o.id}
+                  className="border-t border-[var(--color-gray-100)] hover:bg-[var(--color-gray-50)] transition-colors duration-150"
+                >
+                  <td className="px-4 py-3 font-mono font-bold text-[var(--color-ink)]">
+                    {o.order_number}
+                  </td>
                   <td className="px-4 py-3">
-                    <span className="font-semibold text-[var(--color-ink)]">{o.profile?.full_name ?? o.recipient_name}</span>
+                    <span className="font-semibold text-[var(--color-ink)]">
+                      {o.profile?.full_name ?? o.recipient_name}
+                    </span>
                     <br />
-                    <span className="text-xs text-[var(--color-gray-500)]">{o.profile?.email ?? o.recipient_email}</span>
+                    <span className="text-xs text-[var(--color-gray-500)]">
+                      {o.profile?.email ?? o.recipient_email}
+                    </span>
                   </td>
                   <td className="px-4 py-3 font-medium">{o.package?.name}</td>
-                  <td className="px-4 py-3 text-[var(--color-gray-500)]">{fmtDateTime(o.created_at)}</td>
-                  <td className="px-4 py-3 text-right font-black text-[var(--color-ink)]">{idr(Number(o.amount))}</td>
+                  <td className="px-4 py-3 text-[var(--color-gray-500)]">
+                    {fmtDateTime(o.created_at)}
+                  </td>
+                  <td className="px-4 py-3 text-right font-black text-[var(--color-ink)]">
+                    {idr(Number(o.amount))}
+                  </td>
                   <td className="px-4 py-3">{getStatusBadge(o.status)}</td>
                   <td className="px-4 py-3 text-right">
                     <Button
                       size="sm"
                       variant="outline"
                       className="flex items-center gap-1.5"
-                      onClick={() => { setSelected(o); setNote(o.admin_note || ""); }}
+                      onClick={() => {
+                        setSelected(o);
+                        setNote(o.admin_note || "");
+                      }}
                     >
                       <Eye className="h-3.5 w-3.5" />
                       Detail
@@ -216,27 +278,55 @@ function AdminOrders() {
       </div>
 
       {selected && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-xs animate-fade-in" onClick={() => setSelected(null)}>
-          <div className="w-full max-w-lg rounded-lg bg-white p-6 shadow-xl max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-xs animate-fade-in"
+          onClick={() => setSelected(null)}
+        >
+          <div
+            className="w-full max-w-lg rounded-lg bg-white p-6 shadow-xl max-h-[90vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="mb-4 flex items-start justify-between">
               <div>
-                <h3 className="text-xl font-bold text-[var(--color-ink)]">{selected.order_number}</h3>
-                <p className="text-xs text-[var(--color-gray-500)]">{selected.profile?.email ?? selected.recipient_email}</p>
+                <h3 className="text-xl font-bold text-[var(--color-ink)]">
+                  {selected.order_number}
+                </h3>
+                <p className="text-xs text-[var(--color-gray-500)]">
+                  {selected.profile?.email ?? selected.recipient_email}
+                </p>
               </div>
               <Badge variant="outline">{selected.status.toUpperCase()}</Badge>
             </div>
 
             <div className="my-4 space-y-3 rounded-lg bg-[var(--color-gray-50)] p-4 text-sm">
-              <div className="flex justify-between"><span className="text-[var(--color-gray-500)]">Paket:</span><strong className="text-[var(--color-ink)]">{selected.package?.name}</strong></div>
-              <div className="flex justify-between"><span className="text-[var(--color-gray-500)]">Nominal Tagihan:</span><strong className="text-lg font-black text-[var(--color-ink)]">{idr(Number(selected.amount))}</strong></div>
-              <div className="flex justify-between"><span className="text-[var(--color-gray-500)]">Penerima:</span><span>{selected.recipient_name} ({selected.recipient_phone || "-"})</span></div>
-              <div className="flex justify-between"><span className="text-[var(--color-gray-500)]">Metode Pembayaran:</span><span className="uppercase font-semibold">{selected.method}</span></div>
+              <div className="flex justify-between">
+                <span className="text-[var(--color-gray-500)]">Paket:</span>
+                <strong className="text-[var(--color-ink)]">{selected.package?.name}</strong>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-[var(--color-gray-500)]">Nominal Tagihan:</span>
+                <strong className="text-lg font-black text-[var(--color-ink)]">
+                  {idr(Number(selected.amount))}
+                </strong>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-[var(--color-gray-500)]">Penerima:</span>
+                <span>
+                  {selected.recipient_name} ({selected.recipient_phone || "-"})
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-[var(--color-gray-500)]">Metode Pembayaran:</span>
+                <span className="uppercase font-semibold">{selected.method}</span>
+              </div>
             </div>
 
             {/* Proof of transfer visual preview */}
             {selected.proof_url ? (
               <div className="mt-4 space-y-2">
-                <span className="text-xs font-bold uppercase tracking-wider text-[var(--color-gray-500)]">Bukti Pembayaran:</span>
+                <span className="text-xs font-bold uppercase tracking-wider text-[var(--color-gray-500)]">
+                  Bukti Pembayaran:
+                </span>
                 {isPDF ? (
                   <a
                     href={proofUrl || undefined}
@@ -269,7 +359,9 @@ function AdminOrders() {
             )}
 
             <div className="mt-4">
-              <label className="mb-1 block text-xs font-semibold text-[var(--color-gray-700)]">Catatan Admin / Alasan Penolakan</label>
+              <label className="mb-1 block text-xs font-semibold text-[var(--color-gray-700)]">
+                Catatan Admin / Alasan Penolakan
+              </label>
               <Textarea
                 placeholder="Tulis alasan penolakan (wajib jika reject) atau catatan aktivasi (opsional)"
                 value={note}
@@ -308,4 +400,3 @@ function AdminOrders() {
     </>
   );
 }
-

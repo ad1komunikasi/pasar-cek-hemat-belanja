@@ -7,15 +7,47 @@ import { idr, deltaPct, fmtDate, fmtDateTime, fmtDateTimeWithSeconds } from "@/l
 import { useRealTimePrices } from "@/hooks/use-real-time-prices";
 import { getDeterministicBenchmarkPrices } from "@/lib/benchmark";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { ArrowDown, ArrowUp, Minus, Search, Calendar as CalendarIcon, Database, ExternalLink, Heart, TrendingUp, Crown, ListChecks } from "lucide-react";
+import {
+  ArrowDown,
+  ArrowUp,
+  Minus,
+  Search,
+  Calendar as CalendarIcon,
+  Database,
+  ExternalLink,
+  Heart,
+  TrendingUp,
+  Crown,
+  ListChecks,
+} from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
 import { PremiumUpgradeModal } from "@/components/premium-upgrade-modal";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts";
 
 export const Route = createFileRoute("/_authenticated/prices")({
   head: () => ({ meta: [{ title: "Harga Sembako Hari Ini — PasarCek" }] }),
@@ -23,16 +55,21 @@ export const Route = createFileRoute("/_authenticated/prices")({
 });
 
 const get90DayTrendData = (productName: string) => {
-  const basePrice = productName.includes("Beras") ? 14000 
-                  : productName.includes("Minyak") ? 16500
-                  : productName.includes("Cabai") ? 42000
-                  : productName.includes("Daging") ? 130000
-                  : productName.includes("Telur") ? 26000
-                  : 12000;
-  
+  const basePrice = productName.includes("Beras")
+    ? 14000
+    : productName.includes("Minyak")
+      ? 16500
+      : productName.includes("Cabai")
+        ? 42000
+        : productName.includes("Daging")
+          ? 130000
+          : productName.includes("Telur")
+            ? 26000
+            : 12000;
+
   const seed = productName.charCodeAt(0);
   return Array.from({ length: 12 }).map((_, idx) => {
-    const factor = Math.sin((idx + seed) * 0.8) * 0.08 + (idx * 0.015);
+    const factor = Math.sin((idx + seed) * 0.8) * 0.08 + idx * 0.015;
     return {
       label: `Mgu ${idx + 1}`,
       Harga: Math.round(basePrice * (1 + factor)),
@@ -49,9 +86,13 @@ function PricesPage() {
   const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
   const [lockedFeatureName, setLockedFeatureName] = useState("");
   const [trendModalOpen, setTrendModalOpen] = useState(false);
-  const [trendProduct, setTrendProduct] = useState<{ id: string; name: string; unit: string } | null>(null);
+  const [trendProduct, setTrendProduct] = useState<{
+    id: string;
+    name: string;
+    unit: string;
+  } | null>(null);
 
-  const today = new Date().toLocaleDateString('en-CA');
+  const today = new Date().toLocaleDateString("en-CA");
   const { user, isPremium } = useAuth();
   const qc = useQueryClient();
 
@@ -59,18 +100,29 @@ function PricesPage() {
     queryKey: ["fav-products", user?.id],
     queryFn: async () => {
       if (!user) return [];
-      return (await supabase.from("favorites_products").select("product_id").eq("user_id", user.id)).data ?? [];
+      return (
+        (await supabase.from("favorites_products").select("product_id").eq("user_id", user.id))
+          .data ?? []
+      );
     },
     enabled: !!user,
   });
 
-  const favProductIds = useMemo(() => new Set((favProducts ?? []).map((fp: any) => fp.product_id)), [favProducts]);
+  const favProductIds = useMemo(
+    () => new Set((favProducts ?? []).map((fp: any) => fp.product_id)),
+    [favProducts],
+  );
 
   async function toggleFavProduct(productId: string) {
     if (!user) return;
     const isFav = favProductIds.has(productId);
     if (isFav) {
-      const { data } = await supabase.from("favorites_products").select("id").eq("user_id", user.id).eq("product_id", productId).maybeSingle();
+      const { data } = await supabase
+        .from("favorites_products")
+        .select("id")
+        .eq("user_id", user.id)
+        .eq("product_id", productId)
+        .maybeSingle();
       if (data) {
         await supabase.from("favorites_products").delete().eq("id", data.id);
         toast.success("Dihapus dari produk favorit");
@@ -78,7 +130,7 @@ function PricesPage() {
     } else {
       await supabase.from("favorites_products").insert({
         user_id: user.id,
-        product_id: productId
+        product_id: productId,
       });
       toast.success("Ditambahkan ke produk favorit");
     }
@@ -117,7 +169,10 @@ function PricesPage() {
     },
   });
 
-  const wishlistProductIds = useMemo(() => new Set((wishlistItems ?? []).map((wi: any) => wi.product_id)), [wishlistItems]);
+  const wishlistProductIds = useMemo(
+    () => new Set((wishlistItems ?? []).map((wi: any) => wi.product_id)),
+    [wishlistItems],
+  );
 
   async function toggleWishlistProduct(productId: string, unit: string) {
     if (!user || !wishlistBasket) {
@@ -142,7 +197,7 @@ function PricesPage() {
         basket_id: wishlistBasket.id,
         product_id: productId,
         unit: unit || "kg",
-        quantity: 1
+        quantity: 1,
       });
       if (error) {
         toast.error("Gagal menambahkan ke Daftar Belanja: " + error.message);
@@ -155,19 +210,23 @@ function PricesPage() {
 
   const { data: markets } = useQuery({
     queryKey: ["markets-list"],
-    queryFn: async () => (await supabase.from("markets").select("id,name,city").order("name")).data ?? [],
+    queryFn: async () =>
+      (await supabase.from("markets").select("id,name,city").order("name")).data ?? [],
   });
 
   const { data: prices, isLoading } = useQuery({
     queryKey: ["prices-today", marketId, category, selectedDate],
     queryFn: async () => {
       const dateToUse = selectedDate || today;
-      
+
       const dateToUseMs = new Date(dateToUse).getTime();
       const ydaystr = new Date(dateToUseMs - 86400000).toISOString().slice(0, 10);
 
       // Always fetch products and markets first to ensure complete coverage
-      const { data: products } = await supabase.from("products").select("id,name,category,unit").order("name");
+      const { data: products } = await supabase
+        .from("products")
+        .select("id,name,category,unit")
+        .order("name");
       const { data: markets } = await supabase.from("markets").select("id,name,city").order("name");
 
       if (!products || !markets) {
@@ -175,8 +234,11 @@ function PricesPage() {
       }
 
       // Query database for selected date
-      let query = supabase.from("product_prices")
-        .select("id, price, recorded_at, created_at, product_id, market_id, product:products(id,name,category,unit), market:markets(id,name,city)")
+      let query = supabase
+        .from("product_prices")
+        .select(
+          "id, price, recorded_at, created_at, product_id, market_id, product:products(id,name,category,unit), market:markets(id,name,city)",
+        )
         .eq("recorded_at", dateToUse);
       if (marketId !== "all") query = query.eq("market_id", marketId);
       const { data } = await query;
@@ -195,7 +257,11 @@ function PricesPage() {
       const activeMarkets = marketId !== "all" ? markets.filter((m) => m.id === marketId) : markets;
 
       // Generate all benchmark prices for active markets and products
-      const benchmarkPrices = getDeterministicBenchmarkPrices(products as any[], activeMarkets as any[], dateToUse);
+      const benchmarkPrices = getDeterministicBenchmarkPrices(
+        products as any[],
+        activeMarkets as any[],
+        dateToUse,
+      );
 
       // Merge: prefer DB prices over benchmark prices
       const mergedPrices = benchmarkPrices.map((bp: any) => {
@@ -211,7 +277,7 @@ function PricesPage() {
             created_at: dbRow.created_at,
             source: dbRow.source || "database",
             product: dbRow.product || bp.product,
-            market: dbRow.market || bp.market
+            market: dbRow.market || bp.market,
           };
         }
         return bp; // benchmark price
@@ -220,7 +286,10 @@ function PricesPage() {
       const isBenchmark = mergedPrices.some((r: any) => r.source === "SP2KP Kemendag");
 
       // Query yesterday's prices
-      let yresQuery = supabase.from("product_prices").select("product_id,market_id,price").eq("recorded_at", ydaystr);
+      const yresQuery = supabase
+        .from("product_prices")
+        .select("product_id,market_id,price")
+        .eq("recorded_at", ydaystr);
       const yres = await yresQuery;
       const yDbPrices = yres.data ?? [];
       const yDbPriceMap = new Map<string, number>();
@@ -232,7 +301,11 @@ function PricesPage() {
         }
       });
 
-      const yBenchmarkPrices = getDeterministicBenchmarkPrices(products as any[], markets as any[], ydaystr);
+      const yBenchmarkPrices = getDeterministicBenchmarkPrices(
+        products as any[],
+        markets as any[],
+        ydaystr,
+      );
       const ymap = new Map<string, number>();
       yBenchmarkPrices.forEach((bp: any) => {
         const key = `${bp.product_id}:${bp.market_id}`;
@@ -249,38 +322,50 @@ function PricesPage() {
         list: mergedPrices.map((r: any) => ({
           ...r,
           prev: ymap.get(r.product_id + ":" + r.market_id) ?? null,
-        }))
+        })),
       };
     },
   });
 
   const activeDate = (prices?.dateUsed ?? selectedDate) || today;
-  const { prices: livePrices, lastUpdated: liveLastUpdated } = useRealTimePrices(prices?.list, activeDate);
+  const { prices: livePrices, lastUpdated: liveLastUpdated } = useRealTimePrices(
+    prices?.list,
+    activeDate,
+  );
   const pricesList = livePrices;
   const categories = Array.from(new Set(pricesList.map((p: any) => p.product.category)));
-  
-  const filtered = pricesList.filter((p: any) =>
-    (category === "all" || p.product.category === category) &&
-    (!q || p.product.name.toLowerCase().includes(q.toLowerCase())),
+
+  const filtered = pricesList.filter(
+    (p: any) =>
+      (category === "all" || p.product.category === category) &&
+      (!q || p.product.name.toLowerCase().includes(q.toLowerCase())),
   );
 
   const lastUpdatedTimestamp = liveLastUpdated;
 
   return (
     <AppShell>
-      <PageHeader title="Harga Sembako Hari Ini" description="Update terbaru dari pasar tradisional di sekitar Anda." />
+      <PageHeader
+        title="Harga Sembako Hari Ini"
+        description="Update terbaru dari pasar tradisional di sekitar Anda."
+      />
 
       <div className="mb-4 grid gap-3 sm:grid-cols-[1fr_180px_180px_180px]">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--color-gray-500)]" />
-          <Input className="pl-9 h-10" placeholder="Cari produk..." value={q} onChange={(e) => setQ(e.target.value)} />
+          <Input
+            className="pl-9 h-10"
+            placeholder="Cari produk..."
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+          />
         </div>
         <div className="relative">
           <CalendarIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--color-gray-500)] pointer-events-none" />
-          <Input 
-            type="date" 
-            className="pl-9 h-10 cursor-pointer" 
-            value={activeDate} 
+          <Input
+            type="date"
+            className="pl-9 h-10 cursor-pointer"
+            value={activeDate}
             max={today}
             onChange={(e) => {
               const val = e.target.value;
@@ -290,7 +375,7 @@ function PricesPage() {
               }
               if (!isPremium && val) {
                 const selectedTime = new Date(val).getTime();
-                const limitTime = new Date(today).getTime() - (7 * 24 * 60 * 60 * 1000);
+                const limitTime = new Date(today).getTime() - 7 * 24 * 60 * 60 * 1000;
                 if (selectedTime < limitTime) {
                   setLockedFeatureName("Analitik Riwayat > 7 Hari");
                   setUpgradeModalOpen(true);
@@ -299,21 +384,33 @@ function PricesPage() {
                 }
               }
               setSelectedDate(val);
-            }} 
+            }}
           />
         </div>
         <Select value={marketId} onValueChange={setMarketId}>
-          <SelectTrigger className="h-10"><SelectValue placeholder="Semua pasar" /></SelectTrigger>
+          <SelectTrigger className="h-10">
+            <SelectValue placeholder="Semua pasar" />
+          </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Semua pasar</SelectItem>
-            {(markets ?? []).map((m: any) => <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>)}
+            {(markets ?? []).map((m: any) => (
+              <SelectItem key={m.id} value={m.id}>
+                {m.name}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
         <Select value={category} onValueChange={setCategory}>
-          <SelectTrigger className="h-10"><SelectValue placeholder="Semua kategori" /></SelectTrigger>
+          <SelectTrigger className="h-10">
+            <SelectValue placeholder="Semua kategori" />
+          </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Semua kategori</SelectItem>
-            {categories.map((c: any) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+            {categories.map((c: any) => (
+              <SelectItem key={c} value={c}>
+                {c}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
       </div>
@@ -330,10 +427,10 @@ function PricesPage() {
               {prices?.isBenchmark ? (
                 <span className="flex items-center gap-1">
                   Terintegrasi Acuan Online
-                  <a 
-                    href="https://sp2kp.kemendag.go.id/" 
-                    target="_blank" 
-                    rel="noopener noreferrer" 
+                  <a
+                    href="https://sp2kp.kemendag.go.id/"
+                    target="_blank"
+                    rel="noopener noreferrer"
                     className="font-bold underline text-[var(--color-brand-blue)] hover:text-[var(--color-brand-green)] flex items-center gap-0.5"
                   >
                     SP2KP Kemendag <ExternalLink className="h-3 w-3 inline" />
@@ -345,10 +442,16 @@ function PricesPage() {
             </span>
           </div>
           <div className="text-[var(--color-gray-500)]">
-            Tanggal Data: <strong className="text-[var(--color-brand-blue)] font-bold">{fmtDate(activeDate)}</strong>
+            Tanggal Data:{" "}
+            <strong className="text-[var(--color-brand-blue)] font-bold">
+              {fmtDate(activeDate)}
+            </strong>
             {lastUpdatedTimestamp && (
               <span className="ml-2 pl-2 border-l border-[var(--color-gray-300)]">
-                Update Real-Time: <strong className="text-[var(--color-brand-green)] font-bold">{fmtDateTimeWithSeconds(lastUpdatedTimestamp)}</strong>
+                Update Real-Time:{" "}
+                <strong className="text-[var(--color-brand-green)] font-bold">
+                  {fmtDateTimeWithSeconds(lastUpdatedTimestamp)}
+                </strong>
               </span>
             )}
           </div>
@@ -368,20 +471,38 @@ function PricesPage() {
             </tr>
           </thead>
           <tbody>
-            {isLoading && <tr><td className="px-4 py-8 text-center text-[var(--color-gray-500)]" colSpan={6}>Memuat...</td></tr>}
+            {isLoading && (
+              <tr>
+                <td className="px-4 py-8 text-center text-[var(--color-gray-500)]" colSpan={6}>
+                  Memuat...
+                </td>
+              </tr>
+            )}
             {!isLoading && filtered.length === 0 && (
-              <tr><td colSpan={6}><EmptyState title="Belum ada data harga" description="Coba ubah filter, pilih tanggal lain, atau pilih pasar lain." /></td></tr>
+              <tr>
+                <td colSpan={6}>
+                  <EmptyState
+                    title="Belum ada data harga"
+                    description="Coba ubah filter, pilih tanggal lain, atau pilih pasar lain."
+                  />
+                </td>
+              </tr>
             )}
             {filtered.map((r: any) => {
               const d = deltaPct(r.price, r.prev);
               const status = d == null ? "stabil" : d > 1 ? "naik" : d < -1 ? "turun" : "stabil";
               return (
-                <tr key={r.id} className="border-t border-[var(--color-gray-100)] hover:bg-[var(--color-gray-50)]/30 transition-colors">
+                <tr
+                  key={r.id}
+                  className="border-t border-[var(--color-gray-100)] hover:bg-[var(--color-gray-50)]/30 transition-colors"
+                >
                   <td className="px-4 py-3 font-semibold text-[var(--color-ink)] flex items-center gap-2">
                     <button
                       onClick={() => toggleFavProduct(r.product.id)}
                       className="focus:outline-none group p-1 -ml-1 rounded hover:bg-gray-50 transition-colors"
-                      title={favProductIds.has(r.product.id) ? "Hapus dari Favorit" : "Tambah ke Favorit"}
+                      title={
+                        favProductIds.has(r.product.id) ? "Hapus dari Favorit" : "Tambah ke Favorit"
+                      }
                     >
                       <Heart
                         className={`h-4 w-4 transition-all duration-200 ${
@@ -394,7 +515,11 @@ function PricesPage() {
                     <button
                       onClick={() => toggleWishlistProduct(r.product.id, r.product.unit)}
                       className="focus:outline-none group p-1 rounded hover:bg-gray-50 transition-colors"
-                      title={wishlistProductIds.has(r.product.id) ? "Hapus dari Daftar Belanja Pintar" : "Tambah ke Daftar Belanja Pintar"}
+                      title={
+                        wishlistProductIds.has(r.product.id)
+                          ? "Hapus dari Daftar Belanja Pintar"
+                          : "Tambah ke Daftar Belanja Pintar"
+                      }
                     >
                       <ListChecks
                         className={`h-4 w-4 transition-all duration-200 ${
@@ -424,19 +549,28 @@ function PricesPage() {
                           90 Hari
                         </button>
                       </div>
-                      <span className="text-[10px] text-[var(--color-gray-500)] font-normal mt-0.5">Satuan: {r.product.unit}</span>
+                      <span className="text-[10px] text-[var(--color-gray-500)] font-normal mt-0.5">
+                        Satuan: {r.product.unit}
+                      </span>
                     </div>
                   </td>
                   <td className="px-4 py-3 text-[var(--color-gray-700)]">{r.product.category}</td>
                   <td className="px-4 py-3 text-[var(--color-gray-700)]">{r.market.name}</td>
                   <td className="px-4 py-3 text-right font-bold">{idr(r.price)}</td>
-                  <td className="px-4 py-3 text-right text-[var(--color-gray-500)]">{idr(r.prev)}</td>
+                  <td className="px-4 py-3 text-right text-[var(--color-gray-500)]">
+                    {idr(r.prev)}
+                  </td>
                   <td className="px-4 py-3 text-right">
-                    <Badge variant="outline" className={
-                      status === "naik" ? "border-[var(--color-destructive)] text-[var(--color-destructive)] bg-red-50/10" :
-                      status === "turun" ? "border-[var(--color-success)] text-[var(--color-success)] bg-green-50/10" :
-                      "border-[var(--color-gray-300)] text-[var(--color-gray-500)]"
-                    }>
+                    <Badge
+                      variant="outline"
+                      className={
+                        status === "naik"
+                          ? "border-[var(--color-destructive)] text-[var(--color-destructive)] bg-red-50/10"
+                          : status === "turun"
+                            ? "border-[var(--color-success)] text-[var(--color-success)] bg-green-50/10"
+                            : "border-[var(--color-gray-300)] text-[var(--color-gray-500)]"
+                      }
+                    >
                       {status === "naik" && <ArrowUp className="mr-1 h-3 w-3" />}
                       {status === "turun" && <ArrowDown className="mr-1 h-3 w-3" />}
                       {status === "stabil" && <Minus className="mr-1 h-3 w-3" />}
@@ -465,18 +599,45 @@ function PricesPage() {
                 Tren Harga 90 Hari: {trendProduct.name}
               </DialogTitle>
               <DialogDescription className="text-xs text-[var(--color-gray-500)] font-normal">
-                Histori pergerakan harga rata-rata mingguan komoditas {trendProduct.name} dalam satuan per {trendProduct.unit}.
+                Histori pergerakan harga rata-rata mingguan komoditas {trendProduct.name} dalam
+                satuan per {trendProduct.unit}.
               </DialogDescription>
             </DialogHeader>
 
             <div className="h-64 w-full mt-4 bg-[var(--color-gray-50)] rounded-xl border p-4">
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={get90DayTrendData(trendProduct.name)} margin={{ top: 10, right: 10, left: -20, bottom: 5 }}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--color-gray-200)" />
-                  <XAxis dataKey="label" tickLine={false} axisLine={false} tick={{ fontSize: 10, fill: "var(--color-gray-500)" }} />
-                  <YAxis tickLine={false} axisLine={false} tick={{ fontSize: 10, fill: "var(--color-gray-500)" }} />
-                  <Tooltip formatter={(value) => [idr(Number(value)), "Harga"]} labelStyle={{ fontWeight: "bold" }} />
-                  <Line type="monotone" dataKey="Harga" stroke="var(--color-brand-green)" strokeWidth={2.5} dot={{ r: 4 }} activeDot={{ r: 6 }} />
+                <LineChart
+                  data={get90DayTrendData(trendProduct.name)}
+                  margin={{ top: 10, right: 10, left: -20, bottom: 5 }}
+                >
+                  <CartesianGrid
+                    strokeDasharray="3 3"
+                    vertical={false}
+                    stroke="var(--color-gray-200)"
+                  />
+                  <XAxis
+                    dataKey="label"
+                    tickLine={false}
+                    axisLine={false}
+                    tick={{ fontSize: 10, fill: "var(--color-gray-500)" }}
+                  />
+                  <YAxis
+                    tickLine={false}
+                    axisLine={false}
+                    tick={{ fontSize: 10, fill: "var(--color-gray-500)" }}
+                  />
+                  <Tooltip
+                    formatter={(value) => [idr(Number(value)), "Harga"]}
+                    labelStyle={{ fontWeight: "bold" }}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="Harga"
+                    stroke="var(--color-brand-green)"
+                    strokeWidth={2.5}
+                    dot={{ r: 4 }}
+                    activeDot={{ r: 6 }}
+                  />
                 </LineChart>
               </ResponsiveContainer>
             </div>

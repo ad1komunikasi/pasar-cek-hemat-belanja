@@ -34,30 +34,30 @@ export const CATEGORY_BENCHMARKS: Record<string, { min: number; max: number }> =
   "Daging Sapi": { min: 130000, max: 145000 },
   "Minyak Goreng": { min: 16000, max: 20000 },
   "Gula Pasir": { min: 16000, max: 18000 },
-  "Garam": { min: 3000, max: 5000 },
+  Garam: { min: 3000, max: 5000 },
   "Bawang Merah": { min: 32000, max: 45000 },
   "Bawang Putih": { min: 38000, max: 48000 },
   "Cabai Merah": { min: 45000, max: 65000 },
   "Cabai Rawit": { min: 50000, max: 75000 },
-  "Tomat": { min: 12000, max: 18000 },
-  "Kentang": { min: 16000, max: 22000 },
-  "Wortel": { min: 14000, max: 20000 },
+  Tomat: { min: 12000, max: 18000 },
+  Kentang: { min: 16000, max: 22000 },
+  Wortel: { min: 14000, max: 20000 },
   "Tepung Terigu": { min: 11000, max: 14000 },
   "Susu UHT": { min: 17000, max: 21000 },
-  "Tahu": { min: 8000, max: 12000 },
-  "Tempe": { min: 10000, max: 14000 },
-  "Ikan Kembung": { min: 35000, max: 48000 }
+  Tahu: { min: 8000, max: 12000 },
+  Tempe: { min: 10000, max: 14000 },
+  "Ikan Kembung": { min: 35000, max: 48000 },
 };
 
 function getLocationFactor(market: Market): number {
   const city = market.city?.toLowerCase() || "";
   const name = market.name?.toLowerCase() || "";
-  
+
   // Wholesale / Induk markets are cheaper
   if (name.includes("induk") || name.includes("kramat jati")) {
-    return 0.90; // 10% cheaper
+    return 0.9; // 10% cheaper
   }
-  
+
   if (city.includes("selatan")) {
     return 1.05; // 5% more expensive
   }
@@ -65,19 +65,19 @@ function getLocationFactor(market: Market): number {
     return 1.02; // 2% more expensive
   }
   if (city.includes("utara") || city.includes("barat")) {
-    return 1.00;
+    return 1.0;
   }
   if (city.includes("timur")) {
     return 0.95; // 5% cheaper
   }
-  
-  return 1.00;
+
+  return 1.0;
 }
 
 export function getDeterministicBenchmarkPrices(
   products: Product[],
   markets: Market[],
-  dateStr: string
+  dateStr: string,
 ): PriceRow[] {
   const prices: PriceRow[] = [];
 
@@ -96,7 +96,7 @@ export function getDeterministicBenchmarkPrices(
       const randFactor = Math.abs(hash % 1000) / 1000;
       const basePrice = b.min + (b.max - b.min) * randFactor;
       const locationFactor = getLocationFactor(m);
-      
+
       // Round to nearest 100 Rupiah
       const calculatedPrice = Math.round((basePrice * locationFactor) / 100) * 100;
 
@@ -116,7 +116,7 @@ export function getDeterministicBenchmarkPrices(
         created_at: createdAtIso,
         source: "SP2KP Kemendag",
         product: p,
-        market: m
+        market: m,
       });
     }
   }

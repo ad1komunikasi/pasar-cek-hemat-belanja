@@ -27,7 +27,15 @@ type AuthCtx = {
 };
 
 const Ctx = createContext<AuthCtx>({
-  user: null, session: null, profile: null, roles: [], isAdmin: false, isSuperAdmin: false, isPremium: false, loading: true, refresh: async () => {},
+  user: null,
+  session: null,
+  profile: null,
+  roles: [],
+  isAdmin: false,
+  isSuperAdmin: false,
+  isPremium: false,
+  loading: true,
+  refresh: async () => {},
 });
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -38,7 +46,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   async function loadExtras(uid: string, uemail?: string, umeta?: any) {
-    let [{ data: p }, { data: r }] = await Promise.all([
+    const [{ data: p }, { data: r }] = await Promise.all([
       supabase.from("profiles").select("*").eq("id", uid).maybeSingle(),
       supabase.from("user_roles").select("role").eq("user_id", uid),
     ]);
@@ -57,7 +65,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         localStorage.removeItem("waitlist_priority_signup");
       }
     } else if (p && hasWaitlistPriority && !(p as any).waitlist_priority) {
-      const { data } = await supabase.from("profiles").update({ waitlist_priority: true }).eq("id", uid).select().maybeSingle();
+      const { data } = await supabase
+        .from("profiles")
+        .update({ waitlist_priority: true })
+        .eq("id", uid)
+        .select()
+        .maybeSingle();
       if (data) p = data;
       localStorage.removeItem("waitlist_priority_signup");
     } else if (p && hasWaitlistPriority) {
@@ -71,8 +84,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const { data } = await supabase.auth.getSession();
     setSession(data.session);
     setUser(data.session?.user ?? null);
-    if (data.session?.user) await loadExtras(data.session.user.id, data.session.user.email, data.session.user.user_metadata);
-    else { setProfile(null); setRoles([]); }
+    if (data.session?.user)
+      await loadExtras(
+        data.session.user.id,
+        data.session.user.email,
+        data.session.user.user_metadata,
+      );
+    else {
+      setProfile(null);
+      setRoles([]);
+    }
   }
 
   useEffect(() => {
@@ -81,7 +102,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (!mounted) return;
       setSession(data.session);
       setUser(data.session?.user ?? null);
-      if (data.session?.user) loadExtras(data.session.user.id, data.session.user.email, data.session.user.user_metadata).finally(() => setLoading(false));
+      if (data.session?.user)
+        loadExtras(
+          data.session.user.id,
+          data.session.user.email,
+          data.session.user.user_metadata,
+        ).finally(() => setLoading(false));
       else setLoading(false);
     });
     const { data: sub } = supabase.auth.onAuthStateChange((event, sess) => {
@@ -95,13 +121,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setRoles([]);
       }
     });
-    return () => { mounted = false; sub.subscription.unsubscribe(); };
+    return () => {
+      mounted = false;
+      sub.subscription.unsubscribe();
+    };
   }, []);
 
   const isSuperAdmin = roles.includes("super_admin");
   const isAdmin = roles.includes("admin") || isSuperAdmin;
   const isPremium = roles.includes("premium") || isAdmin;
-  return <Ctx.Provider value={{ user, session, profile, roles, isAdmin, isSuperAdmin, isPremium, loading, refresh }}>{children}</Ctx.Provider>;
+  return (
+    <Ctx.Provider
+      value={{ user, session, profile, roles, isAdmin, isSuperAdmin, isPremium, loading, refresh }}
+    >
+      {children}
+    </Ctx.Provider>
+  );
 }
 
 export const useAuth = () => useContext(Ctx);

@@ -6,11 +6,33 @@ import { useAuth } from "@/hooks/use-auth";
 import { useMemo, useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { idr, fmtDateTimeWithSeconds } from "@/lib/format";
 import { useRealTimePrices } from "@/hooks/use-real-time-prices";
 import { getDeterministicBenchmarkPrices } from "@/lib/benchmark";
-import { Plus, Trash2, Trophy, Share2, Store, ShoppingBasket, ListChecks, MapPin, Compass, Navigation, ArrowRight, Crown, Save, Check, Loader2 } from "lucide-react";
+import {
+  Plus,
+  Trash2,
+  Trophy,
+  Share2,
+  Store,
+  ShoppingBasket,
+  ListChecks,
+  MapPin,
+  Compass,
+  Navigation,
+  ArrowRight,
+  Crown,
+  Save,
+  Check,
+  Loader2,
+} from "lucide-react";
 import { toast } from "sonner";
 import cookingOilImg from "@/assets/cooking-oil.png";
 import shallotsImg from "@/assets/shallots.png";
@@ -36,12 +58,14 @@ import { PremiumUpgradeModal } from "@/components/premium-upgrade-modal";
 // Haversine distance calculator
 function getDistance(lat1: number, lon1: number, lat2: number, lon2: number) {
   const R = 6371; // Radius of earth in km
-  const dLat = (lat2 - lat1) * Math.PI / 180;
-  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
   const a =
     Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-    Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   return R * c; // Distance in km
 }
@@ -50,14 +74,19 @@ function getDistance(lat1: number, lon1: number, lat2: number, lon2: number) {
 function getProductImage(categoryName: string, productName: string) {
   const cat = (categoryName || "").toLowerCase();
   const name = (productName || "").toLowerCase();
-  
+
   if (cat.includes("minyak") || name.includes("minyak")) {
     return cookingOilImg;
   }
   if (name.includes("bawang putih")) {
     return garlicImg;
   }
-  if (name.includes("bawang merah") || name.includes("shallot") || cat.includes("bawang") || name.includes("bawang")) {
+  if (
+    name.includes("bawang merah") ||
+    name.includes("shallot") ||
+    cat.includes("bawang") ||
+    name.includes("bawang")
+  ) {
     return shallotsImg;
   }
   if (cat.includes("beras") || name.includes("beras")) {
@@ -69,7 +98,12 @@ function getProductImage(categoryName: string, productName: string) {
   if (name.includes("daging ayam") || name.includes("ayam")) {
     return chickenImg;
   }
-  if (name.includes("daging sapi") || name.includes("sapi") || cat.includes("daging") || name.includes("daging")) {
+  if (
+    name.includes("daging sapi") ||
+    name.includes("sapi") ||
+    cat.includes("daging") ||
+    name.includes("daging")
+  ) {
     return beefImg;
   }
   if (cat.includes("cabai") || name.includes("cabai")) {
@@ -112,31 +146,62 @@ function getProductImage(categoryName: string, productName: string) {
 }
 
 // Fallback icon component for missing product images
-function ProductIconFallback({ categoryName, productName }: { categoryName: string, productName: string }) {
+function ProductIconFallback({
+  categoryName,
+  productName,
+}: {
+  categoryName: string;
+  productName: string;
+}) {
   const cat = (categoryName || "").toLowerCase();
   const name = (productName || "").toLowerCase();
   let IconComponent = ShoppingBasket;
   let colorClass = "text-slate-400 bg-slate-100";
-  
-  if (cat.includes("beras") || name.includes("beras") || cat.includes("padi") || name.includes("padi")) {
+
+  if (
+    cat.includes("beras") ||
+    name.includes("beras") ||
+    cat.includes("padi") ||
+    name.includes("padi")
+  ) {
     IconComponent = Wheat;
     colorClass = "text-amber-600 bg-amber-50";
-  } else if (cat.includes("cabai") || name.includes("cabai") || name.includes("pedas") || cat.includes("sayur") || name.includes("sayur")) {
+  } else if (
+    cat.includes("cabai") ||
+    name.includes("cabai") ||
+    name.includes("pedas") ||
+    cat.includes("sayur") ||
+    name.includes("sayur")
+  ) {
     IconComponent = Flame;
     colorClass = "text-red-600 bg-red-50";
-  } else if (cat.includes("daging") || name.includes("daging") || cat.includes("sapi") || name.includes("sapi") || cat.includes("ayam") || name.includes("ayam")) {
+  } else if (
+    cat.includes("daging") ||
+    name.includes("daging") ||
+    cat.includes("sapi") ||
+    name.includes("sapi") ||
+    cat.includes("ayam") ||
+    name.includes("ayam")
+  ) {
     IconComponent = Beef;
     colorClass = "text-rose-700 bg-rose-50";
   } else if (cat.includes("telur") || name.includes("telur")) {
     IconComponent = Egg;
     colorClass = "text-amber-500 bg-amber-50/50";
-  } else if (cat.includes("minyak") || name.includes("minyak") || cat.includes("cair") || name.includes("cair")) {
+  } else if (
+    cat.includes("minyak") ||
+    name.includes("minyak") ||
+    cat.includes("cair") ||
+    name.includes("cair")
+  ) {
     IconComponent = Droplets;
     colorClass = "text-blue-600 bg-blue-50";
   }
-  
+
   return (
-    <div className={`w-full h-full flex items-center justify-center rounded-xl border border-border/60 ${colorClass}`}>
+    <div
+      className={`w-full h-full flex items-center justify-center rounded-xl border border-border/60 ${colorClass}`}
+    >
       <IconComponent className="h-6 w-6 stroke-[1.5]" />
     </div>
   );
@@ -150,7 +215,7 @@ export const Route = createFileRoute("/_authenticated/wishlist")({
 function WishlistPage() {
   const { user, isPremium } = useAuth();
   const qc = useQueryClient();
-  
+
   const [newProduct, setNewProduct] = useState<string>("");
   const [qty, setQty] = useState<string>("1");
   const [userCoords, setUserCoords] = useState<{ lat: number; lng: number } | null>(null);
@@ -179,7 +244,7 @@ function WishlistPage() {
       (position) => {
         setUserCoords({
           lat: position.coords.latitude,
-          lng: position.coords.longitude
+          lng: position.coords.longitude,
         });
         setLocationLoading(false);
         setLocationDenied(false);
@@ -194,7 +259,7 @@ function WishlistPage() {
         } else {
           toast.error("Gagal mendapatkan lokasi: " + error.message);
         }
-      }
+      },
     );
   };
 
@@ -232,36 +297,53 @@ function WishlistPage() {
   const { data: items } = useQuery({
     queryKey: ["wishlist-items", wishlistBasket?.id],
     enabled: !!wishlistBasket?.id,
-    queryFn: async () => (await supabase
-      .from("basket_items")
-      .select("*, product:products(id,name,unit,category)")
-      .eq("basket_id", wishlistBasket!.id)
-      .order("created_at", { ascending: true })).data ?? [],
+    queryFn: async () =>
+      (
+        await supabase
+          .from("basket_items")
+          .select("*, product:products(id,name,unit,category)")
+          .eq("basket_id", wishlistBasket!.id)
+          .order("created_at", { ascending: true })
+      ).data ?? [],
   });
 
   const { data: products } = useQuery({
     queryKey: ["products-list-wishlist"],
-    queryFn: async () => (await supabase.from("products").select("id,name,unit").order("name")).data ?? [],
+    queryFn: async () =>
+      (await supabase.from("products").select("id,name,unit").order("name")).data ?? [],
   });
 
   const { data: pricesByMarket } = useQuery({
-    queryKey: ["wishlist-prices", items?.map((i: any) => i.product_id).sort().join(",")],
+    queryKey: [
+      "wishlist-prices",
+      items
+        ?.map((i: any) => i.product_id)
+        .sort()
+        .join(","),
+    ],
     enabled: !!items && items.length > 0,
     queryFn: async () => {
-      const today = new Date().toLocaleDateString('en-CA');
+      const today = new Date().toLocaleDateString("en-CA");
       const productIds = items!.map((i: any) => i.product_id);
       const dateToUse = today;
 
-      const { data: productsList } = await supabase.from("products").select("id,name,category,unit").order("name");
-      const { data: marketsList } = await supabase.from("markets").select("id,name,city,lat,lng,address,hours").order("name");
+      const { data: productsList } = await supabase
+        .from("products")
+        .select("id,name,category,unit")
+        .order("name");
+      const { data: marketsList } = await supabase
+        .from("markets")
+        .select("id,name,city,lat,lng,address,hours")
+        .order("name");
 
       if (!productsList || !marketsList) return [];
 
-      const { data } = await supabase.from("product_prices")
+      const { data } = await supabase
+        .from("product_prices")
         .select("price,product_id,market_id,market:markets(id,name,city,lat,lng,address,hours)")
         .eq("recorded_at", dateToUse)
         .in("product_id", productIds);
-      
+
       const dbPrices = data ?? [];
       const dbPriceMap = new Map<string, any>();
       dbPrices.forEach((r: any) => {
@@ -273,7 +355,11 @@ function WishlistPage() {
       });
 
       const activeProducts = productsList.filter((p) => productIds.includes(p.id));
-      const benchmarkPrices = getDeterministicBenchmarkPrices(activeProducts as any[], marketsList as any[], dateToUse);
+      const benchmarkPrices = getDeterministicBenchmarkPrices(
+        activeProducts as any[],
+        marketsList as any[],
+        dateToUse,
+      );
 
       const mergedPrices = benchmarkPrices.map((bp: any) => {
         const key = `${bp.product_id}:${bp.market_id}`;
@@ -282,13 +368,13 @@ function WishlistPage() {
           return {
             price: Number(dbRow.price),
             product_id: bp.product_id,
-            market: dbRow.market || bp.market
+            market: dbRow.market || bp.market,
           };
         }
         return {
           price: bp.price,
           product_id: bp.product_id,
-          market: bp.market
+          market: bp.market,
         };
       });
 
@@ -296,8 +382,11 @@ function WishlistPage() {
     },
   });
 
-  const todayStr = new Date().toLocaleDateString('en-CA');
-  const { prices: livePricesByMarket, lastUpdated: liveLastUpdated } = useRealTimePrices(pricesByMarket, todayStr);
+  const todayStr = new Date().toLocaleDateString("en-CA");
+  const { prices: livePricesByMarket, lastUpdated: liveLastUpdated } = useRealTimePrices(
+    pricesByMarket,
+    todayStr,
+  );
 
   const productCheapestPrices = useMemo(() => {
     if (!items || !livePricesByMarket) return {};
@@ -327,34 +416,47 @@ function WishlistPage() {
 
   const recommendations = useMemo(() => {
     if (!items || !livePricesByMarket) return [];
-    
-    const marketsMap = new Map<string, { id: string; name: string; city: string; address: string; lat: number; lng: number; total: number; covered: number; distance?: number }>();
-    
+
+    const marketsMap = new Map<
+      string,
+      {
+        id: string;
+        name: string;
+        city: string;
+        address: string;
+        lat: number;
+        lng: number;
+        total: number;
+        covered: number;
+        distance?: number;
+      }
+    >();
+
     for (const row of livePricesByMarket as any[]) {
       const item = items.find((i: any) => i.product_id === row.product_id);
       if (!item) continue;
-      
+
       const marketId = row.market.id;
-      const m = marketsMap.get(marketId) ?? { 
-        id: row.market.id, 
-        name: row.market.name, 
-        city: row.market.city, 
+      const m = marketsMap.get(marketId) ?? {
+        id: row.market.id,
+        name: row.market.name,
+        city: row.market.city,
         address: row.market.address || "",
         lat: Number(row.market.lat) || 0,
         lng: Number(row.market.lng) || 0,
-        total: 0, 
-        covered: 0 
+        total: 0,
+        covered: 0,
       };
-      
+
       m.total += Number(row.price) * Number(item.quantity);
       m.covered += 1;
       marketsMap.set(marketId, m);
     }
-    
+
     let list = Array.from(marketsMap.values()).filter((m) => m.covered === items.length);
-    
+
     if (userCoords) {
-      list = list.map(m => {
+      list = list.map((m) => {
         if (m.lat && m.lng) {
           const dist = getDistance(userCoords.lat, userCoords.lng, m.lat, m.lng);
           return { ...m, distance: dist };
@@ -362,13 +464,14 @@ function WishlistPage() {
         return { ...m, distance: Infinity };
       });
     }
-    
+
     return list.sort((a, b) => a.total - b.total);
   }, [items, livePricesByMarket, userCoords]);
 
   const cheapestMarket = recommendations[0];
   const priciestMarket = recommendations[recommendations.length - 1];
-  const maxSavings = cheapestMarket && priciestMarket ? priciestMarket.total - cheapestMarket.total : 0;
+  const maxSavings =
+    cheapestMarket && priciestMarket ? priciestMarket.total - cheapestMarket.total : 0;
 
   // Reset saved status when max savings or items list change
   useEffect(() => {
@@ -395,19 +498,17 @@ function WishlistPage() {
       });
       const searchQueryText = queryParts.join(", ") || "Keranjang Belanja";
 
-      const { error } = await supabase
-        .from("search_savings_history")
-        .insert({
-          user_id: user.id,
-          savings_amount: maxSavings,
-          search_query: searchQueryText
-        });
+      const { error } = await supabase.from("search_savings_history").insert({
+        user_id: user.id,
+        savings_amount: maxSavings,
+        search_query: searchQueryText,
+      });
 
       if (error) throw error;
 
       setIsSaved(true);
       toast.success(`Penghematan ${idr(maxSavings)} berhasil disimpan ke Riwayat!`);
-      
+
       qc.invalidateQueries({ queryKey: ["user-savings-history", user.id] });
       qc.invalidateQueries({ queryKey: ["admin-reports"] });
     } catch (err: any) {
@@ -433,20 +534,21 @@ function WishlistPage() {
 
   async function addItem() {
     if (!newProduct || !wishlistBasket) return;
-    
+
     // Check item limit for free users (max 3 items)
     if (!isPremium && items && items.length >= 3) {
       handleOpenLock("Daftar Belanja Lengkap (Kapasitas > 3 Produk)");
       return;
     }
-    
+
     const p = (products as any[]).find((x) => x.id === newProduct);
     const existing = (items ?? []).find((x: any) => x.product_id === newProduct);
-    
+
     if (existing) {
       await updateQty(existing.id, existing.quantity + (Number(qty) || 1));
       toast.success(`Jumlah ${p?.name} diperbarui.`);
-      setNewProduct(""); setQty("1");
+      setNewProduct("");
+      setQty("1");
       return;
     }
 
@@ -454,11 +556,12 @@ function WishlistPage() {
       basket_id: wishlistBasket.id,
       product_id: newProduct,
       unit: p?.unit ?? "kg",
-      quantity: Number(qty) || 1
+      quantity: Number(qty) || 1,
     });
 
     if (error) return toast.error(error.message);
-    setNewProduct(""); setQty("1");
+    setNewProduct("");
+    setQty("1");
     qc.invalidateQueries({ queryKey: ["wishlist-items"] });
     qc.invalidateQueries({ queryKey: ["wishlist-prices"] });
     toast.success("Produk ditambahkan ke Daftar Belanja.");
@@ -488,7 +591,13 @@ function WishlistPage() {
         }
         description="Rencanakan kebutuhan sembako Anda, bandingkan harga di seluruh pasar, dan gunakan lokasi untuk menemukan opsi terbaik."
         action={
-          <Button variant="outline" onClick={() => { navigator.clipboard.writeText(window.location.href); toast.success("Link disalin"); }}>
+          <Button
+            variant="outline"
+            onClick={() => {
+              navigator.clipboard.writeText(window.location.href);
+              toast.success("Link disalin");
+            }}
+          >
             <Share2 className="h-4 w-4 mr-1" /> Bagikan
           </Button>
         }
@@ -503,7 +612,10 @@ function WishlistPage() {
           <span>Feed Harga Kemendag SP2KP Terhubung (Real-Time)</span>
         </div>
         <div className="text-[var(--color-gray-500)]">
-          Update Terkini: <strong className="text-[var(--color-brand-green)] font-bold">{fmtDateTimeWithSeconds(liveLastUpdated)}</strong>
+          Update Terkini:{" "}
+          <strong className="text-[var(--color-brand-green)] font-bold">
+            {fmtDateTimeWithSeconds(liveLastUpdated)}
+          </strong>
         </div>
       </div>
 
@@ -518,18 +630,28 @@ function WishlistPage() {
                 </SelectTrigger>
                 <SelectContent className="bg-white border">
                   {(products ?? []).map((p: any) => (
-                    <SelectItem key={p.id} value={p.id}>{p.name} ({p.unit})</SelectItem>
+                    <SelectItem key={p.id} value={p.id}>
+                      {p.name} ({p.unit})
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
-              <Input type="number" min="0.1" step="0.1" value={qty} onChange={(e) => setQty(e.target.value)} placeholder="Jumlah" className="h-10" />
+              <Input
+                type="number"
+                min="0.1"
+                step="0.1"
+                value={qty}
+                onChange={(e) => setQty(e.target.value)}
+                placeholder="Jumlah"
+                className="h-10"
+              />
               <Button onClick={addItem} disabled={!newProduct} className="h-10">
                 <Plus className="h-4 w-4 mr-1" /> Tambah
               </Button>
             </div>
           </div>
 
-          {(!items || items.length === 0) ? (
+          {!items || items.length === 0 ? (
             <EmptyState
               title="Daftar Belanja Masih Kosong"
               description="Tambahkan produk di atas or dari halaman Harga Hari Ini untuk memantau estimasi belanja Anda."
@@ -546,31 +668,43 @@ function WishlistPage() {
                   const cheapestInfo = productCheapestPrices[it.product_id];
                   const price = cheapestInfo?.price;
                   const productImg = getProductImage(it.product.category, it.product.name);
-                  
+
                   const productPrices = (livePricesByMarket ?? [])
                     .filter((row: any) => row.product_id === it.product_id)
                     .sort((a: any, b: any) => Number(a.price) - Number(b.price));
 
                   return (
-                    <div key={it.id} className="bg-white rounded-2xl border border-[var(--color-gray-100)] p-4 shadow-soft flex flex-col gap-3.5 hover:shadow-card transition-shadow @container">
+                    <div
+                      key={it.id}
+                      className="bg-white rounded-2xl border border-[var(--color-gray-100)] p-4 shadow-soft flex flex-col gap-3.5 hover:shadow-card transition-shadow @container"
+                    >
                       {/* Product Header */}
                       <div className="flex items-start justify-between gap-3">
                         <div className="flex items-center gap-3">
                           <div className="w-12 h-12 shrink-0 rounded-xl bg-slate-50 border border-border/60 flex items-center justify-center overflow-hidden">
                             {productImg ? (
-                              <img src={productImg} alt={it.product.name} className="w-full h-full object-contain p-0.5" />
+                              <img
+                                src={productImg}
+                                alt={it.product.name}
+                                className="w-full h-full object-contain p-0.5"
+                              />
                             ) : (
-                              <ProductIconFallback categoryName={it.product.category} productName={it.product.name} />
+                              <ProductIconFallback
+                                categoryName={it.product.category}
+                                productName={it.product.name}
+                              />
                             )}
                           </div>
                           <div>
                             <span className="inline-block px-1.5 py-0.5 rounded bg-accent/10 text-accent text-[8px] font-extrabold uppercase tracking-wider mb-0.5">
                               {it.product.category || "Umum"}
                             </span>
-                            <h4 className="font-display font-bold text-xs sm:text-sm text-foreground leading-tight">{it.product.name}</h4>
+                            <h4 className="font-display font-bold text-xs sm:text-sm text-foreground leading-tight">
+                              {it.product.name}
+                            </h4>
                           </div>
                         </div>
-                        
+
                         <Button
                           size="icon"
                           variant="ghost"
@@ -584,13 +718,20 @@ function WishlistPage() {
                       {/* Quantity Modifier */}
                       <div className="flex flex-col @xs:flex-row @xs:items-center justify-between gap-3 bg-[var(--color-gray-50)] p-2.5 rounded-xl border border-[var(--color-gray-100)]">
                         <div className="flex items-center gap-2 flex-wrap @xs:flex-nowrap">
-                          <span className="text-[10px] font-extrabold text-[var(--color-gray-500)] uppercase tracking-wider">Jumlah:</span>
+                          <span className="text-[10px] font-extrabold text-[var(--color-gray-500)] uppercase tracking-wider">
+                            Jumlah:
+                          </span>
                           <div className="flex items-center gap-1.5">
                             <button
                               type="button"
                               className="w-7 h-7 flex items-center justify-center rounded-md border border-[var(--color-gray-300)] bg-white hover:bg-[var(--color-gray-50)] text-xs font-bold transition-colors disabled:opacity-50"
                               disabled={it.quantity <= 0.1}
-                              onClick={() => updateQty(it.id, Math.max(0.1, Number((it.quantity - 0.1).toFixed(1))))}
+                              onClick={() =>
+                                updateQty(
+                                  it.id,
+                                  Math.max(0.1, Number((it.quantity - 0.1).toFixed(1))),
+                                )
+                              }
                             >
                               -
                             </button>
@@ -606,15 +747,21 @@ function WishlistPage() {
                             <button
                               type="button"
                               className="w-7 h-7 flex items-center justify-center rounded-md border border-[var(--color-gray-300)] bg-white hover:bg-[var(--color-gray-50)] text-xs font-bold transition-colors"
-                              onClick={() => updateQty(it.id, Number((it.quantity + 0.1).toFixed(1)))}
+                              onClick={() =>
+                                updateQty(it.id, Number((it.quantity + 0.1).toFixed(1)))
+                              }
                             >
                               +
                             </button>
-                            <span className="text-xs text-[var(--color-gray-500)] font-medium">{it.unit}</span>
+                            <span className="text-xs text-[var(--color-gray-500)] font-medium">
+                              {it.unit}
+                            </span>
                           </div>
                         </div>
                         <div className="text-left @xs:text-right">
-                          <div className="text-[8px] font-bold text-[var(--color-gray-500)] uppercase tracking-wider">Subtotal:</div>
+                          <div className="text-[8px] font-bold text-[var(--color-gray-500)] uppercase tracking-wider">
+                            Subtotal:
+                          </div>
                           <div className="font-extrabold text-sm text-[var(--color-ink)]">
                             {price ? idr(price * it.quantity) : "—"}
                           </div>
@@ -623,22 +770,33 @@ function WishlistPage() {
 
                       {/* Top 2 Markets Prices for this product */}
                       <div className="border-t border-border/60 pt-3 space-y-1.5">
-                        <div className="text-[9px] font-bold text-[var(--color-gray-500)] uppercase tracking-wider">Perbandingan Pasar:</div>
+                        <div className="text-[9px] font-bold text-[var(--color-gray-500)] uppercase tracking-wider">
+                          Perbandingan Pasar:
+                        </div>
                         {productPrices.slice(0, 2).map((row: any, idx: number) => {
                           const isCheapest = idx === 0;
                           const totalMarketPrice = Number(row.price) * it.quantity;
 
                           if (!isPremium && !isCheapest) {
                             return (
-                              <div key={row.market.id} className="flex justify-between items-center text-xs py-1 relative overflow-hidden select-none">
+                              <div
+                                key={row.market.id}
+                                className="flex justify-between items-center text-xs py-1 relative overflow-hidden select-none"
+                              >
                                 <div className="flex flex-col blur-[1.5px]">
-                                  <span className="font-medium text-foreground/45">{row.market.name}</span>
-                                  <span className="text-[8px] text-[var(--color-gray-400)]">{row.market.city}</span>
+                                  <span className="font-medium text-foreground/45">
+                                    {row.market.name}
+                                  </span>
+                                  <span className="text-[8px] text-[var(--color-gray-400)]">
+                                    {row.market.city}
+                                  </span>
                                 </div>
                                 <div className="flex items-center gap-1.5">
                                   <div className="text-right blur-[1.5px] opacity-50">
                                     <span className="font-bold">{idr(Number(row.price))}</span>
-                                    <span className="text-[9px] text-[var(--color-gray-400)] block">Total: {idr(totalMarketPrice)}</span>
+                                    <span className="text-[9px] text-[var(--color-gray-400)] block">
+                                      Total: {idr(totalMarketPrice)}
+                                    </span>
                                   </div>
                                   <button
                                     onClick={() => handleOpenLock("Detail Lintas Pasar")}
@@ -652,15 +810,24 @@ function WishlistPage() {
                           }
 
                           return (
-                            <div key={row.market.id} className="flex justify-between items-center text-xs py-1">
+                            <div
+                              key={row.market.id}
+                              className="flex justify-between items-center text-xs py-1"
+                            >
                               <div className="flex flex-col">
-                                <span className="font-medium text-foreground/80">{row.market.name}</span>
-                                <span className="text-[8px] text-[var(--color-gray-500)]">{row.market.city}</span>
+                                <span className="font-medium text-foreground/80">
+                                  {row.market.name}
+                                </span>
+                                <span className="text-[8px] text-[var(--color-gray-500)]">
+                                  {row.market.city}
+                                </span>
                               </div>
                               <div className="flex items-center gap-1.5">
                                 <div className="text-right">
                                   <span className="font-bold">{idr(Number(row.price))}</span>
-                                  <span className="text-[9px] text-[var(--color-gray-500)] block">Total: {idr(totalMarketPrice)}</span>
+                                  <span className="text-[9px] text-[var(--color-gray-500)] block">
+                                    Total: {idr(totalMarketPrice)}
+                                  </span>
                                 </div>
                                 {isCheapest && (
                                   <span className="text-[8px] font-extrabold bg-[var(--color-success)]/10 text-[var(--color-success)] px-1.5 py-0.5 rounded border border-[var(--color-success)]/20 uppercase tracking-wider">
@@ -680,8 +847,12 @@ function WishlistPage() {
               {/* Total Belanja Terendah Box */}
               <div className="mt-4 flex flex-col @md:flex-row @md:items-center justify-between gap-4 rounded-xl bg-[var(--color-gray-50)] p-4 border-2 border-dashed border-[var(--color-gray-200)]">
                 <div>
-                  <h4 className="font-bold text-sm text-[var(--color-gray-700)]">Total Belanja Terendah (Kombinasi Pasar)</h4>
-                  <p className="text-[10px] text-[var(--color-gray-500)]">Total biaya jika Anda membeli setiap barang di pasar termurahnya masing-masing.</p>
+                  <h4 className="font-bold text-sm text-[var(--color-gray-700)]">
+                    Total Belanja Terendah (Kombinasi Pasar)
+                  </h4>
+                  <p className="text-[10px] text-[var(--color-gray-500)]">
+                    Total biaya jika Anda membeli setiap barang di pasar termurahnya masing-masing.
+                  </p>
                 </div>
                 <div className="text-left @md:text-right">
                   <span className="text-xl font-black text-[var(--color-brand-blue)]">
@@ -707,19 +878,32 @@ function WishlistPage() {
                   <Navigation className="h-4 w-4 shrink-0 fill-current animate-pulse" />
                   <div>
                     <p className="font-bold">Akses Lokasi Aktif</p>
-                    <p className="text-[10px] text-[var(--color-gray-500)] font-normal">Koordinat: {userCoords.lat.toFixed(4)}, {userCoords.lng.toFixed(4)}</p>
+                    <p className="text-[10px] text-[var(--color-gray-500)] font-normal">
+                      Koordinat: {userCoords.lat.toFixed(4)}, {userCoords.lng.toFixed(4)}
+                    </p>
                   </div>
                 </div>
-                <Button size="sm" variant="outline" onClick={requestLocation} disabled={locationLoading} className="w-full text-xs">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={requestLocation}
+                  disabled={locationLoading}
+                  className="w-full text-xs"
+                >
                   Perbarui Lokasi
                 </Button>
               </div>
             ) : (
               <div className="space-y-3 mt-2">
                 <p className="text-xs text-[var(--color-gray-500)] leading-relaxed">
-                  Aktifkan GPS Anda untuk secara otomatis menghitung jarak ke setiap pasar tradisional di Jakarta.
+                  Aktifkan GPS Anda untuk secara otomatis menghitung jarak ke setiap pasar
+                  tradisional di Jakarta.
                 </p>
-                <Button onClick={requestLocation} disabled={locationLoading} className="w-full text-xs h-9">
+                <Button
+                  onClick={requestLocation}
+                  disabled={locationLoading}
+                  className="w-full text-xs h-9"
+                >
                   {locationLoading ? "Mendapatkan Koordinat..." : "Gunakan Lokasi Saya"}
                 </Button>
                 {locationDenied && (
@@ -734,9 +918,13 @@ function WishlistPage() {
           {/* Savings Estimator */}
           {items && items.length > 0 && (
             <div className="rounded-lg bg-gradient-to-br from-[var(--color-brand-blue)] to-[var(--color-brand-green)] p-6 text-white shadow-soft">
-              <p className="text-xs font-semibold uppercase text-white/70">Potensi Hemat Belanja Pintar</p>
+              <p className="text-xs font-semibold uppercase text-white/70">
+                Potensi Hemat Belanja Pintar
+              </p>
               <p className="mt-2 text-3xl font-black">{idr(maxSavings)}</p>
-              <p className="mt-1 text-xs text-white/80">Selisih antara pasar termahal & termurah untuk seluruh barang Anda.</p>
+              <p className="mt-1 text-xs text-white/80">
+                Selisih antara pasar termahal & termurah untuk seluruh barang Anda.
+              </p>
               <Button
                 onClick={handleSaveSavings}
                 disabled={isSaving || isSaved}
@@ -776,7 +964,7 @@ function WishlistPage() {
                 {recommendations.slice(0, isPremium ? undefined : 2).map((m, idx) => {
                   const isCheapest = idx === 0;
                   const isNearest = nearestMarket && nearestMarket.id === m.id;
-                  
+
                   return (
                     <div
                       key={m.id}
@@ -790,7 +978,9 @@ function WishlistPage() {
                         <div>
                           <div className="flex items-center gap-1.5 flex-wrap">
                             <span className="font-bold text-xs sm:text-sm text-[var(--color-ink)] flex items-center gap-1">
-                              {isCheapest && <Trophy className="h-4 w-4 text-[var(--color-success)] shrink-0" />}
+                              {isCheapest && (
+                                <Trophy className="h-4 w-4 text-[var(--color-success)] shrink-0" />
+                              )}
                               {m.name}
                             </span>
                             {isCheapest && (
@@ -810,7 +1000,9 @@ function WishlistPage() {
                           </p>
                         </div>
                         <div className="text-right shrink-0">
-                          <span className={`text-sm sm:text-base font-black ${isCheapest ? "text-[var(--color-success)]" : "text-[var(--color-ink)]"}`}>
+                          <span
+                            className={`text-sm sm:text-base font-black ${isCheapest ? "text-[var(--color-success)]" : "text-[var(--color-ink)]"}`}
+                          >
                             {idr(m.total)}
                           </span>
                           {m.distance !== undefined && m.distance !== Infinity && (
@@ -837,14 +1029,17 @@ function WishlistPage() {
                   );
                 })}
 
-                {(!isPremium && recommendations.length > 2) && (
+                {!isPremium && recommendations.length > 2 && (
                   <div className="rounded-xl border border-dashed border-amber-500/30 bg-amber-500/[0.02] p-4 text-center mt-3 relative overflow-hidden">
                     <div className="mx-auto my-1.5 flex h-9 w-9 items-center justify-center rounded-full bg-amber-500/10 text-amber-500">
                       <Crown className="h-4.5 w-4.5 fill-current" />
                     </div>
-                    <p className="text-xs font-bold text-slate-800">+{recommendations.length - 2} Rekomendasi Pasar Lainnya Terkunci</p>
+                    <p className="text-xs font-bold text-slate-800">
+                      +{recommendations.length - 2} Rekomendasi Pasar Lainnya Terkunci
+                    </p>
                     <p className="text-[10px] text-slate-500 mt-1 max-w-xs mx-auto">
-                      Upgrade ke Premium untuk membuka semua rekomendasi pasar tradisional terdekat & terhemat.
+                      Upgrade ke Premium untuk membuka semua rekomendasi pasar tradisional terdekat
+                      & terhemat.
                     </p>
                     <button
                       onClick={() => handleOpenLock("Rekomendasi Pasar Lengkap")}

@@ -21,7 +21,10 @@ export const EmailService = {
    */
   async logEmail(recipientEmail: string, subject: string, body: string, orderId: string) {
     // Print formatted email details to console for local developers to review
-    console.log("%c📧 [EMAIL SENT SIMULATION]", "background: #1e3a8a; color: #fff; padding: 4px; font-weight: bold;");
+    console.log(
+      "%c📧 [EMAIL SENT SIMULATION]",
+      "background: #1e3a8a; color: #fff; padding: 4px; font-weight: bold;",
+    );
     console.log(`To: ${recipientEmail}`);
     console.log(`Subject: ${subject}`);
     console.log(`Body Snippet: ${body.substring(0, 300)}...`);
@@ -69,10 +72,10 @@ export const EmailService = {
   async sendOrderCreatedEmail(order: OrderData, packageName: string) {
     const origin = window.location.origin;
     const orderLink = `${origin}/orders/${order.id}`;
-    
+
     const subject = `[PasarCek] Tagihan Pemesanan Paket ${packageName} #${order.order_number}`;
-    
-    const methodDetails = order.payment_method 
+
+    const methodDetails = order.payment_method
       ? `
         <div style="background-color: #f8f8f8; padding: 15px; border-radius: 8px; margin: 15px 0;">
           <p style="margin: 5px 0;"><strong>Metode:</strong> ${order.payment_method.name}</p>
@@ -116,9 +119,9 @@ export const EmailService = {
   async sendPaymentUploadedEmail(order: OrderData) {
     const origin = window.location.origin;
     const orderLink = `${origin}/orders/${order.id}`;
-    
+
     const subject = `[PasarCek] Bukti Pembayaran Diterima #${order.order_number}`;
-    
+
     const body = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #424242; line-height: 1.6;">
         <h2 style="color: #127a79; border-bottom: 2px solid #eaeaea; padding-bottom: 10px;">Bukti Pembayaran Diterima</h2>
@@ -145,9 +148,9 @@ export const EmailService = {
   async sendOrderApprovedEmail(order: OrderData, packageName: string) {
     const origin = window.location.origin;
     const dashboardLink = `${origin}/dashboard`;
-    
+
     const subject = `[PasarCek] Selamat! Paket Premium ${packageName} Anda Telah Aktif 🎉`;
-    
+
     const body = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #424242; line-height: 1.6;">
         <h2 style="color: #65c32d; border-bottom: 2px solid #eaeaea; padding-bottom: 10px;">Paket Premium Aktif!</h2>
@@ -181,9 +184,9 @@ export const EmailService = {
   async sendOrderRejectedEmail(order: OrderData, reason: string) {
     const origin = window.location.origin;
     const orderLink = `${origin}/orders/${order.id}`;
-    
+
     const subject = `[PasarCek] Bukti Pembayaran Ditolak #${order.order_number}`;
-    
+
     const body = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #424242; line-height: 1.6;">
         <h2 style="color: #d32f2f; border-bottom: 2px solid #eaeaea; padding-bottom: 10px;">Pemberitahuan: Pembayaran Ditolak</h2>
@@ -215,9 +218,9 @@ export const EmailService = {
   async sendAdminPromotionEmail(recipientEmail: string, recipientName: string) {
     const origin = window.location.origin;
     const dashboardLink = `${origin}/admin`;
-    
+
     const subject = `[PasarCek] Selamat! Anda Telah Diangkat Menjadi Admin Dashboard PasarCek 🎉`;
-    
+
     const body = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #424242; line-height: 1.6;">
         <h2 style="color: #1e3a8a; border-bottom: 2px solid #eaeaea; padding-bottom: 10px;">Akses Admin Aktif!</h2>

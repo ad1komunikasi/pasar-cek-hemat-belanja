@@ -11,7 +11,7 @@ export const getAiAnalysis = createServerFn({ method: "POST" })
           z.object({
             role: z.enum(["user", "model"]),
             parts: z.array(z.object({ text: z.string() })),
-          })
+          }),
         )
         .optional(),
       metricsData: z.object({
@@ -29,7 +29,7 @@ export const getAiAnalysis = createServerFn({ method: "POST" })
             totalOrders: z.union([z.number(), z.string()]),
             successOrders: z.union([z.number(), z.string()]),
             revenue: z.number(),
-          })
+          }),
         ),
         totalBaskets: z.number(),
         popularProducts: z.array(
@@ -38,10 +38,10 @@ export const getAiAnalysis = createServerFn({ method: "POST" })
             category: z.string(),
             count: z.number(),
             quantity: z.number(),
-          })
+          }),
         ),
       }),
-    })
+    }),
   )
   .handler(async ({ data }) => {
     const apiKey = data.apiKey || process.env.GEMINI_API_KEY;
@@ -52,7 +52,7 @@ export const getAiAnalysis = createServerFn({ method: "POST" })
     const { customPrompt, history, metricsData } = data;
 
     // Build the payload for the Gemini API call
-    let contents = history ? [...history] : [];
+    const contents = history ? [...history] : [];
 
     if (contents.length === 0) {
       // First message: Context setup + prompt
@@ -75,13 +75,16 @@ Berikut adalah data riwayat pengguna dan simulasi transaksi pada aplikasi PasarC
 ${metricsData.packageSummary
   .map(
     (pkg) =>
-      `  * ${pkg.name} (Harga: Rp ${pkg.price.toLocaleString("id-ID")}): ${pkg.activeUsers} Pengguna Aktif, Total Pesanan: ${pkg.totalOrders}, Pesanan Sukses: ${pkg.successOrders}, Pendapatan: Rp ${pkg.revenue.toLocaleString("id-ID")}`
+      `  * ${pkg.name} (Harga: Rp ${pkg.price.toLocaleString("id-ID")}): ${pkg.activeUsers} Pengguna Aktif, Total Pesanan: ${pkg.totalOrders}, Pesanan Sukses: ${pkg.successOrders}, Pendapatan: Rp ${pkg.revenue.toLocaleString("id-ID")}`,
   )
   .join("\n")}
 - Total Simulasi Smart Basket Dibuat: ${metricsData.totalBaskets}
 - 10 Produk Terpopuler di Smart Basket (Paling Sering Disimulasikan):
 ${metricsData.popularProducts
-  .map((p, idx) => `  ${idx + 1}. ${p.name} (Kategori: ${p.category}) - ${p.count}x ditambahkan, Total Qty: ${p.quantity}`)
+  .map(
+    (p, idx) =>
+      `  ${idx + 1}. ${p.name} (Kategori: ${p.category}) - ${p.count}x ditambahkan, Total Qty: ${p.quantity}`,
+  )
   .join("\n")}
 
 TUGAS:
@@ -138,13 +141,15 @@ Gunakan selalu nada bicara konsultan profesional ("kami" / "tim kami"), berikan 
                 maxOutputTokens: 8192,
               },
             }),
-          }
+          },
         );
 
         if (!response.ok) {
           const errorText = await response.text();
           console.warn(`Model ${model} failed with status ${response.status}:`, errorText);
-          lastError = new Error(`Gemini API error (${model}): ${response.statusText} (${errorText})`);
+          lastError = new Error(
+            `Gemini API error (${model}): ${response.statusText} (${errorText})`,
+          );
           continue; // Try next model
         }
 
@@ -176,7 +181,9 @@ Gunakan selalu nada bicara konsultan profesional ("kami" / "tim kami"), berikan 
     }
 
     // If all models failed:
-    throw new Error(`Gagal menghubungi AI. Layanan sedang padat atau kunci API tidak valid. Detail: ${lastError?.message || "Tidak diketahui"}`);
+    throw new Error(
+      `Gagal menghubungi AI. Layanan sedang padat atau kunci API tidak valid. Detail: ${lastError?.message || "Tidak diketahui"}`,
+    );
   });
 
 export const getAiProductSuggestions = createServerFn({ method: "POST" })
@@ -188,10 +195,10 @@ export const getAiProductSuggestions = createServerFn({ method: "POST" })
           name: z.string(),
           category: z.string(),
           unit: z.string(),
-        })
+        }),
       ),
       apiKey: z.string().optional(),
-    })
+    }),
   )
   .handler(async ({ data }) => {
     const apiKey = data.apiKey || process.env.GEMINI_API_KEY;
@@ -256,13 +263,15 @@ Kembalikan respon hanya dalam format JSON array yang valid. Jangan sertakan form
                 responseMimeType: "application/json",
               },
             }),
-          }
+          },
         );
 
         if (!response.ok) {
           const errorText = await response.text();
           console.warn(`Model ${model} failed with status ${response.status}:`, errorText);
-          lastError = new Error(`Gemini API error (${model}): ${response.statusText} (${errorText})`);
+          lastError = new Error(
+            `Gemini API error (${model}): ${response.statusText} (${errorText})`,
+          );
           continue;
         }
 
@@ -289,7 +298,9 @@ Kembalikan respon hanya dalam format JSON array yang valid. Jangan sertakan form
       }
     }
 
-    throw new Error(`Gagal menghubungi AI. Layanan sedang padat atau kunci API tidak valid. Detail: ${lastError?.message || "Tidak diketahui"}`);
+    throw new Error(
+      `Gagal menghubungi AI. Layanan sedang padat atau kunci API tidak valid. Detail: ${lastError?.message || "Tidak diketahui"}`,
+    );
   });
 
 export const getAiMarketSuggestions = createServerFn({ method: "POST" })
@@ -303,10 +314,10 @@ export const getAiMarketSuggestions = createServerFn({ method: "POST" })
           city: z.string(),
           type: z.string(),
           hours: z.string().nullable().optional(),
-        })
+        }),
       ),
       apiKey: z.string().optional(),
-    })
+    }),
   )
   .handler(async ({ data }) => {
     const apiKey = data.apiKey || process.env.GEMINI_API_KEY;
@@ -381,13 +392,15 @@ Kembalikan respon hanya dalam format JSON array yang valid. Jangan sertakan form
                 responseMimeType: "application/json",
               },
             }),
-          }
+          },
         );
 
         if (!response.ok) {
           const errorText = await response.text();
           console.warn(`Model ${model} failed with status ${response.status}:`, errorText);
-          lastError = new Error(`Gemini API error (${model}): ${response.statusText} (${errorText})`);
+          lastError = new Error(
+            `Gemini API error (${model}): ${response.statusText} (${errorText})`,
+          );
           continue;
         }
 
@@ -414,7 +427,7 @@ Kembalikan respon hanya dalam format JSON array yang valid. Jangan sertakan form
       }
     }
 
-    throw new Error(`Gagal menghubungi AI. Layanan sedang padat atau kunci API tidak valid. Detail: ${lastError?.message || "Tidak diketahui"}`);
+    throw new Error(
+      `Gagal menghubungi AI. Layanan sedang padat atau kunci API tidak valid. Detail: ${lastError?.message || "Tidak diketahui"}`,
+    );
   });
-
-

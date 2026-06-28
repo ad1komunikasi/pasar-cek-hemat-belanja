@@ -29,13 +29,20 @@ function SettingsPage() {
           <h3 className="text-lg font-bold">Ubah Password</h3>
           <div className="mt-3 space-y-3">
             <Label>Password baru</Label>
-            <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} minLength={6} />
+            <Input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              minLength={6}
+            />
             <Button onClick={changePw}>Perbarui Password</Button>
           </div>
         </div>
         <div className="rounded-lg border border-[var(--color-destructive)] bg-white p-6">
           <h3 className="text-lg font-bold text-[var(--color-destructive)]">Hapus Akun</h3>
-          <p className="mt-2 text-sm text-[var(--color-gray-500)]">Hubungi admin untuk menghapus akun Anda secara permanen.</p>
+          <p className="mt-2 text-sm text-[var(--color-gray-500)]">
+            Hubungi admin untuk menghapus akun Anda secara permanen.
+          </p>
         </div>
       </div>
     </AppShell>

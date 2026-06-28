@@ -5,7 +5,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { useState } from "react";
 import { idr } from "@/lib/format";
 import { getDeterministicBenchmarkPrices } from "@/lib/benchmark";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Trophy } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/compare")({
@@ -19,7 +25,8 @@ function ComparePage() {
 
   const { data: products } = useQuery({
     queryKey: ["products-list"],
-    queryFn: async () => (await supabase.from("products").select("id,name,category,unit").order("name")).data ?? [],
+    queryFn: async () =>
+      (await supabase.from("products").select("id,name,category,unit").order("name")).data ?? [],
   });
 
   const { data: cities } = useQuery({
@@ -34,8 +41,8 @@ function ComparePage() {
     queryKey: ["compare", productId, city],
     enabled: !!productId,
     queryFn: async () => {
-      const today = new Date().toLocaleDateString('en-CA');
-      
+      const today = new Date().toLocaleDateString("en-CA");
+
       const { data: latestDateRow } = await supabase
         .from("product_prices")
         .select("recorded_at")
@@ -43,27 +50,34 @@ function ComparePage() {
         .order("recorded_at", { ascending: false })
         .limit(1)
         .maybeSingle();
-      
+
       let dateToUse = latestDateRow?.recorded_at || today;
       if (dateToUse > today) {
         dateToUse = today;
       }
 
       // Always fetch products and markets first to ensure complete coverage
-      const { data: products } = await supabase.from("products").select("id,name,category,unit").order("name");
-      const { data: markets } = await supabase.from("markets").select("id,name,city,address").order("name");
+      const { data: products } = await supabase
+        .from("products")
+        .select("id,name,category,unit")
+        .order("name");
+      const { data: markets } = await supabase
+        .from("markets")
+        .select("id,name,city,address")
+        .order("name");
 
       if (!products || !markets) return [];
 
       const selectedProduct = products.find((p) => p.id === productId);
       if (!selectedProduct) return [];
 
-      let query = supabase.from("product_prices")
+      const query = supabase
+        .from("product_prices")
         .select("price, market_id, market:markets(id,name,city,address)")
         .eq("recorded_at", dateToUse)
         .eq("product_id", productId);
       const { data } = await query;
-      
+
       const dbPrices = data ?? [];
       const dbPriceMap = new Map<string, any>();
       dbPrices.forEach((r: any) => {
@@ -73,7 +87,11 @@ function ComparePage() {
         }
       });
 
-      const benchmarkPrices = getDeterministicBenchmarkPrices([selectedProduct] as any[], markets as any[], dateToUse);
+      const benchmarkPrices = getDeterministicBenchmarkPrices(
+        [selectedProduct] as any[],
+        markets as any[],
+        dateToUse,
+      );
 
       const mergedPrices = benchmarkPrices.map((bp: any) => {
         const key = bp.market_id;
@@ -81,12 +99,12 @@ function ComparePage() {
           const dbRow = dbPriceMap.get(key);
           return {
             price: Number(dbRow.price),
-            market: dbRow.market || bp.market
+            market: dbRow.market || bp.market,
           };
         }
         return {
           price: bp.price,
-          market: bp.market
+          market: bp.market,
         };
       });
 
@@ -103,46 +121,82 @@ function ComparePage() {
 
   return (
     <AppShell>
-      <PageHeader title="Bandingkan Harga Antar Pasar" description='"Di pasar mana saya bisa belanja paling hemat hari ini?"' />
+      <PageHeader
+        title="Bandingkan Harga Antar Pasar"
+        description='"Di pasar mana saya bisa belanja paling hemat hari ini?"'
+      />
 
       <div className="mb-6 grid gap-3 sm:grid-cols-2">
         <div>
-          <label className="mb-1 block text-xs font-semibold uppercase text-[var(--color-gray-500)]">Pilih Produk</label>
+          <label className="mb-1 block text-xs font-semibold uppercase text-[var(--color-gray-500)]">
+            Pilih Produk
+          </label>
           <Select value={productId} onValueChange={setProductId}>
-            <SelectTrigger><SelectValue placeholder="Pilih produk..." /></SelectTrigger>
+            <SelectTrigger>
+              <SelectValue placeholder="Pilih produk..." />
+            </SelectTrigger>
             <SelectContent>
-              {(products ?? []).map((p: any) => <SelectItem key={p.id} value={p.id}>{p.name} ({p.unit})</SelectItem>)}
+              {(products ?? []).map((p: any) => (
+                <SelectItem key={p.id} value={p.id}>
+                  {p.name} ({p.unit})
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>
         <div>
-          <label className="mb-1 block text-xs font-semibold uppercase text-[var(--color-gray-500)]">Kota</label>
+          <label className="mb-1 block text-xs font-semibold uppercase text-[var(--color-gray-500)]">
+            Kota
+          </label>
           <Select value={city} onValueChange={setCity}>
-            <SelectTrigger><SelectValue placeholder="Semua kota" /></SelectTrigger>
+            <SelectTrigger>
+              <SelectValue placeholder="Semua kota" />
+            </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Semua kota</SelectItem>
-              {(cities ?? []).map((c: string) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+              {(cities ?? []).map((c: string) => (
+                <SelectItem key={c} value={c}>
+                  {c}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>
       </div>
 
-      {!productId && <EmptyState title="Pilih produk untuk membandingkan" description="Pilih satu produk untuk melihat selisih harga antar pasar." />}
+      {!productId && (
+        <EmptyState
+          title="Pilih produk untuk membandingkan"
+          description="Pilih satu produk untuk melihat selisih harga antar pasar."
+        />
+      )}
 
-      {productId && rows && rows.length === 0 && <EmptyState title="Belum ada data" description="Coba ganti kota atau produk." />}
+      {productId && rows && rows.length === 0 && (
+        <EmptyState title="Belum ada data" description="Coba ganti kota atau produk." />
+      )}
 
       {productId && rows && rows.length > 0 && (
         <>
           <div className="mb-6 grid gap-4 sm:grid-cols-3">
             <div className="rounded-lg border border-[var(--color-success)] bg-[var(--color-success)]/10 p-5">
               <Trophy className="mb-2 h-6 w-6 text-[var(--color-success)]" />
-              <p className="text-xs font-semibold uppercase text-[var(--color-gray-500)]">Pasar Termurah</p>
-              <p className="mt-1 text-lg font-bold text-[var(--color-ink)]">{cheapest?.market.name}</p>
-              <p className="text-2xl font-black text-[var(--color-success)]">{idr(cheapest?.price)}</p>
+              <p className="text-xs font-semibold uppercase text-[var(--color-gray-500)]">
+                Pasar Termurah
+              </p>
+              <p className="mt-1 text-lg font-bold text-[var(--color-ink)]">
+                {cheapest?.market.name}
+              </p>
+              <p className="text-2xl font-black text-[var(--color-success)]">
+                {idr(cheapest?.price)}
+              </p>
             </div>
             <div className="rounded-lg border border-[var(--color-gray-100)] bg-white p-5">
-              <p className="text-xs font-semibold uppercase text-[var(--color-gray-500)]">Harga Termahal</p>
-              <p className="mt-1 text-lg font-bold text-[var(--color-ink)]">{priciest?.market.name}</p>
+              <p className="text-xs font-semibold uppercase text-[var(--color-gray-500)]">
+                Harga Termahal
+              </p>
+              <p className="mt-1 text-lg font-bold text-[var(--color-ink)]">
+                {priciest?.market.name}
+              </p>
               <p className="text-2xl font-black">{idr(priciest?.price)}</p>
             </div>
             <div className="rounded-lg border border-[var(--color-brand-blue)] bg-[var(--color-brand-blue)] p-5 text-white">
@@ -155,15 +209,31 @@ function ComparePage() {
           <div className="overflow-hidden rounded-lg border border-[var(--color-gray-100)] bg-white">
             <table className="w-full text-sm">
               <thead className="bg-[var(--color-gray-50)] text-left text-xs font-semibold uppercase tracking-wider text-[var(--color-gray-500)]">
-                <tr><th className="px-4 py-3">Pasar</th><th className="px-4 py-3">Kota</th><th className="px-4 py-3 text-right">Harga</th><th className="px-4 py-3 text-right">Selisih</th></tr>
+                <tr>
+                  <th className="px-4 py-3">Pasar</th>
+                  <th className="px-4 py-3">Kota</th>
+                  <th className="px-4 py-3 text-right">Harga</th>
+                  <th className="px-4 py-3 text-right">Selisih</th>
+                </tr>
               </thead>
               <tbody>
                 {rows.map((r, i) => (
-                  <tr key={r.market.id} className={`border-t border-[var(--color-gray-100)] ${i === 0 ? "bg-[var(--color-success)]/5" : ""}`}>
-                    <td className="px-4 py-3 font-semibold">{r.market.name} {i === 0 && <Badge>TERMURAH</Badge>}</td>
+                  <tr
+                    key={r.market.id}
+                    className={`border-t border-[var(--color-gray-100)] ${i === 0 ? "bg-[var(--color-success)]/5" : ""}`}
+                  >
+                    <td className="px-4 py-3 font-semibold">
+                      {r.market.name} {i === 0 && <Badge>TERMURAH</Badge>}
+                    </td>
                     <td className="px-4 py-3 text-[var(--color-gray-700)]">{r.market.city}</td>
-                    <td className={`px-4 py-3 text-right font-bold ${i === 0 ? "text-[var(--color-success)]" : ""}`}>{idr(r.price)}</td>
-                    <td className="px-4 py-3 text-right text-[var(--color-gray-500)]">{i === 0 ? "—" : `+${idr(r.price - cheapest!.price)}`}</td>
+                    <td
+                      className={`px-4 py-3 text-right font-bold ${i === 0 ? "text-[var(--color-success)]" : ""}`}
+                    >
+                      {idr(r.price)}
+                    </td>
+                    <td className="px-4 py-3 text-right text-[var(--color-gray-500)]">
+                      {i === 0 ? "—" : `+${idr(r.price - cheapest!.price)}`}
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -176,5 +246,9 @@ function ComparePage() {
 }
 
 function Badge({ children }: { children: React.ReactNode }) {
-  return <span className="ml-2 rounded bg-[var(--color-success)] px-2 py-0.5 text-[10px] font-bold uppercase text-white">{children}</span>;
+  return (
+    <span className="ml-2 rounded bg-[var(--color-success)] px-2 py-0.5 text-[10px] font-bold uppercase text-white">
+      {children}
+    </span>
+  );
 }

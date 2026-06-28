@@ -30,7 +30,9 @@ function AdminUsers() {
         supabase.from("user_roles").select("user_id,role"),
       ]);
       const roleMap = new Map<string, string[]>();
-      (roles.data ?? []).forEach((r: any) => roleMap.set(r.user_id, [...(roleMap.get(r.user_id) ?? []), r.role]));
+      (roles.data ?? []).forEach((r: any) =>
+        roleMap.set(r.user_id, [...(roleMap.get(r.user_id) ?? []), r.role]),
+      );
       return (profiles.data ?? []).map((p: any) => ({
         ...p,
         roles: roleMap.get(p.id) ?? [],
@@ -50,12 +52,19 @@ function AdminUsers() {
     if (error) {
       toast.error("Gagal memperbarui prioritas: " + error.message);
     } else {
-      toast.success(`Status prioritas waitlist berhasil di${!currentVal ? "aktifkan" : "nonaktifkan"}!`);
+      toast.success(
+        `Status prioritas waitlist berhasil di${!currentVal ? "aktifkan" : "nonaktifkan"}!`,
+      );
       qc.invalidateQueries({ queryKey: ["admin-users"] });
     }
   };
 
-  const toggleAdminRole = async (userId: string, email: string, name: string, hasAdminRole: boolean) => {
+  const toggleAdminRole = async (
+    userId: string,
+    email: string,
+    name: string,
+    hasAdminRole: boolean,
+  ) => {
     setUpdatingId(userId + "-role");
     let error;
     if (hasAdminRole) {
@@ -68,9 +77,7 @@ function AdminUsers() {
       error = res.error;
     } else {
       // Promote: insert row where role = admin
-      const res = await supabase
-        .from("user_roles")
-        .insert({ user_id: userId, role: "admin" });
+      const res = await supabase.from("user_roles").insert({ user_id: userId, role: "admin" });
       error = res.error;
 
       if (!error && email) {
@@ -89,7 +96,7 @@ function AdminUsers() {
       toast.success(
         hasAdminRole
           ? "Akses admin berhasil dinonaktifkan."
-          : "Pengguna berhasil diangkat menjadi Admin Dashboard & Email notifikasi dikirim!"
+          : "Pengguna berhasil diangkat menjadi Admin Dashboard & Email notifikasi dikirim!",
       );
       qc.invalidateQueries({ queryKey: ["admin-users"] });
     }
@@ -99,7 +106,8 @@ function AdminUsers() {
   const totalCount = users?.length ?? 0;
   const priorityCount = users?.filter((u) => u.waitlist_priority).length ?? 0;
   const regularCount = totalCount - priorityCount;
-  const considerationRate = totalCount > 0 ? ((priorityCount / totalCount) * 100).toFixed(1) : "0.0";
+  const considerationRate =
+    totalCount > 0 ? ((priorityCount / totalCount) * 100).toFixed(1) : "0.0";
 
   // Filtered Users
   const filteredUsers = (users ?? []).filter((u) => {
@@ -119,26 +127,34 @@ function AdminUsers() {
 
   return (
     <>
-      <h1 className="mb-6 text-3xl font-black text-[var(--color-gray-900)]">Pengguna & Prioritas</h1>
+      <h1 className="mb-6 text-3xl font-black text-[var(--color-gray-900)]">
+        Pengguna & Prioritas
+      </h1>
 
       {/* Metrics Summary */}
       <div className="grid gap-4 md:grid-cols-3 mb-6">
         <Card className="border border-[var(--color-gray-100)] bg-white shadow-soft">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-semibold text-[var(--color-gray-500)]">Total Pengguna</CardTitle>
+            <CardTitle className="text-sm font-semibold text-[var(--color-gray-500)]">
+              Total Pengguna
+            </CardTitle>
             <div className="rounded-lg bg-indigo-50 p-2 text-indigo-600">
               <Users className="h-4 w-4" />
             </div>
           </CardHeader>
           <CardContent className="pt-2">
             <div className="text-3xl font-black text-[var(--color-gray-900)]">{totalCount}</div>
-            <p className="text-xs text-[var(--color-gray-400)] mt-1">Pengguna terdaftar di platform</p>
+            <p className="text-xs text-[var(--color-gray-400)] mt-1">
+              Pengguna terdaftar di platform
+            </p>
           </CardContent>
         </Card>
 
         <Card className="border border-amber-100 bg-amber-50/10 shadow-soft">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-semibold text-amber-800">Prioritas Waitlist</CardTitle>
+            <CardTitle className="text-sm font-semibold text-amber-800">
+              Prioritas Waitlist
+            </CardTitle>
             <div className="rounded-lg bg-amber-50 p-2 text-amber-600">
               <Crown className="h-4 w-4 fill-amber-500 text-amber-500" />
             </div>
@@ -151,7 +167,9 @@ function AdminUsers() {
 
         <Card className="border border-emerald-100 bg-emerald-50/10 shadow-soft">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-semibold text-emerald-800">Consideration Rate</CardTitle>
+            <CardTitle className="text-sm font-semibold text-emerald-800">
+              Consideration Rate
+            </CardTitle>
             <div className="rounded-lg bg-emerald-50 p-2 text-emerald-600">
               <Sparkles className="h-4 w-4" />
             </div>
@@ -167,7 +185,10 @@ function AdminUsers() {
       {!isSuperAdmin && (
         <div className="mb-6 flex items-center gap-2.5 rounded-2xl border border-amber-100 bg-amber-50/30 px-5 py-4 text-sm font-semibold text-amber-850 shadow-sm animate-fade-down">
           <ShieldAlert className="h-5 w-5 text-amber-600 flex-shrink-0" />
-          <span>Hanya <strong>Super Admin</strong> yang memiliki hak akses penuh untuk mengelola peran (role) Admin lainnya.</span>
+          <span>
+            Hanya <strong>Super Admin</strong> yang memiliki hak akses penuh untuk mengelola peran
+            (role) Admin lainnya.
+          </span>
         </div>
       )}
 
@@ -236,7 +257,7 @@ function AdminUsers() {
                 const hasAdminRole = u.roles.includes("admin");
                 const isSuperUser = u.roles.includes("super_admin");
                 const isAdminOrSuper = hasAdminRole || isSuperUser;
-                
+
                 return (
                   <tr key={u.id} className="hover:bg-[var(--color-gray-50)]/50 transition-colors">
                     <td className="px-6 py-4">
@@ -258,7 +279,9 @@ function AdminUsers() {
                               </span>
                             )}
                           </div>
-                          <div className="text-xs text-muted-foreground">@{u.username ?? "username"}</div>
+                          <div className="text-xs text-muted-foreground">
+                            @{u.username ?? "username"}
+                          </div>
                         </div>
                       </div>
                     </td>
@@ -271,7 +294,9 @@ function AdminUsers() {
                           disabled={updatingId === u.id}
                           onCheckedChange={() => toggleWaitlistPriority(u.id, u.waitlist_priority)}
                         />
-                        {updatingId === u.id && <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />}
+                        {updatingId === u.id && (
+                          <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />
+                        )}
                       </div>
                     </td>
                     <td className="px-6 py-4">
@@ -279,9 +304,13 @@ function AdminUsers() {
                         <Switch
                           checked={isAdminOrSuper}
                           disabled={!isSuperAdmin || isSuperUser || updatingId === u.id + "-role"}
-                          onCheckedChange={() => toggleAdminRole(u.id, u.email, u.full_name, hasAdminRole)}
+                          onCheckedChange={() =>
+                            toggleAdminRole(u.id, u.email, u.full_name, hasAdminRole)
+                          }
                         />
-                        {updatingId === u.id + "-role" && <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />}
+                        {updatingId === u.id + "-role" && (
+                          <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />
+                        )}
                       </div>
                     </td>
                     <td className="px-6 py-4">
@@ -306,7 +335,9 @@ function AdminUsers() {
                         })}
                       </div>
                     </td>
-                    <td className="px-6 py-4 text-xs text-muted-foreground">{fmtDateTime(u.created_at)}</td>
+                    <td className="px-6 py-4 text-xs text-muted-foreground">
+                      {fmtDateTime(u.created_at)}
+                    </td>
                   </tr>
                 );
               })}

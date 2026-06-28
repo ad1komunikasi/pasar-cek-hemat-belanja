@@ -23,7 +23,11 @@ export const Route = createFileRoute("/auth")({
   head: () => ({
     meta: [
       { title: "Masuk / Daftar — PasarCek" },
-      { name: "description", content: "Masuk ke akun PasarCek untuk mulai mengecek dan membandingkan harga sembako di pasar terdekat." },
+      {
+        name: "description",
+        content:
+          "Masuk ke akun PasarCek untuk mulai mengecek dan membandingkan harga sembako di pasar terdekat.",
+      },
     ],
   }),
   component: AuthPage,
@@ -44,7 +48,9 @@ function AuthPage() {
     navigate({ to: ".", search: { tab: value } });
   }
 
-  useEffect(() => { if (!loading && user) router.navigate({ to: "/dashboard", replace: true }); }, [user, loading, router]);
+  useEffect(() => {
+    if (!loading && user) router.navigate({ to: "/dashboard", replace: true });
+  }, [user, loading, router]);
 
   return (
     <div className="grid min-h-screen lg:grid-cols-2">
@@ -52,7 +58,7 @@ function AuthPage() {
         {/* Glow effects */}
         <div className="absolute -top-20 -left-20 h-96 w-96 rounded-full bg-primary/20 blur-3xl pointer-events-none" />
         <div className="absolute -bottom-20 -right-20 h-96 w-96 rounded-full bg-accent/20 blur-3xl pointer-events-none" />
-        
+
         {/* Header Logo */}
         <Link to="/" className="flex items-center gap-2 text-lg font-bold group relative z-10">
           <div className="grid h-9 w-9 place-items-center rounded-xl bg-gradient-primary text-white shadow-soft group-hover:scale-105 transition-transform duration-200">
@@ -65,10 +71,13 @@ function AuthPage() {
         <div className="relative z-10 my-auto flex flex-col items-center">
           <div className="text-left w-full max-w-md">
             <h1 className="text-5xl font-black leading-tight text-white">
-              Cek Harga Dulu,<br />Belanja Lebih Hemat.
+              Cek Harga Dulu,
+              <br />
+              Belanja Lebih Hemat.
             </h1>
             <p className="mt-6 text-white/80 text-base leading-relaxed">
-              Pantau harga sembako terbaru, bandingkan antar pasar terdekat, dan temukan keranjang belanja paling hemat hari ini.
+              Pantau harga sembako terbaru, bandingkan antar pasar terdekat, dan temukan keranjang
+              belanja paling hemat hari ini.
             </p>
           </div>
 
@@ -80,17 +89,24 @@ function AuthPage() {
             {/* Smart Basket Card Mockup */}
             <div className="relative w-72 bg-white/10 backdrop-blur-md border border-white/15 rounded-2xl p-5 shadow-elevated animate-float z-10">
               <div className="flex items-center justify-between mb-4 border-b border-white/10 pb-2">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-accent-soft">Simulasi Keranjang</span>
-                <span className="text-[10px] font-medium bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full">-12% Lebih Hemat</span>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-accent-soft">
+                  Simulasi Keranjang
+                </span>
+                <span className="text-[10px] font-medium bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full">
+                  -12% Lebih Hemat
+                </span>
               </div>
-              
+
               <div className="space-y-3">
                 <div className="flex items-center justify-between text-xs">
                   <div className="flex items-center gap-2">
                     <div className="w-2.5 h-2.5 rounded-full bg-amber-400" />
                     <span className="font-medium text-white/90">Minyak Goreng 2L</span>
                   </div>
-                  <span className="font-bold text-white">Rp28.500 <span className="text-white/40 line-through text-[10px]">Rp32.000</span></span>
+                  <span className="font-bold text-white">
+                    Rp28.500{" "}
+                    <span className="text-white/40 line-through text-[10px]">Rp32.000</span>
+                  </span>
                 </div>
 
                 <div className="flex items-center justify-between text-xs">
@@ -98,7 +114,10 @@ function AuthPage() {
                     <div className="w-2.5 h-2.5 rounded-full bg-emerald-400" />
                     <span className="font-medium text-white/90">Beras Premium 5kg</span>
                   </div>
-                  <span className="font-bold text-white">Rp64.000 <span className="text-white/40 line-through text-[10px]">Rp69.000</span></span>
+                  <span className="font-bold text-white">
+                    Rp64.000{" "}
+                    <span className="text-white/40 line-through text-[10px]">Rp69.000</span>
+                  </span>
                 </div>
 
                 <div className="flex items-center justify-between text-xs">
@@ -106,19 +125,24 @@ function AuthPage() {
                     <div className="w-2.5 h-2.5 rounded-full bg-sky-400" />
                     <span className="font-medium text-white/90">Telur Ayam 1kg</span>
                   </div>
-                  <span className="font-bold text-white">Rp26.000 <span className="text-white/40 line-through text-[10px]">Rp29.000</span></span>
+                  <span className="font-bold text-white">
+                    Rp26.000{" "}
+                    <span className="text-white/40 line-through text-[10px]">Rp29.000</span>
+                  </span>
                 </div>
               </div>
 
               <div className="mt-4 pt-3 border-t border-white/10 flex items-center justify-between">
                 <span className="text-[11px] font-semibold text-white/70">Total Penghematan</span>
-                <span className="text-xs font-black text-emerald-400 bg-emerald-500/10 px-2 py-1 rounded-lg">Hemat Rp11.500</span>
+                <span className="text-xs font-black text-emerald-400 bg-emerald-500/10 px-2 py-1 rounded-lg">
+                  Hemat Rp11.500
+                </span>
               </div>
             </div>
 
             {/* Floating Icons */}
             {/* MapPin Icon */}
-            <div 
+            <div
               className="absolute -top-4 right-12 z-20 bg-white/10 backdrop-blur-md border border-white/15 p-3 rounded-full text-accent shadow-card animate-float"
               style={{ animationDelay: "1s", animationDuration: "5s" }}
             >
@@ -126,7 +150,7 @@ function AuthPage() {
             </div>
 
             {/* TrendingDown Icon */}
-            <div 
+            <div
               className="absolute -bottom-6 left-12 z-20 bg-white/10 backdrop-blur-md border border-white/15 p-3 rounded-full text-emerald-400 shadow-card animate-float"
               style={{ animationDelay: "2s", animationDuration: "7s" }}
             >
@@ -134,23 +158,53 @@ function AuthPage() {
             </div>
 
             {/* Celengan Ayam */}
-            <div 
+            <div
               className="absolute top-12 -left-10 z-20 bg-white/10 backdrop-blur-md border border-white/15 p-2 rounded-2xl shadow-card animate-float"
               style={{ animationDelay: "0.5s", animationDuration: "6s" }}
             >
-              <svg viewBox="0 0 64 64" className="w-12 h-12" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <svg
+                viewBox="0 0 64 64"
+                className="w-12 h-12"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
                 {/* Tail feathers */}
-                <path d="M8 38C5 32 6 24 10 20C12 22 13 25 12 28C14 24 18 22 20 23C19 26 17 29 14 31C18 28 23 29 24 32C22 34 18 35 12 35" fill="#10b981" />
-                <path d="M10 42C7 38 7 32 10 29C12 31 12 33 11 35C13 32 17 31 18 32C17 34 15 36 13 37" fill="#3b82f6" />
+                <path
+                  d="M8 38C5 32 6 24 10 20C12 22 13 25 12 28C14 24 18 22 20 23C19 26 17 29 14 31C18 28 23 29 24 32C22 34 18 35 12 35"
+                  fill="#10b981"
+                />
+                <path
+                  d="M10 42C7 38 7 32 10 29C12 31 12 33 11 35C13 32 17 31 18 32C17 34 15 36 13 37"
+                  fill="#3b82f6"
+                />
                 {/* Feet */}
-                <path d="M26 46V52M26 52L23 54M26 52L29 54" stroke="#f59e0b" strokeWidth="2" strokeLinecap="round" />
-                <path d="M34 46V52M34 52L31 54M34 52L37 54" stroke="#f59e0b" strokeWidth="2" strokeLinecap="round" />
+                <path
+                  d="M26 46V52M26 52L23 54M26 52L29 54"
+                  stroke="#f59e0b"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                />
+                <path
+                  d="M34 46V52M34 52L31 54M34 52L37 54"
+                  stroke="#f59e0b"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                />
                 {/* Clay Body */}
-                <path d="M12 38C12 25 22 16 34 16C44 16 50 24 50 34C50 42 40 46 30 46C20 46 12 43 12 38Z" fill="url(#clayGrad)" />
+                <path
+                  d="M12 38C12 25 22 16 34 16C44 16 50 24 50 34C50 42 40 46 30 46C20 46 12 43 12 38Z"
+                  fill="url(#clayGrad)"
+                />
                 {/* Neck and Head */}
-                <path d="M32 18C32 12 36 8 42 8C46 8 49 11 48 16C47 22 42 24 36 24" fill="url(#clayGrad)" />
+                <path
+                  d="M32 18C32 12 36 8 42 8C46 8 49 11 48 16C47 22 42 24 36 24"
+                  fill="url(#clayGrad)"
+                />
                 {/* Comb */}
-                <path d="M40 8C39 5 41 2 43 2C45 2 46 4 46 6C48 4 50 5 50 7C50 9 48 10 46 10C46 12 44 13 42 13C41 13 40 10 40 8Z" fill="#ef4444" />
+                <path
+                  d="M40 8C39 5 41 2 43 2C45 2 46 4 46 6C48 4 50 5 50 7C50 9 48 10 46 10C46 12 44 13 42 13C41 13 40 10 40 8Z"
+                  fill="#ef4444"
+                />
                 {/* Beak */}
                 <path d="M48 13L53 15L48 17Z" fill="#f59e0b" />
                 {/* Wattle */}
@@ -159,13 +213,36 @@ function AuthPage() {
                 <circle cx="42" cy="12" r="2" fill="#111827" />
                 <circle cx="42.5" cy="11.5" r="0.6" fill="white" />
                 {/* Coin Slot */}
-                <rect x="22" y="14" width="8" height="2" rx="0.5" transform="rotate(-15 22 14)" fill="#111827" />
+                <rect
+                  x="22"
+                  y="14"
+                  width="8"
+                  height="2"
+                  rx="0.5"
+                  transform="rotate(-15 22 14)"
+                  fill="#111827"
+                />
                 {/* Wing */}
-                <path d="M24 28C24 28 28 24 33 26C38 28 36 34 31 34C26 34 24 30 24 28Z" fill="#f59e0b" opacity="0.8" />
-                <path d="M26 29C26 29 29 26 32 27C35 28 34 32 31 32C28 32 26 30 26 29Z" fill="#ef4444" opacity="0.9" />
-                
+                <path
+                  d="M24 28C24 28 28 24 33 26C38 28 36 34 31 34C26 34 24 30 24 28Z"
+                  fill="#f59e0b"
+                  opacity="0.8"
+                />
+                <path
+                  d="M26 29C26 29 29 26 32 27C35 28 34 32 31 32C28 32 26 30 26 29Z"
+                  fill="#ef4444"
+                  opacity="0.9"
+                />
+
                 <defs>
-                  <linearGradient id="clayGrad" x1="12" y1="16" x2="50" y2="46" gradientUnits="userSpaceOnUse">
+                  <linearGradient
+                    id="clayGrad"
+                    x1="12"
+                    y1="16"
+                    x2="50"
+                    y2="46"
+                    gradientUnits="userSpaceOnUse"
+                  >
                     <stop offset="0%" stopColor="#f97316" />
                     <stop offset="50%" stopColor="#ea580c" />
                     <stop offset="100%" stopColor="#9a3412" />
@@ -175,17 +252,53 @@ function AuthPage() {
             </div>
 
             {/* Uang Koin Rupiah */}
-            <div 
+            <div
               className="absolute top-2 -left-16 z-30 bg-white/10 backdrop-blur-md border border-white/15 p-2 rounded-full shadow-card animate-float"
               style={{ animationDelay: "1.5s", animationDuration: "5s" }}
             >
-              <svg viewBox="0 0 32 32" className="w-6 h-6" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <circle cx="16" cy="16" r="14" fill="url(#goldGrad)" stroke="#b45309" strokeWidth="1" />
-                <circle cx="16" cy="16" r="11" stroke="#fef08a" strokeWidth="0.7" strokeDasharray="1.5 1" />
-                <text x="16" y="19.5" fontFamily="system-ui, sans-serif" fontWeight="900" fontSize="10" fill="#78350f" textAnchor="middle">Rp</text>
+              <svg
+                viewBox="0 0 32 32"
+                className="w-6 h-6"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <circle
+                  cx="16"
+                  cy="16"
+                  r="14"
+                  fill="url(#goldGrad)"
+                  stroke="#b45309"
+                  strokeWidth="1"
+                />
+                <circle
+                  cx="16"
+                  cy="16"
+                  r="11"
+                  stroke="#fef08a"
+                  strokeWidth="0.7"
+                  strokeDasharray="1.5 1"
+                />
+                <text
+                  x="16"
+                  y="19.5"
+                  fontFamily="system-ui, sans-serif"
+                  fontWeight="900"
+                  fontSize="10"
+                  fill="#78350f"
+                  textAnchor="middle"
+                >
+                  Rp
+                </text>
                 <path d="M8 8L9.5 9.5" stroke="white" strokeWidth="1" strokeLinecap="round" />
                 <defs>
-                  <linearGradient id="goldGrad" x1="2" y1="2" x2="30" y2="30" gradientUnits="userSpaceOnUse">
+                  <linearGradient
+                    id="goldGrad"
+                    x1="2"
+                    y1="2"
+                    x2="30"
+                    y2="30"
+                    gradientUnits="userSpaceOnUse"
+                  >
                     <stop offset="0%" stopColor="#fcd34d" />
                     <stop offset="50%" stopColor="#eab308" />
                     <stop offset="100%" stopColor="#ca8a04" />
@@ -195,7 +308,7 @@ function AuthPage() {
             </div>
 
             {/* Sparkles Icon */}
-            <div 
+            <div
               className="absolute bottom-12 -right-4 z-20 bg-white/10 backdrop-blur-md border border-white/15 p-3 rounded-full text-amber-300 shadow-card animate-float"
               style={{ animationDelay: "3s", animationDuration: "8s" }}
             >
@@ -208,7 +321,10 @@ function AuthPage() {
       </div>
       <div className="flex items-center justify-center bg-[var(--color-gray-50)] p-6">
         <div className="w-full max-w-sm">
-          <Link to="/" className="mb-8 inline-flex items-center gap-2 text-sm font-bold lg:hidden group">
+          <Link
+            to="/"
+            className="mb-8 inline-flex items-center gap-2 text-sm font-bold lg:hidden group"
+          >
             <div className="grid h-8 w-8 place-items-center rounded-lg bg-gradient-primary text-white shadow-soft group-hover:scale-105 transition-transform duration-200">
               <ShoppingBasket className="h-4.5 w-4.5" />
             </div>
@@ -220,9 +336,15 @@ function AuthPage() {
               <TabsTrigger value="register">Daftar</TabsTrigger>
               <TabsTrigger value="forgot">Lupa</TabsTrigger>
             </TabsList>
-            <TabsContent value="login"><LoginForm /></TabsContent>
-            <TabsContent value="register"><RegisterForm /></TabsContent>
-            <TabsContent value="forgot"><ForgotForm /></TabsContent>
+            <TabsContent value="login">
+              <LoginForm />
+            </TabsContent>
+            <TabsContent value="register">
+              <RegisterForm />
+            </TabsContent>
+            <TabsContent value="forgot">
+              <ForgotForm />
+            </TabsContent>
           </Tabs>
         </div>
       </div>
@@ -240,11 +362,31 @@ function GoogleButton({ flow }: { flow: "login" | "register" }) {
         redirectTo: `${window.location.origin}/dashboard?flow=${flow}`,
       },
     });
-    if (res.error) { toast.error("Gagal masuk dengan Google"); setBusy(false); }
+    if (res.error) {
+      toast.error("Gagal masuk dengan Google");
+      setBusy(false);
+    }
   }
   return (
     <Button type="button" variant="outline" className="w-full" onClick={signIn} disabled={busy}>
-      <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.1c-.22-.66-.35-1.36-.35-2.1s.13-1.44.35-2.1V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.83z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84C6.71 7.31 9.14 5.38 12 5.38z"/></svg>
+      <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">
+        <path
+          fill="#4285F4"
+          d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+        />
+        <path
+          fill="#34A853"
+          d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+        />
+        <path
+          fill="#FBBC05"
+          d="M5.84 14.1c-.22-.66-.35-1.36-.35-2.1s.13-1.44.35-2.1V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.83z"
+        />
+        <path
+          fill="#EA4335"
+          d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84C6.71 7.31 9.14 5.38 12 5.38z"
+        />
+      </svg>
       Lanjutkan dengan Google
     </Button>
   );
@@ -252,10 +394,18 @@ function GoogleButton({ flow }: { flow: "login" | "register" }) {
 
 function LoginForm() {
   const navigate = useNavigate();
-  const [email, setEmail] = useState(""); const [password, setPassword] = useState(""); const [busy, setBusy] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [busy, setBusy] = useState(false);
   async function submit(e: React.FormEvent) {
     e.preventDefault();
-    try { emailSchema.parse(email); passSchema.parse(password); } catch (err: any) { toast.error(err.errors?.[0]?.message ?? "Input tidak valid"); return; }
+    try {
+      emailSchema.parse(email);
+      passSchema.parse(password);
+    } catch (err: any) {
+      toast.error(err.errors?.[0]?.message ?? "Input tidak valid");
+      return;
+    }
     setBusy(true);
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     setBusy(false);
@@ -267,31 +417,57 @@ function LoginForm() {
     <form onSubmit={submit} className="space-y-4">
       <h2 className="text-2xl font-black">Masuk ke akun Anda</h2>
       <GoogleButton flow="login" />
-      <div className="relative my-4 text-center text-xs text-[var(--color-gray-500)]"><span className="bg-[var(--color-gray-50)] px-2">atau email</span><div className="absolute inset-x-0 top-1/2 -z-10 h-px bg-[var(--color-gray-100)]" /></div>
-      <div><Label>Email</Label><Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required /></div>
-      <div><Label>Password</Label><Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required /></div>
-      <Button type="submit" className="w-full" disabled={busy}>{busy ? "Memproses..." : "Masuk"}</Button>
+      <div className="relative my-4 text-center text-xs text-[var(--color-gray-500)]">
+        <span className="bg-[var(--color-gray-50)] px-2">atau email</span>
+        <div className="absolute inset-x-0 top-1/2 -z-10 h-px bg-[var(--color-gray-100)]" />
+      </div>
+      <div>
+        <Label>Email</Label>
+        <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+      </div>
+      <div>
+        <Label>Password</Label>
+        <Input
+          type="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          required
+        />
+      </div>
+      <Button type="submit" className="w-full" disabled={busy}>
+        {busy ? "Memproses..." : "Masuk"}
+      </Button>
     </form>
   );
 }
 
 function RegisterForm() {
   const navigate = useNavigate();
-  const [fullName, setFullName] = useState(""); const [email, setEmail] = useState(""); const [password, setPassword] = useState(""); const [busy, setBusy] = useState(false);
+  const [fullName, setFullName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [busy, setBusy] = useState(false);
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     if (fullName.trim().length < 2) return toast.error("Nama minimal 2 karakter");
-    try { emailSchema.parse(email); passSchema.parse(password); } catch (err: any) { toast.error(err.errors?.[0]?.message ?? "Input tidak valid"); return; }
+    try {
+      emailSchema.parse(email);
+      passSchema.parse(password);
+    } catch (err: any) {
+      toast.error(err.errors?.[0]?.message ?? "Input tidak valid");
+      return;
+    }
     setBusy(true);
     const isWaitlist = localStorage.getItem("waitlist_priority_signup") === "true";
     const { error } = await supabase.auth.signUp({
-      email, password,
+      email,
+      password,
       options: {
         emailRedirectTo: window.location.origin + "/dashboard",
         data: {
           full_name: fullName,
           waitlist_priority: isWaitlist,
-        }
+        },
       },
     });
     setBusy(false);
@@ -306,23 +482,58 @@ function RegisterForm() {
     <form onSubmit={submit} className="space-y-4">
       <h2 className="text-2xl font-black">Buat akun gratis</h2>
       <GoogleButton flow="register" />
-      <div className="relative my-4 text-center text-xs text-[var(--color-gray-500)]"><span className="bg-[var(--color-gray-50)] px-2">atau email</span><div className="absolute inset-x-0 top-1/2 -z-10 h-px bg-[var(--color-gray-100)]" /></div>
-      <div><Label>Nama lengkap</Label><Input value={fullName} onChange={(e) => setFullName(e.target.value)} required maxLength={100} /></div>
-      <div><Label>Email</Label><Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required /></div>
-      <div><Label>Password</Label><Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} /></div>
-      <p className="text-xs text-[var(--color-gray-500)]">Dengan mendaftar Anda setuju dengan syarat & ketentuan PasarCek.</p>
-      <Button type="submit" className="w-full" disabled={busy}>{busy ? "Memproses..." : "Daftar"}</Button>
+      <div className="relative my-4 text-center text-xs text-[var(--color-gray-500)]">
+        <span className="bg-[var(--color-gray-50)] px-2">atau email</span>
+        <div className="absolute inset-x-0 top-1/2 -z-10 h-px bg-[var(--color-gray-100)]" />
+      </div>
+      <div>
+        <Label>Nama lengkap</Label>
+        <Input
+          value={fullName}
+          onChange={(e) => setFullName(e.target.value)}
+          required
+          maxLength={100}
+        />
+      </div>
+      <div>
+        <Label>Email</Label>
+        <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+      </div>
+      <div>
+        <Label>Password</Label>
+        <Input
+          type="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          required
+          minLength={6}
+        />
+      </div>
+      <p className="text-xs text-[var(--color-gray-500)]">
+        Dengan mendaftar Anda setuju dengan syarat & ketentuan PasarCek.
+      </p>
+      <Button type="submit" className="w-full" disabled={busy}>
+        {busy ? "Memproses..." : "Daftar"}
+      </Button>
     </form>
   );
 }
 
 function ForgotForm() {
-  const [email, setEmail] = useState(""); const [busy, setBusy] = useState(false);
+  const [email, setEmail] = useState("");
+  const [busy, setBusy] = useState(false);
   async function submit(e: React.FormEvent) {
     e.preventDefault();
-    try { emailSchema.parse(email); } catch (err: any) { toast.error(err.errors?.[0]?.message); return; }
+    try {
+      emailSchema.parse(email);
+    } catch (err: any) {
+      toast.error(err.errors?.[0]?.message);
+      return;
+    }
     setBusy(true);
-    const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: window.location.origin + "/reset-password" });
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: window.location.origin + "/reset-password",
+    });
     setBusy(false);
     if (error) return toast.error(error.message);
     toast.success("Link reset password telah dikirim ke email Anda.");
@@ -330,9 +541,16 @@ function ForgotForm() {
   return (
     <form onSubmit={submit} className="space-y-4">
       <h2 className="text-2xl font-black">Lupa password</h2>
-      <p className="text-sm text-[var(--color-gray-500)]">Masukkan email Anda, kami akan kirim tautan untuk mengatur ulang password.</p>
-      <div><Label>Email</Label><Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required /></div>
-      <Button type="submit" className="w-full" disabled={busy}>{busy ? "Mengirim..." : "Kirim Link Reset"}</Button>
+      <p className="text-sm text-[var(--color-gray-500)]">
+        Masukkan email Anda, kami akan kirim tautan untuk mengatur ulang password.
+      </p>
+      <div>
+        <Label>Email</Label>
+        <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+      </div>
+      <Button type="submit" className="w-full" disabled={busy}>
+        {busy ? "Mengirim..." : "Kirim Link Reset"}
+      </Button>
     </form>
   );
 }

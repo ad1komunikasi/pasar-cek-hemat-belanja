@@ -11,9 +11,17 @@ export const Route = createFileRoute("/pricing")({
   head: () => ({
     meta: [
       { title: "Paket Berlangganan — PasarCek" },
-      { name: "description", content: "Pilih paket Premium PasarCek mulai Rp9.900/bulan untuk fitur unlimited alert, analitik penghematan, dan prediksi harga sembako." },
+      {
+        name: "description",
+        content:
+          "Pilih paket Premium PasarCek mulai Rp9.900/bulan untuk fitur unlimited alert, analitik penghematan, dan prediksi harga sembako.",
+      },
       { property: "og:title", content: "Paket Berlangganan — PasarCek" },
-      { property: "og:description", content: "Mulai Rp9.900/bulan. Unlimited price alert, prediksi harga, dan analitik penghematan." },
+      {
+        property: "og:description",
+        content:
+          "Mulai Rp9.900/bulan. Unlimited price alert, prediksi harga, dan analitik penghematan.",
+      },
     ],
   }),
   component: PricingPage,
@@ -24,7 +32,9 @@ function PricingPage() {
   const { user } = useAuth();
   const { data: packages } = useQuery({
     queryKey: ["packages"],
-    queryFn: async () => (await supabase.from("packages").select("*").eq("is_active", true).order("sort_order")).data ?? [],
+    queryFn: async () =>
+      (await supabase.from("packages").select("*").eq("is_active", true).order("sort_order"))
+        .data ?? [],
   });
 
   return (
@@ -38,9 +48,7 @@ function PricingPage() {
             <span className="font-display text-lg font-bold text-primary">PasarCek</span>
           </Link>
           <Button asChild variant="outline">
-            <Link to={user ? "/dashboard" : "/auth"}>
-              {user ? "Dashboard" : "Masuk"}
-            </Link>
+            <Link to={user ? "/dashboard" : "/auth"}>{user ? "Dashboard" : "Masuk"}</Link>
           </Button>
         </div>
       </header>
@@ -53,7 +61,8 @@ function PricingPage() {
             </span>
           </h1>
           <p className="mt-4 text-[var(--color-gray-500)] text-sm sm:text-base">
-            Mulai gratis, upgrade kapan saja untuk fitur premium yang membantu Anda hemat lebih banyak.
+            Mulai gratis, upgrade kapan saja untuk fitur premium yang membantu Anda hemat lebih
+            banyak.
           </p>
         </div>
         <div className="mt-12 grid gap-6 md:grid-cols-3 items-stretch">
@@ -83,7 +92,11 @@ function PricingPage() {
                       {p.price === 0 ? "Gratis" : idr(p.price)}
                     </span>
                     <span className="text-xs text-[var(--color-gray-500)] font-medium">
-                      {p.price === 0 ? "/ selamanya" : p.duration_days === 365 ? "/ tahun" : "/ bulan"}
+                      {p.price === 0
+                        ? "/ selamanya"
+                        : p.duration_days === 365
+                          ? "/ tahun"
+                          : "/ bulan"}
                     </span>
                   </div>
                   {p.description && (
@@ -91,12 +104,15 @@ function PricingPage() {
                       {p.description}
                     </p>
                   )}
-                  
+
                   <div className="my-5 border-t border-[var(--color-gray-100)]" />
-                  
+
                   <ul className="space-y-2.5">
                     {((p.benefits as string[]) ?? []).map((b, i) => (
-                      <li key={i} className="flex items-start gap-2.5 text-xs text-[var(--color-gray-700)]">
+                      <li
+                        key={i}
+                        className="flex items-start gap-2.5 text-xs text-[var(--color-gray-700)]"
+                      >
                         <Check
                           className={`mt-0.5 h-4 w-4 shrink-0 rounded-full p-0.5 ${
                             featured
