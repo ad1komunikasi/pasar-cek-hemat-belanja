@@ -38,6 +38,36 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_reports: {
+        Row: {
+          chat_history: Json
+          created_at: string
+          id: string
+          metrics_snapshot: Json
+          report_text: string
+          title: string
+          user_id: string
+        }
+        Insert: {
+          chat_history?: Json
+          created_at?: string
+          id?: string
+          metrics_snapshot?: Json
+          report_text: string
+          title: string
+          user_id: string
+        }
+        Update: {
+          chat_history?: Json
+          created_at?: string
+          id?: string
+          metrics_snapshot?: Json
+          report_text?: string
+          title?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       auth_logs: {
         Row: {
           created_at: string
@@ -108,6 +138,44 @@ export type Database = {
             referencedRelation: "products"
             referencedColumns: ["id"]
           },
+        ]
+      }
+      email_logs: {
+        Row: {
+          body: string
+          created_at: string
+          id: string
+          order_id: string | null
+          recipient_email: string
+          status: string
+          subject: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          id?: string
+          order_id?: string | null
+          recipient_email: string
+          status?: string
+          subject: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          id?: string
+          order_id?: string | null
+          recipient_email?: string
+          status?: string
+          subject?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_logs_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          }
         ]
       }
       favorites_markets: {
@@ -525,6 +593,30 @@ export type Database = {
           updated_at?: string
           username?: string | null
           waitlist_priority?: boolean
+        }
+        Relationships: []
+      }
+      search_savings_history: {
+        Row: {
+          created_at: string
+          id: string
+          savings_amount: number
+          search_query: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          savings_amount: number
+          search_query: string
+          user_id?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          savings_amount?: number
+          search_query?: string
+          user_id?: string
         }
         Relationships: []
       }

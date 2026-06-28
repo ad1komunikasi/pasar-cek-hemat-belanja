@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { idr, fmtDateTimeWithSeconds } from "@/lib/format";
 import { useRealTimePrices } from "@/hooks/use-real-time-prices";
 import { getDeterministicBenchmarkPrices } from "@/lib/benchmark";
-import { Plus, Trash2, Trophy, Share2, Store, ShoppingBasket, ListChecks, MapPin, Compass, Navigation, ArrowRight, Crown } from "lucide-react";
+import { Plus, Trash2, Trophy, Share2, Store, ShoppingBasket, ListChecks, MapPin, Compass, Navigation, ArrowRight, Crown, Save, Check, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import cookingOilImg from "@/assets/cooking-oil.png";
 import shallotsImg from "@/assets/shallots.png";
@@ -159,6 +159,9 @@ function WishlistPage() {
 
   const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
   const [lockedFeatureName, setLockedFeatureName] = useState("");
+
+  const [isSaving, setIsSaving] = useState(false);
+  const [isSaved, setIsSaved] = useState(false);
 
   const handleOpenLock = (feature: string) => {
     setLockedFeatureName(feature);
@@ -325,7 +328,7 @@ function WishlistPage() {
   const recommendations = useMemo(() => {
     if (!items || !livePricesByMarket) return [];
     
-    const marketsMap = new Map<string, { id: string; name: string; city: string; address: string; lat: number; lng: number; total: number; covered: number }>();
+    const marketsMap = new Map<string, { id: string; name: string; city: string; address: string; lat: number; lng: number; total: number; covered: number; distance?: number }>();
     
     for (const row of livePricesByMarket as any[]) {
       const item = items.find((i: any) => i.product_id === row.product_id);
@@ -366,6 +369,54 @@ function WishlistPage() {
   const cheapestMarket = recommendations[0];
   const priciestMarket = recommendations[recommendations.length - 1];
   const maxSavings = cheapestMarket && priciestMarket ? priciestMarket.total - cheapestMarket.total : 0;
+
+  // Reset saved status when max savings or items list change
+  useEffect(() => {
+    setIsSaved(false);
+  }, [maxSavings, items?.length]);
+
+  const handleSaveSavings = async () => {
+    if (!user?.id) {
+      toast.error("Anda harus masuk terlebih dahulu.");
+      return;
+    }
+    if (maxSavings <= 0) {
+      toast.error("Nilai potensi penghematan tidak valid.");
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      const queryParts = (items ?? []).map((item: any) => {
+        const name = item.product?.name || "Produk";
+        const quantity = item.quantity || 1;
+        const unit = item.unit || "unit";
+        return `${name} (${quantity} ${unit})`;
+      });
+      const searchQueryText = queryParts.join(", ") || "Keranjang Belanja";
+
+      const { error } = await supabase
+        .from("search_savings_history")
+        .insert({
+          user_id: user.id,
+          savings_amount: maxSavings,
+          search_query: searchQueryText
+        });
+
+      if (error) throw error;
+
+      setIsSaved(true);
+      toast.success(`Penghematan ${idr(maxSavings)} berhasil disimpan ke Riwayat!`);
+      
+      qc.invalidateQueries({ queryKey: ["user-savings-history", user.id] });
+      qc.invalidateQueries({ queryKey: ["admin-reports"] });
+    } catch (err: any) {
+      console.error("Error saving savings history:", err);
+      toast.error("Gagal menyimpan penghematan: " + err.message);
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   const nearestMarket = useMemo(() => {
     if (!userCoords || recommendations.length === 0) return null;
@@ -686,6 +737,24 @@ function WishlistPage() {
               <p className="text-xs font-semibold uppercase text-white/70">Potensi Hemat Belanja Pintar</p>
               <p className="mt-2 text-3xl font-black">{idr(maxSavings)}</p>
               <p className="mt-1 text-xs text-white/80">Selisih antara pasar termahal & termurah untuk seluruh barang Anda.</p>
+              <Button
+                onClick={handleSaveSavings}
+                disabled={isSaving || isSaved}
+                className={`mt-4 w-full rounded-md text-xs font-bold uppercase tracking-wider py-2.5 flex items-center justify-center gap-2 transition-all cursor-pointer ${
+                  isSaved
+                    ? "bg-emerald-600/30 text-emerald-200 border border-emerald-500/20"
+                    : "bg-white text-teal-800 hover:bg-white/90 active:scale-[0.98] shadow-xs"
+                }`}
+              >
+                {isSaving ? (
+                  <Loader2 className="h-4.5 w-4.5 animate-spin" />
+                ) : isSaved ? (
+                  <Check className="h-4.5 w-4.5" />
+                ) : (
+                  <Save className="h-4.5 w-4.5" />
+                )}
+                {isSaving ? "Menyimpan..." : isSaved ? "Penghematan Disimpan" : "Simpan ke Riwayat"}
+              </Button>
             </div>
           )}
 
@@ -754,10 +823,11 @@ function WishlistPage() {
 
                       <div className="flex items-center justify-between border-t border-border/40 pt-2 text-[10px]">
                         <span className="text-[var(--color-gray-500)] font-medium">
-                          {m.covered} dari {items.length} produk tersedia
+                          {m.covered} dari {items?.length || 0} produk tersedia
                         </span>
                         <Link
-                          to={`/markets/${m.id}`}
+                          to="/markets/$id"
+                          params={{ id: m.id }}
                           className="font-extrabold text-[var(--color-brand-blue)] hover:text-[var(--color-brand-green)] flex items-center gap-0.5 transition-colors"
                         >
                           Rute & Detail Peta <ArrowRight className="h-3 w-3" />

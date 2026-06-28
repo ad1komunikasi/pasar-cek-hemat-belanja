@@ -7,7 +7,7 @@ import { TrendingUp, MapPin, ShoppingBasket, Bell, Scale, Search, Crown, Sparkle
 import celenganAyam from "@/assets/celengan-ayam.png";
 import { Button } from "@/components/ui/button";
 import { idr } from "@/lib/format";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from "recharts";
 import { PremiumUpgradeModal } from "@/components/premium-upgrade-modal";
@@ -15,6 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({ meta: [{ title: "Dashboard — PasarCek" }] }),
@@ -130,6 +131,69 @@ function DashboardPage() {
     queryKey: ["markets-list-alert"],
     queryFn: async () => (await supabase.from("markets").select("id,name,city").order("name")).data ?? [],
   });
+
+  // Fetch real savings history for this user
+  const { data: userSavings } = useQuery({
+    queryKey: ["user-savings-history", user?.id],
+    enabled: !!user?.id,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("search_savings_history")
+        .select("*")
+        .eq("user_id", user!.id)
+        .order("created_at", { ascending: true });
+      if (error) throw error;
+      return data ?? [];
+    }
+  });
+
+  const chartData = useMemo(() => {
+    // Generate last 12 weeks ending at today
+    const weeks = Array.from({ length: 12 }, (_, i) => {
+      const weekNum = 11 - i;
+      const startDate = new Date();
+      startDate.setDate(startDate.getDate() - (weekNum + 1) * 7);
+      const endDate = new Date();
+      endDate.setDate(endDate.getDate() - weekNum * 7);
+
+      const labelNum = i + 1;
+      return {
+        week: `Mgu ${labelNum}`,
+        savings: 0,
+        startDate,
+        endDate
+      };
+    });
+
+    if (userSavings && userSavings.length > 0) {
+      userSavings.forEach((record: any) => {
+        const recordDate = new Date(record.created_at);
+        for (const w of weeks) {
+          if (recordDate >= w.startDate && recordDate < w.endDate) {
+            w.savings += Number(record.savings_amount);
+            break;
+          }
+        }
+      });
+    }
+
+    return weeks.map(w => ({ week: w.week, savings: w.savings }));
+  }, [userSavings]);
+
+  const totalSavingsSum = useMemo(() => {
+    if (!userSavings) return 0;
+    return userSavings.reduce((acc, curr) => acc + Number(curr.savings_amount), 0);
+  }, [userSavings]);
+
+  const savingsTrendText = useMemo(() => {
+    if (chartData.length < 12) return "Mulai melacak untuk melihat tren";
+    const thisWeek = chartData[11].savings;
+    const lastWeek = chartData[10].savings;
+    const diff = thisWeek - lastWeek;
+    if (diff > 0) return `+ ${idr(diff)} dari minggu lalu`;
+    if (diff < 0) return `- ${idr(Math.abs(diff))} dari minggu lalu`;
+    return "Stabil dari minggu lalu";
+  }, [chartData]);
 
   const { data } = useQuery({
     queryKey: ["dashboard-stats", user?.id],
@@ -267,69 +331,118 @@ function DashboardPage() {
 
   return (
     <AppShell>
-      <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-black text-[var(--color-ink)] flex items-center gap-2">
-            Halo, {profile?.full_name ?? "Sahabat PasarCek"} 👋
+      <div className="mb-10 border-b border-black pb-6 flex flex-col md:flex-row md:items-end md:justify-between gap-4">
+        <div className="min-w-0">
+          <div className="flex items-center gap-2 flex-wrap">
+            <h1 className="text-3xl font-extrabold tracking-tighter text-[var(--color-ink)] uppercase leading-none">
+              HALO, {profile?.full_name ?? "PENGGUNA"}
+            </h1>
             {isPremium && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-amber-500 to-yellow-500 px-2.5 py-0.5 text-[10px] font-black text-slate-900 shadow-md">
+              <span className="inline-flex items-center gap-1 rounded-none bg-[var(--color-swiss-red)] px-2 py-0.5 text-[9px] font-black text-white tracking-widest uppercase">
                 <Crown className="h-3 w-3 fill-current" />
                 PREMIUM
               </span>
             )}
-          </h1>
-          <p className="text-sm text-[var(--color-gray-500)]">
-            Hemat Belanja Hari Ini — pantau harga, bandingkan pasar, dan temukan keranjang termurah.
+          </div>
+          <p className="mt-3 text-xs font-bold uppercase tracking-wider text-[var(--color-gray-500)]">
+            Enterprise Price Analytics — pantau fluktuasi, bandingkan pasar, dan modelkan penghematan keranjang belanja.
           </p>
         </div>
       </div>
 
       {/* Upgrade Callout Banner for Free Users */}
       {!isPremium && (
-        <div className="mb-6 overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-r from-[var(--color-brand-blue)] to-[var(--color-brand-green)] p-5 text-white relative shadow-soft">
-          <div className="absolute right-0 top-0 h-32 w-32 bg-white/10 rounded-full blur-3xl pointer-events-none" />
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 relative z-10">
-            <div>
-              <div className="flex items-center gap-1.5 text-amber-300 font-bold text-[10px] uppercase tracking-wider mb-1">
-                <Crown className="h-3.5 w-3.5 fill-current" />
-                Penawaran Spesial Premium
-              </div>
-              <h3 className="text-base font-black tracking-tight">Upgrade Premium Hanya Rp9.900/bulan!</h3>
-              <p className="text-xs text-white/80 mt-1 max-w-xl leading-relaxed">
-                Buka Prediksi Harga AI, Alert Harga tanpa batas, Analitik Tren & Riwayat Penghematan 90 Hari, serta Smart Basket tanpa batas produk.
-              </p>
+        <div className="mb-10 border-l-4 border-[var(--color-swiss-red)] bg-white border border-y border-r border-[var(--color-gray-200)] p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-6 rounded-none">
+          <div className="min-w-0">
+            <div className="flex items-center gap-1.5 text-[var(--color-swiss-red)] font-black text-[10px] uppercase tracking-widest mb-1.5">
+              <Crown className="h-3.5 w-3.5 fill-current" />
+              Penawaran Spesial Premium
             </div>
-            <Button
-              asChild
-              className="shrink-0 bg-white text-[var(--color-brand-blue)] hover:bg-white/95 hover:scale-[1.02] active:scale-[0.98] font-black border-0 rounded-xl px-4 py-2.5 shadow-md text-xs transition-all duration-200"
-            >
-              <Link to="/pricing">Upgrade Sekarang</Link>
-            </Button>
+            <h3 className="text-lg font-extrabold tracking-tighter text-black uppercase leading-none">Upgrade Premium — Hanya Rp9.900/bulan</h3>
+            <p className="text-xs text-[var(--color-gray-500)] mt-2 max-w-2xl leading-relaxed font-medium">
+              Buka fitur analitik tingkat lanjut: Prediksi Pergerakan Harga Pangan berbasis AI, Alert Notifikasi Tanpa Batas, grafik pelacakan penghematan 90 hari, dan integrasi Smart Basket tanpa batas produk.
+            </p>
           </div>
+          <Button
+            asChild
+            className="shrink-0 bg-black text-white hover:bg-zinc-800 rounded-none px-6 py-5 text-xs font-black uppercase tracking-wider"
+          >
+            <Link to="/pricing">Upgrade Sekarang</Link>
+          </Button>
         </div>
       )}
 
       <Section>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
-          <StatCard label="Harga Hari Ini" value={data?.priceUpdates ?? 0} hint="Update harga sembako" icon={TrendingUp} accent="blue" />
-          <StatCard label="Pasar Terdekat" value={data?.markets ?? 0} hint="Pasar aktif" icon={MapPin} accent="green" />
-          <StatCard label="Smart Basket" value={data?.baskets ?? 0} hint="Simulasi tersimpan" icon={ShoppingBasket} accent="warning" />
+          <StatCard label="Harga Terpantau" value={data?.priceUpdates ?? 0} hint="Update log sembako" icon={TrendingUp} accent="blue" />
+          <StatCard label="Jejaring Pasar" value={data?.markets ?? 0} hint="Pasar aktif terintegrasi" icon={MapPin} accent="green" />
+          <StatCard label="Keranjang Belanja" value={data?.baskets ?? 0} hint="Simulasi tersimpan" icon={ShoppingBasket} accent="warning" />
           <StatCard label="Daftar Belanja" value={data?.wishlist ?? 0} hint="Produk dipantau" icon={ListChecks} accent="green" />
-          <StatCard label="Notifikasi Baru" value={data?.unread ?? 0} hint="Belum dibaca" icon={Bell} accent="danger" />
+          <StatCard label="Alert Tertunda" value={data?.unread ?? 0} hint="Notifikasi belum dibaca" icon={Bell} accent="danger" />
         </div>
       </Section>
 
-      <Section title="Aksi Cepat">
+      <Section title="Indeks Harga Bahan Pokok Terkini">
+        <div className="overflow-x-auto border border-[var(--color-gray-200)] bg-white rounded-none">
+          <table className="w-full text-left border-collapse text-xs">
+            <thead>
+              <tr className="border-b border-black bg-[var(--color-gray-50)]">
+                <th className="p-3 font-black uppercase tracking-wider text-[var(--color-gray-500)] text-[10px]">Komoditas</th>
+                <th className="p-3 font-black uppercase tracking-wider text-[var(--color-gray-500)] text-[10px] text-right">Harga Rata-Rata</th>
+                <th className="p-3 font-black uppercase tracking-wider text-[var(--color-gray-500)] text-[10px]">Prediksi Pergerakan (7 Hari)</th>
+                <th className="p-3 font-black uppercase tracking-wider text-[var(--color-gray-500)] text-[10px]">Rekomendasi Analitis</th>
+                <th className="p-3 font-black uppercase tracking-wider text-[var(--color-gray-500)] text-[10px] text-right">Tindakan</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-[var(--color-gray-100)]">
+              {Object.entries(aiForecastData).map(([key, data]) => {
+                const nameMap: Record<string, string> = {
+                  beras: "Beras Premium / kg",
+                  minyak: "Minyak Goreng Curah / L",
+                  cabai: "Cabai Rawit Merah / kg",
+                  daging: "Daging Sapi Segar / kg",
+                  telur: "Telur Ayam Ras / kg",
+                };
+                return (
+                  <tr key={key} className="hover:bg-[var(--color-gray-50)]/50 transition-colors">
+                    <td className="p-3 font-bold text-[var(--color-ink)] uppercase tracking-tight">{nameMap[key] || key}</td>
+                    <td className="p-3 font-black text-right text-[var(--color-ink)] text-sm">{idr(data.current)}</td>
+                    <td className="p-3">
+                      <span className={cn(
+                        "inline-flex items-center gap-1 px-2 py-0.5 font-bold text-[9px] uppercase rounded-none",
+                        data.isUp ? "bg-red-50 text-[var(--color-swiss-red)]" : data.trend.includes("Stabil") ? "bg-zinc-100 text-zinc-600" : "bg-emerald-50 text-[var(--color-brand-green)]"
+                      )}>
+                        {data.trend}
+                      </span>
+                    </td>
+                    <td className="p-3 text-[var(--color-gray-700)] text-2xs max-w-md truncate">{data.recommendation}</td>
+                    <td className="p-3 text-right">
+                      <Button
+                        variant="link"
+                        onClick={() => setSelectedAiProduct(key)}
+                        className="text-[10px] font-black uppercase tracking-wider text-black p-0 h-auto hover:text-[var(--color-swiss-red)] hover:no-underline"
+                      >
+                        Lihat Proyeksi →
+                      </Button>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </Section>
+      <Section title="Aksi Cepat Sistem">
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-          <QuickAction to="/prices" icon={TrendingUp} label="Harga Hari Ini" />
+          <QuickAction to="/prices" icon={TrendingUp} label="Monitor Harga" />
           <QuickAction to="/compare" icon={Scale} label="Bandingkan" />
-          <QuickAction to="/markets" icon={Search} label="Cari Pasar" />
+          <QuickAction to="/markets" icon={Search} label="Database Pasar" />
           <QuickAction to="/smart-basket" icon={ShoppingBasket} label="Smart Basket" />
-          <QuickAction to="/wishlist" icon={ListChecks} label="Daftar Belanja" />
+          <QuickAction to="/wishlist" icon={ListChecks} label="Daftar Pantau" />
           {isPremium ? (
-            <QuickAction to="/profile" icon={Crown} label="Akun Premium" highlight />
+            <QuickAction to="/profile" icon={Crown} label="Profil Premium" highlight />
           ) : (
-            <QuickAction to="/pricing" icon={Crown} label="Upgrade" highlight />
+            <QuickAction to="/pricing" icon={Crown} label="Upgrade Akun" highlight />
           )}
         </div>
       </Section>
@@ -337,49 +450,48 @@ function DashboardPage() {
       {/* Main Premium Features Split View */}
       <div className="grid gap-6 lg:grid-cols-3 mb-8">
         <div className="lg:col-span-2 space-y-6">
-          <div className="rounded-xl border border-[var(--color-gray-100)] bg-white shadow-sm overflow-hidden">
+          <div className="rounded-none border border-[var(--color-gray-200)] bg-white overflow-hidden">
             <Tabs defaultValue="savings" className="w-full">
-              <div className="border-b border-[var(--color-gray-100)] px-4 py-3 bg-[var(--color-gray-50)]">
-                <TabsList className="bg-white border border-[var(--color-gray-100)] rounded-lg p-0.5">
-                  <TabsTrigger value="savings" className="text-xs py-1.5 px-3 font-semibold rounded-md data-[state=active]:bg-primary data-[state=active]:text-white">
+              <div className="border-b border-[var(--color-gray-200)] px-6 py-4 bg-[var(--color-gray-50)]">
+                <TabsList className="bg-transparent border-0 gap-2 p-0 h-auto flex flex-wrap">
+                  <TabsTrigger value="savings" className="text-xs py-2 px-4 font-black uppercase tracking-wider rounded-none border border-[var(--color-gray-200)] bg-white text-zinc-500 data-[state=active]:bg-black data-[state=active]:text-white data-[state=active]:border-black transition-colors cursor-pointer">
                     Riwayat Penghematan
                   </TabsTrigger>
-                  <TabsTrigger value="prediction" className="text-xs py-1.5 px-3 font-semibold rounded-md data-[state=active]:bg-primary data-[state=active]:text-white">
+                  <TabsTrigger value="prediction" className="text-xs py-2 px-4 font-black uppercase tracking-wider rounded-none border border-[var(--color-gray-200)] bg-white text-zinc-500 data-[state=active]:bg-black data-[state=active]:text-white data-[state=active]:border-black transition-colors cursor-pointer">
                     Prediksi Harga AI
                   </TabsTrigger>
-                  <TabsTrigger value="alerts" className="text-xs py-1.5 px-3 font-semibold rounded-md data-[state=active]:bg-primary data-[state=active]:text-white">
+                  <TabsTrigger value="alerts" className="text-xs py-2 px-4 font-black uppercase tracking-wider rounded-none border border-[var(--color-gray-200)] bg-white text-zinc-500 data-[state=active]:bg-black data-[state=active]:text-white data-[state=active]:border-black transition-colors cursor-pointer">
                     Alert Harga
                   </TabsTrigger>
                 </TabsList>
               </div>
-
-              {/* TAB 1: Savings History */}
+ 
               <TabsContent value="savings" className="p-6 focus:outline-none">
-                <div className="mb-4 flex items-center justify-between">
+                <div className="mb-6 flex flex-col sm:flex-row sm:items-baseline sm:justify-between gap-2">
                   <div>
-                    <h3 className="text-base font-bold text-[var(--color-ink)]">Pelacakan Riwayat Penghematan (90 Hari)</h3>
-                    <p className="text-xs text-[var(--color-gray-500)]">Estimasi total uang yang Anda hemat dari belanja dengan panduan PasarCek.</p>
+                    <h3 className="text-sm font-black uppercase tracking-tight text-[var(--color-ink)]">Pelacakan Riwayat Penghematan (90 Hari)</h3>
+                    <p className="text-xs text-[var(--color-gray-500)] mt-1">Estimasi total uang yang Anda hemat dari belanja dengan panduan PasarCek.</p>
                   </div>
                   {isPremium && (
-                    <div className="text-right">
-                      <p className="text-2xs uppercase font-extrabold text-[var(--color-gray-500)]">Total Penghematan</p>
-                      <p className="text-lg font-black text-[var(--color-brand-green)]">{idr(717000)}</p>
+                    <div className="sm:text-right border-l-2 sm:border-l-0 sm:border-r-2 border-black pl-3 sm:pr-3">
+                      <p className="text-[9px] uppercase font-black tracking-wider text-[var(--color-gray-500)]">Total Penghematan</p>
+                      <p className="text-xl font-black tracking-tight text-[var(--color-brand-green)]">{idr(totalSavingsSum)}</p>
                     </div>
                   )}
                 </div>
 
-                <div className="relative h-64 w-full rounded-lg bg-[var(--color-gray-50)]/50 border border-[var(--color-gray-100)] p-4">
+                <div className="relative h-64 w-full rounded-none border border-[var(--color-gray-200)] p-4 bg-[var(--color-gray-50)]/30">
                   {/* Blur lock layer for free users */}
                   {!isPremium && (
-                    <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-white/70 backdrop-blur-md rounded-lg p-6 text-center">
-                      <div className="mb-3 rounded-full bg-amber-500/10 p-3 text-amber-500 border border-amber-500/20 shadow-inner">
-                        <Crown className="h-6 w-6" />
+                    <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-white/90 rounded-none p-6 text-center">
+                      <div className="mb-3 bg-red-50 p-3 text-[var(--color-swiss-red)] border border-red-100">
+                        <Crown className="h-6 w-6 fill-current" />
                       </div>
-                      <h4 className="font-bold text-sm text-[var(--color-ink)]">Tersedia di Paket Premium</h4>
-                      <p className="text-xs text-[var(--color-gray-500)] max-w-sm mt-1 mb-4">
-                        Upgrade ke Premium untuk membuka grafik interaktif riwayat penghematan belanja bulanan Anda selama 90 hari terakhir.
+                      <h4 className="font-black uppercase text-xs tracking-wider text-[var(--color-ink)]">Fitur Terkunci (Premium Only)</h4>
+                      <p className="text-xs text-[var(--color-gray-500)] max-w-sm mt-2 mb-4 leading-relaxed font-medium">
+                        Upgrade ke Premium untuk membuka grafik analitik tren penghematan belanja bulanan Anda selama 90 hari terakhir. {totalSavingsSum > 0 && `Saat ini Anda telah memiliki catatan penghematan riil sebesar ${idr(totalSavingsSum)}.`}
                       </p>
-                      <Button size="sm" onClick={() => handleOpenLock("Riwayat Penghematan 90 Hari")}>
+                      <Button size="sm" className="rounded-none bg-black text-white hover:bg-zinc-800 text-xs font-black uppercase tracking-wider" onClick={() => handleOpenLock("Riwayat Penghematan 90 Hari")}>
                         Buka Fitur Sekarang
                       </Button>
                     </div>
@@ -387,38 +499,32 @@ function DashboardPage() {
 
                   <div className={`w-full h-full ${!isPremium ? "blur-sm opacity-30 select-none pointer-events-none" : ""}`}>
                     <ResponsiveContainer width="100%" height="100%">
-                      <AreaChart data={mockSavingsData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                        <defs>
-                          <linearGradient id="colorSavings" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor="var(--color-brand-green)" stopOpacity={0.4}/>
-                            <stop offset="95%" stopColor="var(--color-brand-green)" stopOpacity={0.0}/>
-                          </linearGradient>
-                        </defs>
-                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--color-gray-100)" />
-                        <XAxis dataKey="week" tickLine={false} axisLine={false} tick={{ fontSize: 10, fill: "var(--color-gray-500)" }} />
-                        <YAxis tickLine={false} axisLine={false} tick={{ fontSize: 10, fill: "var(--color-gray-500)" }} />
-                        <Tooltip formatter={(value) => [idr(Number(value)), "Penghematan"]} labelStyle={{ fontWeight: "bold" }} />
-                        <Area type="monotone" dataKey="savings" stroke="var(--color-brand-green)" strokeWidth={2.5} fillOpacity={1} fill="url(#colorSavings)" />
+                      <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                        <CartesianGrid strokeDasharray="0" stroke="var(--color-gray-200)" />
+                        <XAxis dataKey="week" tickLine={false} axisLine={true} tick={{ fontSize: 9, fill: "var(--color-gray-500)", fontWeight: "bold" }} />
+                        <YAxis tickLine={false} axisLine={true} tick={{ fontSize: 9, fill: "var(--color-gray-500)", fontWeight: "bold" }} />
+                        <Tooltip formatter={(value) => [idr(Number(value)), "Penghematan"]} labelStyle={{ fontWeight: "bold", fontSize: 11 }} />
+                        <Area type="monotone" dataKey="savings" stroke="var(--color-brand-green)" strokeWidth={2.5} fill="#0f766e" fillOpacity={0.08} />
                       </AreaChart>
                     </ResponsiveContainer>
                   </div>
                 </div>
               </TabsContent>
-
+ 
               {/* TAB 2: AI Price Predictions */}
               <TabsContent value="prediction" className="p-6 focus:outline-none">
-                <div className="mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                   <div>
-                    <h3 className="text-base font-bold text-[var(--color-ink)] flex items-center gap-1.5">
-                      <Sparkles className="h-4.5 w-4.5 text-amber-500" />
-                      Prediksi Harga Pangan AI
+                    <h3 className="text-sm font-black uppercase tracking-tight text-[var(--color-ink)] flex items-center gap-1.5">
+                      <Sparkles className="h-4 w-4 text-[var(--color-swiss-red)]" />
+                      Prediksi Fluktuasi Harga AI
                     </h3>
-                    <p className="text-xs text-[var(--color-gray-500)]">Proyeksi pergerakan harga 7 hari ke depan dengan kecerdasan buatan.</p>
+                    <p className="text-xs text-[var(--color-gray-500)] mt-1">Proyeksi pergerakan harga 7 hari ke depan dengan pemodelan prediktif.</p>
                   </div>
-                  <div className="min-w-[150px]">
+                  <div className="min-w-[160px]">
                     <Select value={selectedAiProduct} onValueChange={setSelectedAiProduct}>
-                      <SelectTrigger className="h-9 text-xs"><SelectValue /></SelectTrigger>
-                      <SelectContent>
+                      <SelectTrigger className="h-9 text-xs rounded-none border-[var(--color-gray-200)] font-bold uppercase"><SelectValue /></SelectTrigger>
+                      <SelectContent className="rounded-none">
                         <SelectItem value="beras">Beras Premium</SelectItem>
                         <SelectItem value="minyak">Minyak Goreng</SelectItem>
                         <SelectItem value="cabai">Cabai Rawit Merah</SelectItem>
@@ -428,184 +534,184 @@ function DashboardPage() {
                     </Select>
                   </div>
                 </div>
-
-                <div className="relative rounded-lg border border-[var(--color-gray-100)] p-4 bg-[var(--color-gray-50)]/50 min-h-[300px]">
+ 
+                <div className="relative rounded-none border border-[var(--color-gray-200)] p-4 bg-[var(--color-gray-50)]/30 min-h-[300px]">
                   {/* Blur lock layer for free users */}
                   {!isPremium && (
-                    <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-white/70 backdrop-blur-md rounded-lg p-6 text-center">
-                      <div className="mb-3 rounded-full bg-amber-500/10 p-3 text-amber-500 border border-amber-500/20 shadow-inner">
-                        <Crown className="h-6 w-6" />
+                    <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-white/90 rounded-none p-6 text-center">
+                      <div className="mb-3 bg-red-50 p-3 text-[var(--color-swiss-red)] border border-red-100">
+                        <Crown className="h-6 w-6 fill-current" />
                       </div>
-                      <h4 className="font-bold text-sm text-[var(--color-ink)]">Tersedia di Paket Premium</h4>
-                      <p className="text-xs text-[var(--color-gray-500)] max-w-sm mt-1 mb-4">
-                        Dapatkan proyeksi fluktuasi harga 7 hari ke depan beserta analisis rekomendasi kapan waktu belanja termurah dengan AI.
+                      <h4 className="font-black uppercase text-xs tracking-wider text-[var(--color-ink)]">Prediksi AI Terkunci</h4>
+                      <p className="text-xs text-[var(--color-gray-500)] max-w-sm mt-2 mb-4 leading-relaxed font-medium">
+                        Dapatkan proyeksi fluktuasi harga sembako 7 hari ke depan beserta analisis rekomendasi kapan waktu belanja terbaik dengan AI.
                       </p>
-                      <Button size="sm" onClick={() => handleOpenLock("Prediksi Harga AI")}>
+                      <Button size="sm" className="rounded-none bg-black text-white hover:bg-zinc-800 text-xs font-black uppercase tracking-wider" onClick={() => handleOpenLock("Prediksi Harga AI")}>
                         Buka Prediksi AI
                       </Button>
                     </div>
                   )}
-
-                  <div className={`grid gap-4 md:grid-cols-3 ${!isPremium ? "blur-sm opacity-30 select-none pointer-events-none" : ""}`}>
+ 
+                  <div className={`grid gap-6 md:grid-cols-3 ${!isPremium ? "blur-sm opacity-30 select-none pointer-events-none" : ""}`}>
                     <div className="md:col-span-2 space-y-4">
-                      <div className="flex items-center justify-between border-b border-[var(--color-gray-100)] pb-2">
+                      <div className="flex items-center justify-between border-b border-[var(--color-gray-200)] pb-3">
                         <div>
-                          <span className="text-[10px] font-extrabold text-[var(--color-gray-500)] uppercase tracking-wider">Harga Sekarang:</span>
-                          <p className="text-lg font-black text-[var(--color-ink)]">{idr(currentForecast.current)}</p>
+                          <span className="text-[9px] font-black text-[var(--color-gray-500)] uppercase tracking-wider">Harga Indeks Sekarang:</span>
+                          <p className="text-2xl font-black tracking-tight text-[var(--color-ink)]">{idr(currentForecast.current)}</p>
                         </div>
                         <div className="text-right">
-                          <span className="text-[10px] font-extrabold text-[var(--color-gray-500)] uppercase tracking-wider">Proyeksi Tren AI:</span>
-                          <p className={`text-xs font-bold ${currentForecast.isUp ? "text-[var(--color-destructive)]" : currentForecast.trend.includes("Stabil") ? "text-[var(--color-gray-700)]" : "text-[var(--color-success)]"}`}>
+                          <span className="text-[9px] font-black text-[var(--color-gray-500)] uppercase tracking-wider">Tren Proyeksi AI:</span>
+                          <p className={cn("text-xs font-black uppercase tracking-wide mt-1", currentForecast.isUp ? "text-[var(--color-swiss-red)]" : currentForecast.trend.includes("Stabil") ? "text-zinc-700" : "text-[var(--color-brand-green)]")}>
                             {currentForecast.trend}
                           </p>
                         </div>
                       </div>
-
+ 
                       <div className="h-44 w-full">
                         <ResponsiveContainer width="100%" height="100%">
                           <LineChart data={getForecastChartData(selectedAiProduct)} margin={{ top: 5, right: 10, left: -20, bottom: 5 }}>
-                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--color-gray-100)" />
-                            <XAxis dataKey="day" tickLine={false} axisLine={false} tick={{ fontSize: 9, fill: "var(--color-gray-500)" }} />
-                            <YAxis tickLine={false} axisLine={false} tick={{ fontSize: 9, fill: "var(--color-gray-500)" }} />
-                            <Tooltip formatter={(value) => [idr(Number(value)), "Prediksi Harga"]} labelStyle={{ fontWeight: "bold" }} />
-                            <Line type="monotone" dataKey="Harga" stroke="var(--color-brand-blue)" strokeWidth={2} dot={{ r: 3 }} activeDot={{ r: 5 }} />
+                            <CartesianGrid strokeDasharray="0" stroke="var(--color-gray-200)" />
+                            <XAxis dataKey="day" tickLine={false} axisLine={true} tick={{ fontSize: 9, fill: "var(--color-gray-500)", fontWeight: "bold" }} />
+                            <YAxis tickLine={false} axisLine={true} tick={{ fontSize: 9, fill: "var(--color-gray-500)", fontWeight: "bold" }} />
+                            <Tooltip formatter={(value) => [idr(Number(value)), "Prediksi Harga"]} labelStyle={{ fontWeight: "bold", fontSize: 11 }} />
+                            <Line type="monotone" dataKey="Harga" stroke="var(--color-swiss-red)" strokeWidth={2.5} dot={{ r: 3, strokeWidth: 2, fill: "white" }} activeDot={{ r: 5 }} />
                           </LineChart>
                         </ResponsiveContainer>
                       </div>
                     </div>
-
-                    <div className="bg-white rounded-xl border border-[var(--color-gray-100)] p-4 flex flex-col justify-between shadow-soft">
+ 
+                    <div className="bg-white rounded-none border border-[var(--color-gray-200)] p-4 flex flex-col justify-between">
                       <div>
-                        <div className="flex items-center gap-1 text-[var(--color-brand-blue)] font-bold text-xs uppercase tracking-wider mb-2">
-                          <Sparkles className="h-3.5 w-3.5" />
-                          Rekomendasi AI
+                        <div className="flex items-center gap-1 text-black font-black text-[10px] uppercase tracking-wider border-b border-black pb-2 mb-3">
+                          <Sparkles className="h-3.5 w-3.5 text-[var(--color-swiss-red)]" />
+                          Rekomendasi Analitis
                         </div>
-                        <p className="text-xs text-[var(--color-gray-700)] leading-relaxed whitespace-pre-wrap">
+                        <p className="text-xs text-[var(--color-gray-700)] leading-relaxed font-medium">
                           {currentForecast.recommendation}
                         </p>
                       </div>
-                      <div className="mt-4 pt-3 border-t border-[var(--color-gray-100)] text-[10px] text-[var(--color-gray-400)] italic flex items-center gap-1">
-                        <AlertCircle className="h-3 w-3 shrink-0" />
-                        Analisis dibuat otomatis berdasarkan pola pasar historis.
+                      <div className="mt-4 pt-3 border-t border-[var(--color-gray-100)] text-[9px] text-[var(--color-gray-400)] font-bold uppercase tracking-wider flex items-center gap-1.5">
+                        <AlertCircle className="h-3.5 w-3.5 shrink-0 text-[var(--color-swiss-red)]" />
+                        Validitas data: historis 90 hari.
                       </div>
                     </div>
                   </div>
                 </div>
               </TabsContent>
-
+ 
               {/* TAB 3: Price Alerts */}
               <TabsContent value="alerts" className="p-6 focus:outline-none">
                 <div className="mb-4">
-                  <h3 className="text-base font-bold text-[var(--color-ink)]">Atur Alert Harga</h3>
-                  <p className="text-xs text-[var(--color-gray-500)]">
-                    Dapatkan notifikasi instan saat harga bahan pokok turun di bawah target belanja hemat Anda.
+                  <h3 className="text-sm font-black uppercase tracking-tight text-[var(--color-ink)]">Konfigurasi Alert Harga</h3>
+                  <p className="text-xs text-[var(--color-gray-500)] mt-1">
+                    Dapatkan alert instan saat harga bahan pokok turun mencapai target belanja hemat Anda.
                   </p>
                 </div>
-
+ 
                 <div className="space-y-6">
                   {/* Alert Creation Form */}
-                  <div className="rounded-lg border border-[var(--color-gray-100)] bg-[var(--color-gray-50)]/50 p-4">
-                    <h4 className="text-xs font-bold uppercase text-[var(--color-gray-500)] mb-3">Buat Alert Baru</h4>
-                    <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-4 items-end">
+                  <div className="rounded-none border border-[var(--color-gray-200)] bg-[var(--color-gray-50)]/50 p-4">
+                    <h4 className="text-[10px] font-black uppercase tracking-wider text-[var(--color-gray-500)] mb-3">Buat Parameter Alert</h4>
+                    <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-4 items-end">
                       <div>
-                        <Label className="text-3xs uppercase font-extrabold text-[var(--color-gray-500)]">Pilih Produk</Label>
+                        <Label className="text-[9px] font-black uppercase tracking-wider text-[var(--color-gray-500)]">Produk Komoditas</Label>
                         <Select value={alertProduct} onValueChange={setAlertProduct}>
-                          <SelectTrigger className="h-9 text-xs mt-1"><SelectValue placeholder="Pilih..." /></SelectTrigger>
-                          <SelectContent>
+                          <SelectTrigger className="h-9 text-xs mt-1 rounded-none border-[var(--color-gray-200)] font-bold"><SelectValue placeholder="Pilih..." /></SelectTrigger>
+                          <SelectContent className="rounded-none">
                             {(dbProducts ?? []).map((p: any) => (
                               <SelectItem key={p.id} value={p.id}>{p.name} ({p.unit})</SelectItem>
                             ))}
                           </SelectContent>
                         </Select>
                       </div>
-
+ 
                       <div>
-                        <Label className="text-3xs uppercase font-extrabold text-[var(--color-gray-500)]">Pilih Pasar</Label>
+                        <Label className="text-[9px] font-black uppercase tracking-wider text-[var(--color-gray-500)]">Lokasi Pasar</Label>
                         <Select value={alertMarket} onValueChange={setAlertMarket}>
-                          <SelectTrigger className="h-9 text-xs mt-1"><SelectValue placeholder="Pilih..." /></SelectTrigger>
-                          <SelectContent>
+                          <SelectTrigger className="h-9 text-xs mt-1 rounded-none border-[var(--color-gray-200)] font-bold"><SelectValue placeholder="Pilih..." /></SelectTrigger>
+                          <SelectContent className="rounded-none">
                             {(dbMarkets ?? []).map((m: any) => (
                               <SelectItem key={m.id} value={m.id}>{m.name} ({m.city})</SelectItem>
                             ))}
                           </SelectContent>
                         </Select>
                       </div>
-
+ 
                       <div>
-                        <Label className="text-3xs uppercase font-extrabold text-[var(--color-gray-500)]">Kondisi & Target Harga</Label>
+                        <Label className="text-[9px] font-black uppercase tracking-wider text-[var(--color-gray-500)]">Kondisi & Target (Rp)</Label>
                         <div className="flex items-center gap-1 mt-1">
                           <Select value={alertCondition} onValueChange={(val: any) => setAlertCondition(val)}>
-                            <SelectTrigger className="w-16 h-9 text-xs"><SelectValue /></SelectTrigger>
-                            <SelectContent>
+                            <SelectTrigger className="w-16 h-9 text-xs rounded-none border-[var(--color-gray-200)] font-black"><SelectValue /></SelectTrigger>
+                            <SelectContent className="rounded-none">
                               <SelectItem value="<=">&lt;=</SelectItem>
                               <SelectItem value=">=">&gt;=</SelectItem>
                             </SelectContent>
                           </Select>
                           <Input
                             type="number"
-                            className="h-9 text-xs"
+                            className="h-9 text-xs rounded-none border-[var(--color-gray-200)] font-bold"
                             placeholder="Contoh: 14000"
                             value={alertPrice}
                             onChange={(e) => setAlertPrice(e.target.value)}
                           />
                         </div>
                       </div>
-
+ 
                       <div>
-                        <Button onClick={handleAddAlert} className="w-full h-9 text-xs flex items-center justify-center gap-1.5">
+                        <Button onClick={handleAddAlert} className="w-full h-9 text-xs bg-black text-white hover:bg-zinc-800 rounded-none font-black uppercase tracking-wider flex items-center justify-center gap-1.5 cursor-pointer">
                           <Plus className="h-3.5 w-3.5" />
-                          Tambah Alert
+                          Tambah Parameter
                         </Button>
                       </div>
                     </div>
-
+ 
                     {!isPremium && (
-                      <p className="text-[10px] text-amber-500 font-semibold mt-2.5 flex items-center gap-1 bg-amber-500/5 p-1.5 rounded border border-amber-500/10">
-                        <AlertCircle className="h-3 w-3 shrink-0" />
-                        Batas gratis: Akun Free dibatasi maksimal 1 alert aktif. Upgrade ke Premium untuk mendapatkan alert tanpa batas.
+                      <p className="text-[9px] text-[var(--color-swiss-red)] font-bold mt-3 flex items-center gap-1.5 bg-red-50 p-2 border border-red-100 rounded-none uppercase tracking-wide">
+                        <AlertCircle className="h-3.5 w-3.5 shrink-0" />
+                        Batas gratis: Akun Free dibatasi maksimal 1 alert aktif. Upgrade Premium untuk alert tanpa batas.
                       </p>
                     )}
                   </div>
-
+ 
                   {/* Alerts List */}
                   <div className="space-y-2">
-                    <h4 className="text-xs font-bold uppercase text-[var(--color-gray-500)]">Alert Aktif ({alerts.length})</h4>
+                    <h4 className="text-[10px] font-black uppercase tracking-wider text-[var(--color-gray-500)]">Daftar Alert Aktif ({alerts.length})</h4>
                     {alerts.length === 0 ? (
-                      <div className="text-center py-6 border border-dashed rounded-lg text-xs text-[var(--color-gray-500)]">
-                        Belum ada alert harga yang dibuat.
+                      <div className="text-center py-8 border border-dashed rounded-none text-xs text-[var(--color-gray-500)]">
+                        Belum ada alert harga yang dikonfigurasi.
                       </div>
                     ) : (
-                      <div className="divide-y divide-[var(--color-gray-100)] border border-[var(--color-gray-100)] rounded-lg bg-white overflow-hidden">
+                      <div className="border border-[var(--color-gray-200)] bg-white overflow-hidden rounded-none divide-y divide-[var(--color-gray-100)]">
                         {alerts.map((a) => (
-                          <div key={a.id} className="p-3.5 flex flex-col sm:flex-row justify-between sm:items-center gap-3 hover:bg-[var(--color-gray-50)]/30 transition-colors">
+                          <div key={a.id} className="p-4 flex flex-col sm:flex-row justify-between sm:items-center gap-3 hover:bg-[var(--color-gray-50)]/30 transition-colors">
                             <div className="min-w-0">
-                              <p className="font-bold text-xs text-[var(--color-ink)]">{a.productName}</p>
-                              <p className="text-[10px] text-[var(--color-gray-500)] flex items-center gap-1 mt-0.5">
-                                <MapPin className="h-3 w-3 text-slate-400" />
+                              <p className="font-black text-xs text-[var(--color-ink)] uppercase tracking-tight">{a.productName}</p>
+                              <p className="text-[10px] text-[var(--color-gray-500)] flex items-center gap-1 mt-1 font-semibold uppercase">
+                                <MapPin className="h-3.5 w-3.5 text-zinc-400" />
                                 {a.marketName}
                               </p>
-                              <div className="mt-1 flex items-center gap-1.5">
-                                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-blue-50 text-[10px] font-bold text-[var(--color-brand-blue)]">
+                              <div className="mt-2 flex items-center gap-2 flex-wrap">
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 border border-zinc-200 text-[9px] font-black uppercase tracking-wider text-black bg-zinc-50 rounded-none">
                                   Target: {a.condition === "<=" ? "di bawah" : "di atas"} {idr(a.targetPrice)}
                                 </span>
                                 {a.status === "triggered" ? (
-                                  <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-red-50 text-[10px] font-bold text-red-600 animate-bounce">
-                                    <Bell className="h-2.5 w-2.5" /> Memicu 🔔
+                                  <span className="inline-flex items-center gap-0.5 px-2 py-0.5 bg-red-50 text-[9px] font-black uppercase tracking-wider text-[var(--color-swiss-red)] animate-pulse rounded-none border border-red-100">
+                                    <Bell className="h-2.5 w-2.5 fill-current" /> MEMICU
                                   </span>
                                 ) : (
-                                  <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-green-50 text-[10px] font-bold text-green-600">
-                                    ● Aktif
+                                  <span className="inline-flex items-center gap-0.5 px-2 py-0.5 bg-emerald-50 text-[9px] font-black uppercase tracking-wider text-[var(--color-brand-green)] rounded-none border border-emerald-100">
+                                    AKTIF
                                   </span>
                                 )}
                               </div>
                             </div>
-                            <div className="flex gap-1.5 shrink-0">
+                            <div className="flex gap-2 shrink-0">
                               {a.status === "active" && (
                                 <Button
                                   size="sm"
                                   variant="outline"
                                   onClick={() => handleSimulateTrigger(a)}
-                                  className="h-8 text-2xs px-2 font-bold text-[var(--color-brand-blue)] border-[var(--color-brand-blue)]/20 hover:bg-[var(--color-brand-blue)]/5"
+                                  className="h-8 text-[9px] font-black uppercase tracking-wider text-black border border-black hover:bg-black hover:text-white rounded-none transition-colors"
                                 >
                                   Simulasi Trigger
                                 </Button>
@@ -614,7 +720,7 @@ function DashboardPage() {
                                 size="sm"
                                 variant="ghost"
                                 onClick={() => handleDeleteAlert(a.id)}
-                                className="h-8 w-8 p-0 text-[var(--color-destructive)] hover:bg-red-50 hover:text-[var(--color-destructive)] rounded-md"
+                                className="h-8 w-8 p-0 text-[var(--color-swiss-red)] hover:bg-red-50 rounded-none border border-transparent hover:border-red-100 transition-colors"
                               >
                                 <Trash2 className="h-3.5 w-3.5" />
                               </Button>
@@ -629,62 +735,63 @@ function DashboardPage() {
             </Tabs>
           </div>
         </div>
-
+ 
         {/* Right Sidebar Column */}
         <div className="space-y-6">
-          <div className="group relative overflow-hidden rounded-xl border border-[var(--color-gray-100)] bg-gradient-to-br from-[var(--color-brand-blue)] to-[var(--color-brand-green)] p-6 text-white flex flex-col justify-between gap-5 shadow-sm">
-            <div className="absolute right-0 bottom-0 opacity-10 blur-xl w-32 h-32 bg-white rounded-full pointer-events-none" />
-            <div className="z-10">
-              <div className="mb-3.5 flex items-center gap-2">
-                <div className="h-9 w-9 overflow-hidden rounded-full border border-white/20 bg-[#1e3a8a] shadow-inner transition-transform duration-300 group-hover:scale-115">
-                  <img src={celenganAyam} alt="Celengan Ayam" className="h-full w-full object-cover" />
+          <div className="relative rounded-none border border-[var(--color-gray-200)] bg-black p-6 text-white flex flex-col justify-between gap-6">
+            <div>
+              <div className="mb-4 flex items-center gap-2">
+                <div className="grid h-6 w-6 place-items-center bg-[var(--color-swiss-red)] text-white">
+                  <Sparkles className="h-3.5 w-3.5" />
                 </div>
-                <span className="text-[10px] font-extrabold uppercase tracking-wider text-white/70">Tips Hemat PasarCek</span>
+                <span className="text-[10px] font-black uppercase tracking-wider text-zinc-400">Instruksi Penghematan</span>
               </div>
-              <h3 className="text-xl font-black leading-tight">Belanja Lebih Cerdas Bersama PasarCek</h3>
-              <p className="mt-2 text-xs text-white/80 leading-relaxed max-w-sm">
-                Mulai simulasi belanja dengan Smart Basket dan temukan pasar termurah berdasarkan keranjang belanja Anda hari ini.
+              <h3 className="text-lg font-extrabold uppercase tracking-tight leading-none text-white">Alokasi & Simulasi Belanja</h3>
+              <p className="mt-3 text-xs text-zinc-400 leading-relaxed font-medium">
+                Gunakan algoritma perbandingan harga multi-pasar kami dengan memodelkan keranjang mingguan Anda di Smart Basket. Temukan titik harga termurah secara real-time.
               </p>
             </div>
-            <Button asChild className="w-full bg-white text-[var(--color-brand-blue)] hover:bg-white/95 shadow-md rounded-xl font-bold py-5 relative z-10 hover:scale-[1.01] transition-transform">
+            <Button asChild className="w-full bg-white text-black hover:bg-zinc-100 rounded-none font-bold py-5 text-xs uppercase tracking-wider cursor-pointer">
               <Link to="/smart-basket">Mulai Simulasi Belanja</Link>
             </Button>
           </div>
-
-          <div className="rounded-xl border border-[var(--color-gray-100)] bg-white p-6 shadow-sm flex flex-col justify-between min-h-[220px]">
+ 
+          <div className="relative rounded-none border border-[var(--color-gray-200)] bg-white p-6 flex flex-col justify-between min-h-[220px]">
+            {/* Swiss Accent Bar */}
+            <div className="absolute left-0 top-0 h-1 w-full bg-[var(--color-brand-green)]" />
             <div>
-              <h3 className="text-sm font-black text-[var(--color-ink)] uppercase tracking-wider">
+              <h3 className="text-[10px] font-black text-[var(--color-gray-500)] uppercase tracking-wider">
                 Penghematan Bulan Ini
               </h3>
-              <p className="mt-2 text-3xl font-black text-[var(--color-brand-green)]">
+              <p className="mt-3 text-4xl font-black tracking-tight text-[var(--color-brand-green)] leading-none">
                 {isPremium ? idr(173000) : idr(0)}
               </p>
-              <p className="mt-1 text-2xs text-[var(--color-gray-500)] leading-normal">
+              <p className="mt-3 text-xs text-[var(--color-gray-500)] leading-relaxed font-medium">
                 {isPremium 
-                  ? "Anda telah menghemat sekitar 14% dari anggaran belanja Anda bulan ini."
-                  : "Mulai simulasi keranjang belanja untuk menghitung penghematan Anda."
+                  ? "Penghematan setara 14% dari baseline anggaran pangan rumah tangga bulanan Anda."
+                  : "Mulai simulasi keranjang belanja untuk memverifikasi rasio penghematan."
                 }
               </p>
             </div>
-
+ 
             {!isPremium ? (
               <div className="mt-4 border-t border-[var(--color-gray-100)] pt-4">
-                <p className="text-[10px] text-[var(--color-gray-500)] italic mb-2">Simpan data penghematan Anda dengan Premium.</p>
-                <div className="rounded-lg bg-[var(--color-gray-50)] border border-[var(--color-gray-100)] p-3 flex flex-col items-center gap-1.5 text-center">
-                  <Crown className="h-4 w-4 text-amber-500" />
-                  <span className="text-[10px] font-bold text-[var(--color-gray-700)]">Fitur Riwayat Penghematan Terkunci</span>
+                <p className="text-[9px] text-[var(--color-gray-500)] font-bold uppercase tracking-wide mb-2 italic">Data Historis Dikunci (Premium)</p>
+                <div className="rounded-none bg-[var(--color-gray-50)] border border-[var(--color-gray-200)] p-3 flex flex-col items-center gap-1.5 text-center">
+                  <Crown className="h-4 w-4 text-[var(--color-swiss-red)]" />
+                  <span className="text-[10px] font-black uppercase tracking-wider text-[var(--color-gray-700)]">Riwayat Penghematan Terkunci</span>
                 </div>
               </div>
             ) : (
-              <div className="mt-4 border-t border-[var(--color-gray-100)] pt-4 flex items-center gap-2 text-xs text-[var(--color-brand-green)] font-semibold">
-                <ArrowUpRight className="h-4.5 w-4.5" />
-                <span>+ Rp 42.000 dari minggu lalu</span>
+              <div className="mt-4 border-t border-[var(--color-gray-100)] pt-4 flex items-center gap-2 text-xs text-[var(--color-brand-green)] font-black uppercase tracking-wider">
+                <ArrowUpRight className="h-4 w-4" />
+                <span>{savingsTrendText}</span>
               </div>
             )}
           </div>
         </div>
       </div>
-
+ 
       {/* Reusable Premium Lock/Upgrade modal */}
       <PremiumUpgradeModal
         isOpen={upgradeModalOpen}
@@ -694,12 +801,18 @@ function DashboardPage() {
     </AppShell>
   );
 }
-
+ 
 function QuickAction({ to, icon: Icon, label, highlight }: { to: string; icon: React.ComponentType<{ className?: string }>; label: string; highlight?: boolean }) {
   return (
-    <Link to={to} className={`flex flex-col items-start gap-3 rounded-lg border p-4 transition-colors ${highlight ? "border-[var(--color-brand-green)] bg-[var(--color-accent-soft)] hover:bg-[var(--color-accent-soft)]/80" : "border-[var(--color-gray-100)] bg-white hover:bg-[var(--color-gray-50)]"}`}>
-      <Icon className={`h-5 w-5 ${highlight ? "text-[var(--color-brand-green)]" : "text-[var(--color-brand-blue)]"}`} />
-      <span className="text-sm font-semibold text-[var(--color-ink)]">{label}</span>
+    <Link 
+      to={to} 
+      className={cn(
+        "flex flex-col items-start gap-4 rounded-none border border-[var(--color-gray-200)] p-4 transition-all hover:border-black",
+        highlight ? "bg-[var(--color-swiss-red)] text-white hover:bg-red-700" : "bg-white hover:bg-[var(--color-gray-50)]"
+      )}
+    >
+      <Icon className={cn("h-4 w-4", highlight ? "text-white animate-pulse" : "text-black")} />
+      <span className={cn("text-xs font-black uppercase tracking-wider", highlight ? "text-white" : "text-[var(--color-ink)]")}>{label}</span>
     </Link>
   );
 }

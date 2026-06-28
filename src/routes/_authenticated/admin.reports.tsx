@@ -3,15 +3,15 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { StatCard } from "@/components/app-shell";
 import { idr } from "@/lib/format";
-import { LineChart, Line, ResponsiveContainer, XAxis, YAxis, Tooltip } from "recharts";
+import { LineChart, Line, ResponsiveContainer, XAxis, YAxis, Tooltip, BarChart, Bar, CartesianGrid } from "recharts";
 import { Badge } from "@/components/ui/badge";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Sparkles, Send, Brain, Bot, User, Loader2, HelpCircle, RefreshCw, BarChart2, Save, Download, ChevronDown, FileText, Clipboard, Printer, Trash2, Key, AlertTriangle, Copy, Check } from "lucide-react";
+import { Sparkles, Send, Brain, Bot, User, Loader2, HelpCircle, RefreshCw, BarChart2, Save, Download, ChevronDown, FileText, Clipboard, Printer, Trash2, Key, AlertTriangle, Copy, Check, ShieldAlert } from "lucide-react";
 import { getAiAnalysis } from "@/lib/api/ai.functions";
 import { toast } from "sonner";
 import {
@@ -49,6 +49,12 @@ function AdminReports() {
       const { count: totalUsers } = await supabase
         .from("profiles")
         .select("id", { count: "exact", head: true });
+
+      // 4b. Fetch search savings history
+      const { data: savingsHistory } = await supabase
+        .from("search_savings_history")
+        .select("id, savings_amount, search_query, created_at, user_id")
+        .order("created_at", { ascending: false });
 
       // Daily revenue chart calculation (same as before)
       const byDay = new Map<string, number>();
@@ -150,11 +156,21 @@ function AdminReports() {
         .sort((a, b) => b.count - a.count)
         .slice(0, 10);
 
+      const premiumUserIds = new Set((activeSubs ?? []).map((sub: any) => sub.user_id));
+      const processedSavings = (savingsHistory ?? []).map((s: any) => ({
+        id: s.id,
+        amount: Number(s.savings_amount),
+        query: s.search_query,
+        date: s.created_at,
+        userType: premiumUserIds.has(s.user_id) ? "premium" : "free"
+      }));
+
       return {
         series,
         total,
         count: orders?.length ?? 0,
         packageRows,
+        processedSavings,
         aiMetrics: {
           totalUsers: totalUsersCount,
           freeUsers: activeFreeCount,
@@ -176,6 +192,86 @@ function AdminReports() {
       };
     },
   });
+
+  const [savingsDateFilter, setSavingsDateFilter] = useState<"all" | "90" | "30" | "7">("all");
+  const [savingsUserFilter, setSavingsUserFilter] = useState<"all" | "free" | "premium">("all");
+
+  const filteredSavings = useMemo(() => {
+    if (!data?.processedSavings) return [];
+    
+    return data.processedSavings.filter((s: any) => {
+      if (savingsUserFilter !== "all" && s.userType !== savingsUserFilter) {
+        return false;
+      }
+      
+      if (savingsDateFilter !== "all") {
+        const limitDays = Number(savingsDateFilter);
+        const recordDate = new Date(s.date);
+        const diffTime = Math.abs(Date.now() - recordDate.getTime());
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        if (diffDays > limitDays) {
+          return false;
+        }
+      }
+      
+      return true;
+    });
+  }, [data?.processedSavings, savingsDateFilter, savingsUserFilter]);
+
+  const totalSavings = useMemo(() => {
+    return filteredSavings.reduce((sum: number, s: any) => sum + s.amount, 0);
+  }, [filteredSavings]);
+
+  const avgSavings = useMemo(() => {
+    return filteredSavings.length > 0 ? totalSavings / filteredSavings.length : 0;
+  }, [filteredSavings, totalSavings]);
+
+  const totalSavesCount = useMemo(() => {
+    return filteredSavings.length;
+  }, [filteredSavings]);
+
+  const savingsChartData = useMemo(() => {
+    const groups: Record<string, number> = {};
+    
+    const daysToSeed = savingsDateFilter === "7" ? 7 : savingsDateFilter === "30" ? 30 : 15;
+    for (let i = daysToSeed - 1; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      const label = d.toLocaleDateString("id-ID", { day: "numeric", month: "short" });
+      groups[label] = 0;
+    }
+    
+    filteredSavings.forEach((s: any) => {
+      const label = new Date(s.date).toLocaleDateString("id-ID", { day: "numeric", month: "short" });
+      if (groups[label] !== undefined) {
+        groups[label] = Number(groups[label]) + Number(s.amount);
+      } else if (savingsDateFilter === "all" || savingsDateFilter === "90") {
+        groups[label] = Number(groups[label] ?? 0) + Number(s.amount);
+      }
+    });
+    
+    return Object.entries(groups).map(([date, savings]) => ({ date, savings }));
+  }, [filteredSavings, savingsDateFilter]);
+
+  const popularKeywords = useMemo(() => {
+    const counts: Record<string, number> = {};
+    
+    filteredSavings.forEach((s: any) => {
+      if (!s.query) return;
+      const itemsList = s.query.split(",");
+      itemsList.forEach((item: string) => {
+        const cleanName = item.split("(")[0].trim();
+        if (cleanName) {
+          counts[cleanName] = (counts[cleanName] ?? 0) + 1;
+        }
+      });
+    });
+    
+    return Object.entries(counts)
+      .map(([name, count]) => ({ name, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 5);
+  }, [filteredSavings]);
 
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisStep, setAnalysisStep] = useState(0);
@@ -466,7 +562,7 @@ function AdminReports() {
       
       if (!error && report) {
         setReportText(report.report_text);
-        setChatHistory(report.chat_history || []);
+        setChatHistory((report.chat_history as any[]) || []);
         setSelectedReportId(id);
         setActiveTab("laporan");
         toast.success("Laporan berhasil dimuat!");
@@ -787,6 +883,128 @@ function AdminReports() {
               </ResponsiveContainer>
             </div>
           </div>
+
+          {/* New Savings Usage Report */}
+          <div className="rounded-lg border border-[var(--color-gray-100)] bg-white p-6 space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-zinc-100 pb-4">
+              <div>
+                <h3 className="text-base font-black uppercase tracking-tight text-zinc-950 flex items-center gap-2">
+                  <BarChart2 className="h-5 w-5 text-indigo-600" />
+                  Laporan Penghematan Belanja Pengguna
+                </h3>
+                <p className="text-xs text-zinc-500 mt-1">Ringkasan penggunaan fitur Potensi Hemat Belanja Pintar oleh pengguna.</p>
+              </div>
+              
+              {/* Filter Toolbar */}
+              <div className="flex flex-wrap items-center gap-2">
+                <div className="flex items-center gap-1 bg-zinc-100 p-0.5 rounded-md text-[10px]">
+                  <button
+                    onClick={() => setSavingsDateFilter("all")}
+                    className={`px-2 py-1 rounded font-bold uppercase tracking-wider transition-colors cursor-pointer ${savingsDateFilter === "all" ? "bg-white text-zinc-950 shadow-xs" : "text-zinc-500 hover:text-zinc-950"}`}
+                  >
+                    Semua
+                  </button>
+                  <button
+                    onClick={() => setSavingsDateFilter("90")}
+                    className={`px-2 py-1 rounded font-bold uppercase tracking-wider transition-colors cursor-pointer ${savingsDateFilter === "90" ? "bg-white text-zinc-950 shadow-xs" : "text-zinc-500 hover:text-zinc-950"}`}
+                  >
+                    90 Hari
+                  </button>
+                  <button
+                    onClick={() => setSavingsDateFilter("30")}
+                    className={`px-2 py-1 rounded font-bold uppercase tracking-wider transition-colors cursor-pointer ${savingsDateFilter === "30" ? "bg-white text-zinc-950 shadow-xs" : "text-zinc-500 hover:text-zinc-950"}`}
+                  >
+                    30 Hari
+                  </button>
+                  <button
+                    onClick={() => setSavingsDateFilter("7")}
+                    className={`px-2 py-1 rounded font-bold uppercase tracking-wider transition-colors cursor-pointer ${savingsDateFilter === "7" ? "bg-white text-zinc-950 shadow-xs" : "text-zinc-500 hover:text-zinc-950"}`}
+                  >
+                    7 Hari
+                  </button>
+                </div>
+
+                <select
+                  value={savingsUserFilter}
+                  onChange={(e) => setSavingsUserFilter(e.target.value as any)}
+                  className="bg-zinc-100 hover:bg-zinc-200 border-0 outline-none rounded-md px-2.5 py-1 text-[10px] font-bold text-zinc-700 uppercase tracking-wider cursor-pointer"
+                >
+                  <option value="all">Semua Tipe User</option>
+                  <option value="free">Free User Only</option>
+                  <option value="premium">Premium User Only</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Metrics */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="p-4 rounded-lg bg-zinc-50 border border-zinc-100 flex flex-col justify-between">
+                <span className="text-[10px] uppercase font-black tracking-wider text-zinc-500">Total Akumulasi Hemat</span>
+                <span className="text-xl font-extrabold text-emerald-600 mt-1">{idr(totalSavings)}</span>
+              </div>
+              <div className="p-4 rounded-lg bg-zinc-50 border border-zinc-100 flex flex-col justify-between">
+                <span className="text-[10px] uppercase font-black tracking-wider text-zinc-500">Rata-rata Hemat per Pencarian</span>
+                <span className="text-xl font-extrabold text-indigo-600 mt-1">{idr(avgSavings)}</span>
+              </div>
+              <div className="p-4 rounded-lg bg-zinc-50 border border-zinc-100 flex flex-col justify-between">
+                <span className="text-[10px] uppercase font-black tracking-wider text-zinc-500">Frekuensi Penyimpanan</span>
+                <span className="text-xl font-extrabold text-zinc-800 mt-1">{totalSavesCount} Kali</span>
+              </div>
+            </div>
+
+            {/* Charts & Popular Keywords */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <div className="lg:col-span-2 space-y-2">
+                <h4 className="text-xs font-black uppercase tracking-wider text-zinc-500">Tren Penghematan Harian</h4>
+                <div className="h-56 bg-zinc-50/50 rounded-lg p-2 border border-zinc-100">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={savingsChartData}>
+                      <CartesianGrid strokeDasharray="0" vertical={false} stroke="#e4e4e7" />
+                      <XAxis dataKey="date" tick={{ fontSize: 9, fill: "#71717a", fontWeight: "bold" }} tickLine={false} />
+                      <YAxis tick={{ fontSize: 9, fill: "#71717a", fontWeight: "bold" }} tickLine={false} />
+                      <Tooltip formatter={(value) => idr(Number(value))} />
+                      <Bar dataKey="savings" fill="#0f766e" radius={[4, 4, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <h4 className="text-xs font-black uppercase tracking-wider text-zinc-500">Produk Terpopuler (Tersimpan)</h4>
+                <div className="bg-zinc-50/50 rounded-lg p-4 border border-zinc-100 h-56 flex flex-col justify-between">
+                  {popularKeywords.length === 0 ? (
+                    <div className="h-full flex items-center justify-center text-xs text-zinc-400 italic">
+                      Belum ada data produk tersimpan
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      {popularKeywords.map((keyword, idx) => (
+                        <div key={keyword.name} className="flex items-center justify-between text-[11px]">
+                          <div className="flex items-center gap-1.5 min-w-0">
+                            <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-zinc-200 text-[9px] font-black text-zinc-700">
+                              {idx + 1}
+                            </span>
+                            <span className="font-bold text-zinc-800 truncate">{keyword.name}</span>
+                          </div>
+                          <span className="font-bold text-zinc-500 bg-zinc-200/50 px-1.5 py-0.5 rounded text-[9px] shrink-0">
+                            {keyword.count}x
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  
+                  {/* Privacy note conforming to terms */}
+                  <div className="flex items-start gap-1 border-t border-zinc-200/60 pt-2.5 text-[9px] text-zinc-400 leading-normal mt-2">
+                    <ShieldAlert className="h-3 w-3 text-indigo-500 shrink-0 mt-0.5" />
+                    <span>
+                      <strong>Privasi Terjaga:</strong> Data di atas dianonimkan secara ketat untuk melindungi data pribadi pengguna sesuai T&C.
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Right Side: AI Sales Assistant */}
@@ -899,7 +1117,7 @@ function AdminReports() {
                     className="flex-1 text-[11px] h-8 bg-gray-50 border border-gray-200 rounded-md px-2 focus:outline-none focus:ring-1 focus:ring-blue-600 text-gray-800 font-semibold"
                   >
                     <option value="">-- Buat Laporan Baru --</option>
-                    {savedReports.map((report) => (
+                    {savedReports.map((report: any) => (
                       <option key={report.id} value={report.id}>
                         {report.title}
                       </option>

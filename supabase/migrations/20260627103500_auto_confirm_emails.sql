@@ -19,8 +19,7 @@ BEGIN
   
   -- C. Konfirmasi email secara otomatis dengan memperbarui data di auth.users
   UPDATE auth.users
-  SET email_confirmed_at = COALESCE(email_confirmed_at, now()),
-      confirmed_at = COALESCE(confirmed_at, now())
+  SET email_confirmed_at = COALESCE(email_confirmed_at, now())
   WHERE id = NEW.id;
   
   RETURN NEW;
@@ -29,6 +28,5 @@ END $$;
 -- 3. Perbarui seluruh user lama yang email_confirmed_at-nya masih kosong agar bisa langsung login
 UPDATE auth.users
 SET 
-    email_confirmed_at = COALESCE(email_confirmed_at, created_at, now()),
-    confirmed_at = COALESCE(confirmed_at, created_at, now())
-WHERE email_confirmed_at IS NULL OR confirmed_at IS NULL;
+    email_confirmed_at = COALESCE(email_confirmed_at, created_at, now())
+WHERE email_confirmed_at IS NULL;
