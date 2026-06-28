@@ -51,67 +51,65 @@
   --color-ring: var(--ring);
   --color-surface: var(--surface);
 
-  --color-brand-blue: #0f172a;
-  --color-brand-green: #0f766e;
-  --color-swiss-red: #d8232a;
+  --color-brand-blue: #1e3a8a;
+  --color-brand-green: #127a79;
   --color-ink: #111111;
   --color-gray-50: #f8f8f8;
   --color-gray-100: #eaeaea;
-  --color-gray-200: #e4e4e7;
   --color-gray-300: #bdbdbd;
   --color-gray-500: #757575;
   --color-gray-700: #424242;
 
-  --shadow-soft: none;
-  --shadow-card: none;
-  --shadow-elevated: none;
+  --shadow-soft: 0 4px 20px -4px color-mix(in oklab, var(--primary) 12%, transparent);
+  --shadow-card: 0 8px 30px -10px color-mix(in oklab, var(--primary) 18%, transparent);
+  --shadow-elevated: 0 20px 60px -20px color-mix(in oklab, var(--primary) 30%, transparent);
 
-  --gradient-hero: none;
-  --gradient-primary: none;
-  --gradient-navy: none;
+  --gradient-hero: linear-gradient(135deg, oklch(0.98 0.005 274.65), oklch(0.95 0.02 195.44));
+  --gradient-primary: linear-gradient(135deg, var(--primary), var(--primary-glow));
+  --gradient-navy: linear-gradient(135deg, oklch(0.25 0.10 274.65), oklch(0.30 0.06 195.44));
 }
 
 :root {
-  --radius: 0.125rem; /* Sharp corner style for Swiss Grid */
-  --primary: #111111;
+  --radius: 0.75rem;
+  --primary: oklch(0.34 0.177 274.65);
   --primary-foreground: oklch(1 0 0);
-  --primary-glow: #333333;
-  --accent: #d8232a; /* Swiss Red accent */
+  --primary-glow: oklch(0.48 0.18 268);
+  --accent: oklch(0.486 0.089 195.44);
   --accent-foreground: oklch(1 0 0);
-  --accent-soft: #fef2f2;
-  --background: #fcfcfc;
-  --foreground: #111111;
+  --accent-soft: oklch(0.92 0.02 195.44);
+  --background: oklch(0.99 0.002 274.65);
+  --foreground: oklch(0.08 0.01 274.65);
   --surface: oklch(1 0 0);
   --card: oklch(1 0 0);
-  --card-foreground: #111111;
+  --card-foreground: oklch(0.08 0.01 274.65);
   --popover: oklch(1 0 0);
-  --popover-foreground: #111111;
-  --secondary: #f4f4f5;
-  --secondary-foreground: #111111;
-  --muted: #f4f4f5;
-  --muted-foreground: #71717a;
-  --success: #0f766e;
+  --popover-foreground: oklch(0.08 0.01 274.65);
+  --secondary: oklch(0.96 0.005 274.65);
+  --secondary-foreground: oklch(0.34 0.177 274.65);
+  --muted: oklch(0.96 0.005 274.65);
+  --muted-foreground: oklch(0.45 0.02 274.65);
+  --success: oklch(0.65 0.17 145);
   --success-foreground: oklch(1 0 0);
-  --warning: #d97706;
-  --warning-foreground: #451a03;
-  --info: #2563eb;
+  --warning: oklch(0.78 0.15 75);
+  --warning-foreground: oklch(0.25 0.05 70);
+  --info: oklch(0.55 0.20 258);
   --info-foreground: oklch(1 0 0);
-  --destructive: #dc2626;
+  --destructive: oklch(0.58 0.22 27);
   --destructive-foreground: oklch(1 0 0);
-  --border: #eaeaea;
-  --input: #eaeaea;
-  --ring: #111111;
+  --border: oklch(0.90 0.005 274.65);
+  --input: oklch(0.90 0.005 274.65);
+  --ring: oklch(0.486 0.089 195.44);
 }
 
 .dark {
-  --background: #0f0f10;
-  --foreground: #f4f4f5;
-  --card: #18181b;
-  --card-foreground: #f4f4f5;
-  --muted: #27272a;
-  --muted-foreground: #a1a1aa;
-  --border: #27272a;
-  --input: #27272a;
+  --background: oklch(0.08 0.005 274.65);
+  --foreground: oklch(0.98 0 0);
+  --card: oklch(0.12 0.01 274.65);
+  --card-foreground: oklch(0.98 0 0);
+  --muted: oklch(0.15 0.01 274.65);
+  --muted-foreground: oklch(0.70 0.01 274.65);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
 }
 
 @layer base {
@@ -123,21 +121,16 @@
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
   }
-  h1, h2, h3, h4, h5 { 
-    font-family: var(--font-sans); 
-    font-weight: 800;
-    letter-spacing: -0.04em; 
-    line-height: 1.1;
-  }
+  h1, h2, h3, h4, h5 { font-family: var(--font-display); letter-spacing: -0.02em; }
   .app-shell, .app-shell h1, .app-shell h2, .app-shell h3, .app-shell h4 {
-    font-family: var(--font-sans);
-    letter-spacing: -0.03em;
+    font-family: var(--font-app);
+    letter-spacing: -0.01em;
   }
 }
 
-@utility shadow-soft { box-shadow: none; }
-@utility shadow-card { box-shadow: none; }
-@utility shadow-elevated { box-shadow: none; }
+@utility shadow-soft { box-shadow: var(--shadow-soft); }
+@utility shadow-card { box-shadow: var(--shadow-card); }
+@utility shadow-elevated { box-shadow: var(--shadow-elevated); }
 @utility bg-gradient-hero { background-image: var(--gradient-hero); }
 @utility bg-gradient-navy { background-image: var(--gradient-navy); }
 @utility bg-gradient-primary { background-image: var(--gradient-primary); }
