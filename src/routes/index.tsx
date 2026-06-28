@@ -22,12 +22,12 @@ import {
   Store,
   Users,
   Database,
-  PiggyBank,
   Frown,
   Search,
   Map as MapIcon,
   Package,
 } from "lucide-react";
+import { CelenganAyamIcon } from "@/components/celengan-ayam-icon";
 import heroImg from "@/assets/hero-illustration.png";
 import problemImg from "@/assets/problem-illustration.png";
 import familyImg from "@/assets/family-illustration.png";
@@ -354,7 +354,7 @@ function Stats() {
     { icon: Users, value: "100.000+", label: "Pengguna Terdaftar" },
     { icon: Store, value: "500+", label: "Pasar Terpantau" },
     { icon: Database, value: "50.000+", label: "Update Harga Harian" },
-    { icon: PiggyBank, value: "Rp2 M+", label: "Potensi Penghematan" },
+    { icon: CelenganAyamIcon, value: "Rp2 M+", label: "Potensi Penghematan" },
   ];
   return (
     <section className="bg-white py-14">
