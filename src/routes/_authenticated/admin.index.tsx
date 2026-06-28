@@ -138,15 +138,14 @@ function AdminDashboard() {
 
   return (
     <>
-      {/* Swiss grid header */}
-      <div className="mb-10 border-b border-black pb-6 flex flex-col md:flex-row md:items-end md:justify-between gap-4">
+      {/* Header */}
+      <div className="mb-8 grid grid-cols-[minmax(0,1fr)_auto] items-end gap-4">
         <div className="min-w-0">
-          <h1 className="text-4xl font-extrabold tracking-tighter text-[var(--color-ink)] sm:text-5xl uppercase leading-none">
-            Admin Operations Dashboard
+          <h1 className="flex items-center gap-2.5 flex-wrap text-3xl font-black tracking-tight text-[var(--color-ink)] sm:text-4xl">
+            Admin Dashboard
           </h1>
-          <p className="mt-3 text-xs font-bold uppercase tracking-wider text-[var(--color-gray-500)]">
-            Enterprise Console — pantau performa finansial, verifikasi status premium, dan logs
-            aktivitas platform.
+          <p className="mt-2 text-sm text-[var(--color-gray-500)] sm:text-base">
+            Enterprise Console — pantau performa finansial, verifikasi status premium, dan logs aktivitas platform.
           </p>
         </div>
       </div>
@@ -165,7 +164,7 @@ function AdminDashboard() {
           value={stats?.pending ?? 0}
           hint="Aksi manual diperlukan"
           icon={Clock}
-          accent="danger"
+          accent="warning"
         />
         <StatCard
           label="Total Pendapatan"
@@ -175,55 +174,55 @@ function AdminDashboard() {
         />
       </div>
 
-      {/* Data-First Analytics Split Grid */}
+      {/* Data split grid */}
       <div className="grid gap-6 lg:grid-cols-3 mt-8">
-        {/* Left Double Column (Charts & Lists) */}
+        {/* Left Double Column */}
         <div className="lg:col-span-2 space-y-6">
           {/* Revenue Chart */}
-          <div className="rounded-none border border-[var(--color-gray-200)] bg-white p-6">
-            <div className="mb-4 flex justify-between items-baseline border-b border-zinc-200 pb-3">
-              <h3 className="text-xs font-black uppercase tracking-widest text-[var(--color-ink)]">
+          <div className="rounded-lg border border-[var(--color-gray-100)] bg-white p-6 shadow-sm">
+            <div className="mb-4 flex justify-between items-baseline border-b border-[var(--color-gray-100)] pb-3">
+              <h3 className="text-sm font-bold text-[var(--color-ink)]">
                 Indeks Pendapatan Harian (Lunas)
               </h3>
-              <span className="text-[10px] text-[var(--color-gray-500)] font-bold uppercase">
+              <span className="text-xs text-[var(--color-gray-500)] font-medium">
                 7 Hari Terakhir
               </span>
             </div>
             <div className="h-64 w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={chartData} margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="0" stroke="var(--color-gray-200)" />
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--color-gray-100)" />
                   <XAxis
                     dataKey="date"
                     tickLine={false}
-                    axisLine={true}
-                    tick={{ fontSize: 9, fill: "var(--color-gray-500)", fontWeight: "bold" }}
+                    axisLine={false}
+                    tick={{ fontSize: 10, fill: "var(--color-gray-500)" }}
                   />
                   <YAxis
                     tickLine={false}
-                    axisLine={true}
-                    tick={{ fontSize: 9, fill: "var(--color-gray-500)", fontWeight: "bold" }}
+                    axisLine={false}
+                    tick={{ fontSize: 10, fill: "var(--color-gray-500)" }}
                     tickFormatter={(v: number) => `Rp ${num(v / 1000)}k`}
                   />
                   <Tooltip
                     formatter={(value) => [idr(Number(value)), "Pendapatan"]}
-                    labelStyle={{ fontWeight: "bold", fontSize: 11 }}
+                    labelStyle={{ fontWeight: "bold", fontSize: 12 }}
                   />
-                  <Bar dataKey="revenue" fill="#111111" radius={0} maxBarSize={40} />
+                  <Bar dataKey="revenue" fill="var(--color-brand-blue)" radius={[4, 4, 0, 0]} maxBarSize={40} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
           </div>
 
           {/* Recent Transactions Table */}
-          <div className="rounded-none border border-[var(--color-gray-200)] bg-white p-6">
-            <div className="mb-4 flex justify-between items-baseline border-b border-zinc-200 pb-3">
-              <h3 className="text-xs font-black uppercase tracking-widest text-[var(--color-ink)]">
+          <div className="rounded-lg border border-[var(--color-gray-100)] bg-white p-6 shadow-sm">
+            <div className="mb-4 flex justify-between items-baseline border-b border-[var(--color-gray-100)] pb-3">
+              <h3 className="text-sm font-bold text-[var(--color-ink)]">
                 Daftar Transaksi Terbaru
               </h3>
               <Link
                 to="/admin/orders"
-                className="text-[10px] font-black uppercase tracking-wider text-[var(--color-swiss-red)] hover:underline"
+                className="text-xs font-semibold text-[var(--color-brand-blue)] hover:text-[var(--color-brand-green)] transition-colors"
               >
                 Semua Transaksi →
               </Link>
@@ -231,20 +230,20 @@ function AdminDashboard() {
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse text-xs">
                 <thead>
-                  <tr className="border-b border-black bg-[var(--color-gray-50)]">
-                    <th className="p-3 font-black uppercase tracking-wider text-[var(--color-gray-500)] text-[10px]">
+                  <tr className="border-b border-[var(--color-gray-100)] bg-[var(--color-gray-50)]/50">
+                    <th className="p-3 font-semibold text-[var(--color-gray-500)]">
                       Tanggal
                     </th>
-                    <th className="p-3 font-black uppercase tracking-wider text-[var(--color-gray-500)] text-[10px]">
+                    <th className="p-3 font-semibold text-[var(--color-gray-500)]">
                       User
                     </th>
-                    <th className="p-3 font-black uppercase tracking-wider text(--color-gray-500) text-[10px]">
+                    <th className="p-3 font-semibold text-[var(--color-gray-500)]">
                       Paket
                     </th>
-                    <th className="p-3 font-black uppercase tracking-wider text-[var(--color-gray-500)] text-[10px] text-right">
+                    <th className="p-3 font-semibold text-[var(--color-gray-500)] text-right">
                       Nominal
                     </th>
-                    <th className="p-3 font-black uppercase tracking-wider text-[var(--color-gray-500)] text-[10px] text-right">
+                    <th className="p-3 font-semibold text-[var(--color-gray-500)] text-right">
                       Status
                     </th>
                   </tr>
@@ -253,24 +252,24 @@ function AdminDashboard() {
                   {(recentTransactions ?? []).map((o: any) => (
                     <tr key={o.id} className="hover:bg-[var(--color-gray-50)]/50 transition-colors">
                       <td className="p-3 text-[var(--color-gray-700)]">{fmtDate(o.created_at)}</td>
-                      <td className="p-3 font-bold text-[var(--color-ink)] uppercase tracking-tight">
+                      <td className="p-3 font-semibold text-[var(--color-ink)]">
                         {o.profile?.full_name ?? "Sistem User"}
                       </td>
-                      <td className="p-3 font-medium text-[var(--color-gray-700)]">
+                      <td className="p-3 text-[var(--color-gray-700)]">
                         {o.package?.name ?? "Premium Pack"}
                       </td>
-                      <td className="p-3 font-black text-right text-[var(--color-ink)]">
+                      <td className="p-3 font-bold text-right text-[var(--color-ink)]">
                         {idr(o.amount)}
                       </td>
                       <td className="p-3 text-right">
                         <span
                           className={cn(
-                            "inline-flex items-center px-1.5 py-0.5 text-[9px] font-black uppercase rounded-none border",
+                            "inline-flex items-center px-2 py-0.5 text-[10px] font-semibold rounded border",
                             o.status === "active" || o.status === "paid"
-                              ? "bg-emerald-50 text-[var(--color-brand-green)] border-emerald-100"
+                              ? "bg-green-50 text-[var(--color-brand-green)] border-green-100"
                               : o.status === "proof_uploaded" || o.status === "verifying"
                                 ? "bg-amber-50 text-[var(--color-warning)] border-amber-100"
-                                : "bg-red-50 text-[var(--color-swiss-red)] border-red-100",
+                                : "bg-red-50 text-[var(--color-destructive)] border-red-100",
                           )}
                         >
                           {o.status}
@@ -294,48 +293,46 @@ function AdminDashboard() {
           </div>
         </div>
 
-        {/* Right Single Column (Verifications & Feed) */}
+        {/* Right Single Column */}
         <div className="space-y-6">
           {/* Verification Requests Box */}
-          <div className="rounded-none border border-[var(--color-gray-200)] bg-white p-6">
-            <div className="mb-4 flex justify-between items-baseline border-b border-zinc-200 pb-3">
-              <h3 className="text-xs font-black uppercase tracking-widest text-[var(--color-ink)]">
+          <div className="rounded-lg border border-[var(--color-gray-100)] bg-white p-6 shadow-sm">
+            <div className="mb-4 flex justify-between items-baseline border-b border-[var(--color-gray-100)] pb-3">
+              <h3 className="text-sm font-bold text-[var(--color-ink)]">
                 Antrean Verifikasi
               </h3>
               {stats?.pending && stats.pending > 0 ? (
-                <span className="inline-flex h-4.5 items-center justify-center bg-[var(--color-swiss-red)] px-2 text-[9px] font-black text-white uppercase tracking-wider animate-pulse">
+                <span className="inline-flex h-5 items-center justify-center rounded-full bg-red-100 px-2 text-[10px] font-semibold text-red-600 animate-pulse">
                   {stats.pending} Baru
                 </span>
               ) : null}
             </div>
 
             {/* List */}
-            <div className="space-y-4">
+            <div className="space-y-3">
               {(pendingVerifications ?? []).map((o: any) => (
                 <div
                   key={o.id}
-                  className="border-l-2 border-[var(--color-swiss-red)] bg-[var(--color-gray-50)]/50 p-3 hover:bg-[var(--color-gray-50)] transition-all"
+                  className="border-l-2 border-[var(--color-brand-blue)] bg-[var(--color-gray-50)]/50 p-3 rounded-r-md hover:bg-[var(--color-gray-50)] transition-all"
                 >
                   <div className="flex justify-between items-start gap-2">
                     <div className="min-w-0">
-                      <p className="text-[10px] font-black text-[var(--color-ink)] uppercase tracking-tight truncate">
+                      <p className="text-xs font-semibold text-[var(--color-ink)] truncate">
                         {o.profile?.full_name ?? "Tanpa Nama"}
                       </p>
-                      <p className="text-[9px] text-[var(--color-gray-500)] truncate mt-0.5">
+                      <p className="text-[10px] text-[var(--color-gray-500)] truncate mt-0.5">
                         {o.profile?.email}
                       </p>
                     </div>
-                    <span className="text-[10px] font-black text-black shrink-0">
+                    <span className="text-xs font-bold text-slate-800 shrink-0">
                       {idr(o.amount)}
                     </span>
                   </div>
-                  <div className="mt-2.5 flex justify-between items-center gap-2 border-t border-[var(--color-gray-100)] pt-2">
-                    <span className="text-[9px] font-bold text-[var(--color-gray-500)]">
-                      {o.package?.name}
-                    </span>
+                  <div className="mt-2.5 flex justify-between items-center gap-2 border-t border-[var(--color-gray-100)]/60 pt-2">
+                    <span className="text-[10px] text-[var(--color-gray-500)]">{o.package?.name}</span>
                     <Link
                       to="/admin/orders"
-                      className="text-[9px] font-black uppercase tracking-wider text-[var(--color-swiss-red)] hover:no-underline"
+                      className="text-[10px] font-semibold text-[var(--color-brand-blue)] hover:text-[var(--color-brand-green)] transition-colors"
                     >
                       Verifikasi →
                     </Link>
@@ -344,18 +341,18 @@ function AdminDashboard() {
               ))}
 
               {(pendingVerifications ?? []).length === 0 && (
-                <div className="text-center py-8 text-[var(--color-gray-500)] text-xs font-medium flex flex-col items-center gap-2 border border-dashed rounded-none">
-                  <CheckCircle2 className="h-5 w-5 text-emerald-500" />
-                  Semua transaksi lunas terverifikasi.
+                <div className="text-center py-8 text-[var(--color-gray-500)] text-xs font-medium flex flex-col items-center gap-2 border border-dashed border-[var(--color-gray-100)] rounded-lg">
+                  <CheckCircle2 className="h-5 w-5 text-green-500" />
+                  Semua transaksi terverifikasi.
                 </div>
               )}
             </div>
           </div>
 
           {/* New User Registrations Box */}
-          <div className="rounded-none border border-[var(--color-gray-200)] bg-white p-6">
-            <div className="mb-4 border-b border-zinc-200 pb-3">
-              <h3 className="text-xs font-black uppercase tracking-widest text-[var(--color-ink)]">
+          <div className="rounded-lg border border-[var(--color-gray-100)] bg-white p-6 shadow-sm">
+            <div className="mb-4 border-b border-[var(--color-gray-100)] pb-3">
+              <h3 className="text-sm font-bold text-[var(--color-ink)]">
                 User Registrasi Terkini
               </h3>
             </div>
@@ -363,16 +360,10 @@ function AdminDashboard() {
               {(recentUsers ?? []).map((u: any) => (
                 <div key={u.id} className="py-2.5 flex justify-between items-center gap-3">
                   <div className="min-w-0">
-                    <p className="text-xs font-bold text-[var(--color-ink)] uppercase tracking-tight truncate">
-                      {u.full_name ?? "User Baru"}
-                    </p>
-                    <p className="text-[9px] text-[var(--color-gray-500)] truncate mt-0.5">
-                      {u.email}
-                    </p>
+                    <p className="text-xs font-semibold text-[var(--color-ink)] truncate">{u.full_name ?? "User Baru"}</p>
+                    <p className="text-[10px] text-[var(--color-gray-500)] truncate mt-0.5">{u.email}</p>
                   </div>
-                  <span className="text-[9px] font-medium text-[var(--color-gray-500)] shrink-0">
-                    {fmtDate(u.created_at)}
-                  </span>
+                  <span className="text-[10px] text-[var(--color-gray-500)] shrink-0">{fmtDate(u.created_at)}</span>
                 </div>
               ))}
               {(recentUsers ?? []).length === 0 && (

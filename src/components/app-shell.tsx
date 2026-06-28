@@ -1,27 +1,27 @@
+import { ReactNode, useState } from "react";
 import { Link, useRouter, useRouterState } from "@tanstack/react-router";
+import { useQueryClient } from "@tanstack/react-query";
+import { useAuth } from "@/hooks/use-auth";
+import { supabase } from "@/integrations/supabase/client";
+import { cn } from "@/lib/utils";
 import {
   LayoutDashboard,
-  TrendingUp,
-  Scale,
-  MapPin,
-  ShoppingBasket,
   Heart,
+  Clock,
   Bell,
   User,
   Settings,
   LogOut,
+  Crown,
   Shield,
+  ShoppingBasket,
+  ListChecks,
   Menu,
   X,
-  Crown,
-  Clock,
-  ListChecks,
+  TrendingUp,
+  Scale,
+  MapPin,
 } from "lucide-react";
-import { useState, type ReactNode } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/hooks/use-auth";
-import { useQueryClient } from "@tanstack/react-query";
-import { cn } from "@/lib/utils";
 
 const nav = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -59,11 +59,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           </div>
           <span className="font-display text-lg font-bold text-primary">PasarCek</span>
         </Link>
-        <button
-          onClick={() => setOpen((v) => !v)}
-          aria-label="Menu"
-          className="rounded p-2 hover:bg-[var(--color-gray-50)]"
-        >
+        <button onClick={() => setOpen((v) => !v)} aria-label="Menu" className="rounded p-2 hover:bg-[var(--color-gray-50)]">
           {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
         </button>
       </header>
@@ -72,15 +68,15 @@ export function AppShell({ children }: { children: ReactNode }) {
         {/* Sidebar */}
         <aside
           className={cn(
-            "fixed inset-y-0 left-0 z-30 w-64 border-r border-[var(--color-gray-100)] bg-white transition-transform lg:sticky lg:top-0 lg:h-screen lg:translate-x-0",
-            open ? "translate-x-0" : "-translate-x-full",
+            "fixed inset-y-0 left-0 z-30 w-64 border-r border-[var(--color-gray-100)] bg-white transition-transform duration-200 ease-in-out lg:sticky lg:top-0 lg:h-screen lg:translate-x-0",
+            open ? "translate-x-0" : "-translate-x-full lg:translate-x-0",
           )}
         >
-          <div className="hidden h-14 items-center gap-2 border-b border-[var(--color-gray-100)] px-5 font-black uppercase tracking-tighter lg:flex">
-            <div className="grid h-8 w-8 place-items-center bg-black text-white">
+          <div className="hidden h-14 items-center gap-2 border-b border-[var(--color-gray-100)] px-5 font-bold tracking-tight lg:flex">
+            <div className="grid h-8 w-8 place-items-center rounded-lg bg-gradient-primary text-white shadow-soft">
               <ShoppingBasket className="h-4.5 w-4.5" />
             </div>
-            <span className="text-lg font-extrabold text-black">PasarCek</span>
+            <span className="font-display text-lg font-bold text-primary">PasarCek</span>
           </div>
           <nav className="flex flex-col gap-1 p-3">
             {nav.map((n) => {
@@ -91,74 +87,45 @@ export function AppShell({ children }: { children: ReactNode }) {
                   to={n.to}
                   onClick={() => setOpen(false)}
                   className={cn(
-                    "flex items-center gap-3 rounded-none px-3 py-2.5 text-xs font-bold uppercase tracking-wider transition-colors",
-                    active
-                      ? "bg-black text-white"
-                      : "text-[var(--color-gray-700)] hover:bg-[var(--color-gray-100)]",
+                    "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-all duration-200",
+                    active ? "bg-gradient-primary text-white shadow-soft" : "text-[var(--color-gray-700)] hover:bg-[var(--color-gray-50)]",
                   )}
                 >
-                  <n.icon className="h-3.5 w-3.5" />
+                  <n.icon className="h-4 w-4" />
                   {n.label}
                 </Link>
               );
             })}
             <div className="mt-3 border-t border-[var(--color-gray-100)] pt-3">
-              <Link
-                to="/pricing"
-                onClick={() => setOpen(false)}
-                className="flex items-center gap-3 rounded-none bg-[var(--color-swiss-red)] px-3 py-2.5 text-xs font-bold uppercase tracking-wider text-white hover:opacity-90"
-              >
-                <Crown className="h-4 w-4 fill-white" /> Upgrade Premium
+              <Link to="/pricing" onClick={() => setOpen(false)} className="flex items-center gap-3 rounded-md bg-[var(--color-accent-soft)] px-3 py-2 text-sm font-semibold text-[var(--color-brand-green)] hover:opacity-90">
+                <Crown className="h-4 w-4" /> Upgrade Premium
               </Link>
             </div>
             {isAdmin && (
               <div className="mt-3 border-t border-[var(--color-gray-100)] pt-3">
-                <Link
-                  to="/admin"
-                  onClick={() => setOpen(false)}
-                  className={cn(
-                    "flex items-center gap-3 rounded-none px-3 py-2.5 text-xs font-bold uppercase tracking-wider",
-                    path.startsWith("/admin")
-                      ? "bg-[var(--color-ink)] text-white"
-                      : "text-[var(--color-gray-700)] hover:bg-[var(--color-gray-100)]",
-                  )}
-                >
-                  <Shield className="h-3.5 w-3.5" /> Admin Panel
+                <Link to="/admin" onClick={() => setOpen(false)} className={cn(
+                  "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium",
+                  path.startsWith("/admin") ? "bg-[var(--color-ink)] text-white" : "text-[var(--color-gray-700)] hover:bg-[var(--color-gray-50)]",
+                )}>
+                  <Shield className="h-4 w-4" /> Admin
                 </Link>
               </div>
             )}
             <div className="mt-3 border-t border-[var(--color-gray-100)] pt-3">
-              <Link
-                to="/profile"
-                search={{ complete: "" }}
-                onClick={() => setOpen(false)}
-                className="flex items-center gap-3 rounded-none px-3 py-2 text-xs font-bold uppercase tracking-wider text-[var(--color-gray-700)] hover:bg-[var(--color-gray-100)]"
-              >
-                <User className="h-3.5 w-3.5" /> {profile?.full_name ?? "Profil"}
+              <Link to="/profile" search={{ complete: "" }} onClick={() => setOpen(false)} className="flex items-center gap-3 rounded-md px-3 py-2 text-sm text-[var(--color-gray-700)] hover:bg-[var(--color-gray-50)]">
+                <User className="h-4 w-4" /> {profile?.full_name ?? "Profil"}
               </Link>
-              <Link
-                to="/settings"
-                onClick={() => setOpen(false)}
-                className="flex items-center gap-3 rounded-none px-3 py-2 text-xs font-bold uppercase tracking-wider text-[var(--color-gray-700)] hover:bg-[var(--color-gray-100)]"
-              >
-                <Settings className="h-3.5 w-3.5" /> Pengaturan
+              <Link to="/settings" onClick={() => setOpen(false)} className="flex items-center gap-3 rounded-md px-3 py-2 text-sm text-[var(--color-gray-700)] hover:bg-[var(--color-gray-50)]">
+                <Settings className="h-4 w-4" /> Pengaturan
               </Link>
-              <button
-                onClick={signOut}
-                className="flex w-full items-center gap-3 rounded-none px-3 py-2 text-xs font-bold uppercase tracking-wider text-[var(--color-gray-700)] hover:bg-[var(--color-gray-100)]"
-              >
-                <LogOut className="h-3.5 w-3.5" /> Keluar
+              <button onClick={signOut} className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm text-[var(--color-gray-700)] hover:bg-[var(--color-gray-50)]">
+                <LogOut className="h-4 w-4" /> Keluar
               </button>
             </div>
           </nav>
         </aside>
 
-        {open && (
-          <div
-            className="fixed inset-0 z-20 bg-black/30 lg:hidden"
-            onClick={() => setOpen(false)}
-          />
-        )}
+        {open && <div className="fixed inset-0 z-20 bg-black/30 lg:hidden" onClick={() => setOpen(false)} />}
 
         <main className="min-h-screen flex-1 lg:ml-0">
           <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-10 lg:py-10">{children}</div>
@@ -168,113 +135,52 @@ export function AppShell({ children }: { children: ReactNode }) {
   );
 }
 
-export function PageHeader({
-  title,
-  description,
-  action,
-}: {
-  title: ReactNode;
-  description?: string;
-  action?: ReactNode;
-}) {
+export function PageHeader({ title, description, action }: { title: ReactNode; description?: string; action?: ReactNode }) {
   return (
-    <div className="mb-10 border-b border-black pb-6 flex flex-col md:flex-row md:items-end md:justify-between gap-4">
+    <div className="mb-8 grid grid-cols-[minmax(0,1fr)_auto] items-end gap-4">
       <div className="min-w-0">
-        <h1 className="text-4xl font-extrabold tracking-tighter text-[var(--color-ink)] sm:text-5xl uppercase leading-none">
-          {title}
-        </h1>
-        {description && (
-          <p className="mt-3 text-xs font-bold uppercase tracking-wider text-[var(--color-gray-500)] max-w-2xl">
-            {description}
-          </p>
-        )}
+        <h1 className="flex items-center gap-2.5 flex-wrap text-3xl font-black tracking-tight text-[var(--color-ink)] sm:text-4xl">{title}</h1>
+        {description && <p className="mt-2 text-sm text-[var(--color-gray-500)] sm:text-base">{description}</p>}
       </div>
       {action && <div className="shrink-0">{action}</div>}
     </div>
   );
 }
 
-export function StatCard({
-  label,
-  value,
-  hint,
-  icon: Icon,
-  accent,
-}: {
-  label: string;
-  value: ReactNode;
-  hint?: string;
-  icon?: React.ComponentType<{ className?: string }>;
-  accent?: "blue" | "green" | "warning" | "danger";
-}) {
-  const color =
-    accent === "green"
-      ? "bg-[var(--color-brand-green)]"
-      : accent === "warning"
-        ? "bg-[var(--color-warning)]"
-        : accent === "danger"
-          ? "bg-[var(--color-swiss-red)]"
-          : "bg-black";
+export function StatCard({ label, value, hint, icon: Icon, accent }: { label: string; value: ReactNode; hint?: string; icon?: React.ComponentType<{ className?: string }>; accent?: "blue" | "green" | "warning" | "danger" }) {
+  const color = accent === "green" ? "var(--color-brand-green)" : accent === "warning" ? "var(--color-warning)" : accent === "danger" ? "var(--color-destructive)" : "var(--color-brand-blue)";
   return (
-    <div className="relative rounded-none border border-[var(--color-gray-200)] bg-white p-5 pt-6 flex flex-col justify-between transition-colors hover:border-black">
-      {/* Swiss Accent Bar */}
-      <div className={cn("absolute left-0 top-0 h-1 w-full", color)} />
-      <div className="min-w-0">
-        <p className="text-[10px] font-black uppercase tracking-wider text-[var(--color-gray-500)]">
-          {label}
-        </p>
-        <div className="mt-2 text-3xl font-black tracking-tighter text-[var(--color-ink)] sm:text-4xl leading-none">
-          {value}
+    <div className="rounded-lg border border-[var(--color-gray-100)] bg-white p-5">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="truncate text-xs font-medium uppercase tracking-wider text-[var(--color-gray-500)]">{label}</p>
+          <div className="mt-2 text-2xl font-black text-[var(--color-ink)] sm:text-3xl">{value}</div>
+          {hint && <p className="mt-1 text-xs text-[var(--color-gray-500)]">{hint}</p>}
         </div>
+        {Icon && <div className="shrink-0 rounded-md p-2" style={{ backgroundColor: color, color: "white" }}>
+          <Icon className="h-5 w-5" />
+        </div>}
       </div>
-      {hint && (
-        <div className="mt-4 flex items-center justify-between border-t border-[var(--color-gray-100)] pt-2 text-[10px] text-[var(--color-gray-500)] font-medium">
-          <span>{hint}</span>
-          {Icon && <Icon className="h-3.5 w-3.5 opacity-40" />}
-        </div>
-      )}
     </div>
   );
 }
 
-export function EmptyState({
-  title,
-  description,
-  action,
-}: {
-  title: string;
-  description?: string;
-  action?: ReactNode;
-}) {
+export function EmptyState({ title, description, action }: { title: string; description?: string; action?: ReactNode }) {
   return (
-    <div className="rounded-none border border-zinc-200 bg-white px-6 py-12 text-center">
-      <h3 className="text-sm font-black uppercase tracking-wider text-[var(--color-ink)]">
-        {title}
-      </h3>
-      {description && <p className="mt-2 text-xs text-[var(--color-gray-500)]">{description}</p>}
+    <div className="rounded-lg border border-dashed border-[var(--color-gray-100)] bg-white px-6 py-12 text-center">
+      <h3 className="text-lg font-bold text-[var(--color-ink)]">{title}</h3>
+      {description && <p className="mt-2 text-sm text-[var(--color-gray-500)]">{description}</p>}
       {action && <div className="mt-4">{action}</div>}
     </div>
   );
 }
 
-export function Section({
-  title,
-  action,
-  children,
-}: {
-  title?: string;
-  action?: ReactNode;
-  children: ReactNode;
-}) {
+export function Section({ title, action, children }: { title?: string; action?: ReactNode; children: ReactNode }) {
   return (
-    <section className="mb-10 border-t border-black pt-6">
+    <section className="mb-8">
       {(title || action) && (
-        <div className="mb-6 flex items-baseline justify-between gap-3">
-          {title && (
-            <h2 className="text-xs font-black uppercase tracking-widest text-[var(--color-ink)]">
-              {title}
-            </h2>
-          )}
+        <div className="mb-4 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3">
+          {title && <h2 className="truncate text-lg font-bold text-[var(--color-ink)]">{title}</h2>}
           {action && <div className="shrink-0">{action}</div>}
         </div>
       )}
