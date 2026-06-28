@@ -20,7 +20,7 @@ import {
   Eye,
   ListChecks,
 } from "lucide-react";
-import celenganAyam from "@/assets/celengan-ayam.png";
+import { CelenganAyamIcon } from "@/components/celengan-ayam-icon";
 import { Button } from "@/components/ui/button";
 import { idr } from "@/lib/format";
 import { useState, useEffect, useMemo } from "react";
@@ -835,8 +835,8 @@ function DashboardPage() {
             <div className="absolute right-0 bottom-0 opacity-10 blur-xl w-32 h-32 bg-white rounded-full pointer-events-none" />
             <div className="z-10">
               <div className="mb-3.5 flex items-center gap-2">
-                <div className="h-9 w-9 overflow-hidden rounded-full border border-white/20 bg-[#1e3a8a] shadow-inner transition-transform duration-300 group-hover:scale-115">
-                  <img src={celenganAyam} alt="Celengan Ayam" className="h-full w-full object-cover" />
+                <div className="h-9 w-9 flex items-center justify-center rounded-full border border-white/20 bg-white/10 backdrop-blur-sm shadow-inner transition-transform duration-300 group-hover:scale-115">
+                  <CelenganAyamIcon className="h-6 w-6" />
                 </div>
                 <span className="text-[10px] font-extrabold uppercase tracking-wider text-white/70">Tips Hemat PasarCek</span>
               </div>
