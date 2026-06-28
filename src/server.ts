@@ -1,19 +1,23 @@
 import "./lib/error-capture";
-import WebSocket from "ws";
 
-// Polyfill global WebSocket for Node.js environments (like Vercel Node 20)
-if (typeof globalThis.WebSocket !== "function") {
-  try {
-    Object.defineProperty(globalThis, "WebSocket", {
-      value: WebSocket,
-      writable: true,
-      configurable: true,
-      enumerable: true,
-    });
-  } catch (e) {
-    console.error("Failed to polyfill globalThis.WebSocket:", e);
+// Polyfill global WebSocket for Node.js environments (like Vercel Node 20).
+// Use dynamic import with try/catch so the function doesn't crash if `ws`
+// is not available in the bundled output.
+(async () => {
+  if (typeof globalThis.WebSocket !== "function") {
+    try {
+      const { default: WebSocket } = await import("ws");
+      Object.defineProperty(globalThis, "WebSocket", {
+        value: WebSocket,
+        writable: true,
+        configurable: true,
+        enumerable: true,
+      });
+    } catch {
+      // `ws` is not available — Supabase realtime will fall back gracefully
+    }
   }
-}
+})();
 
 import { consumeLastCapturedError } from "./lib/error-capture";
 import { renderErrorPage } from "./lib/error-page";

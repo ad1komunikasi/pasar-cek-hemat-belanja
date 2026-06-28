@@ -46,10 +46,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   async function loadExtras(uid: string, uemail?: string, umeta?: any) {
-    const [{ data: p }, { data: r }] = await Promise.all([
+    const [{ data: pInit }, { data: r }] = await Promise.all([
       supabase.from("profiles").select("*").eq("id", uid).maybeSingle(),
       supabase.from("user_roles").select("role").eq("user_id", uid),
     ]);
+    let p = pInit;
     const hasWaitlistPriority = localStorage.getItem("waitlist_priority_signup") === "true";
     if (!p && uid) {
       const newProfile = {

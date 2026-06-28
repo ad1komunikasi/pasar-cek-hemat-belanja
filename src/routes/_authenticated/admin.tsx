@@ -13,6 +13,8 @@ import {
   LogIn,
   Menu,
   X,
+  LayoutDashboard,
+  ArrowLeft,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
@@ -72,9 +74,11 @@ function AdminLayout() {
           </div>
           <Link
             to="/dashboard"
-            className="text-[10px] font-black uppercase tracking-wider text-zinc-400 hover:text-white transition-colors"
+            className="flex items-center gap-2 rounded-none border border-white/30 bg-white/5 px-3 py-2 text-[10px] font-black uppercase tracking-wider text-white hover:bg-white hover:text-black transition-all duration-150"
           >
-            ← App Dashboard
+            <ArrowLeft className="h-3 w-3" />
+            <LayoutDashboard className="h-3 w-3" />
+            <span>Ke Dashboard</span>
           </Link>
         </div>
       </header>
