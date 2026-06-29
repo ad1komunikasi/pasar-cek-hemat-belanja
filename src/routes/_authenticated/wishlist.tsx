@@ -32,6 +32,7 @@ import {
   Save,
   Check,
   Loader2,
+  FolderOpen,
 } from "lucide-react";
 import { toast } from "sonner";
 import cookingOilImg from "@/assets/cooking-oil.png";
@@ -227,6 +228,90 @@ function WishlistPage() {
 
   const [isSaving, setIsSaving] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
+
+  const { data: savedHistories } = useQuery({
+    queryKey: ["user-savings-history", user?.id],
+    enabled: !!user?.id,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("search_savings_history")
+        .select("*")
+        .eq("user_id", user!.id)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data ?? [];
+    }
+  });
+
+  const handleDeleteHistory = async (historyId: string) => {
+    if (!confirm("Apakah Anda yakin ingin menghapus riwayat penghematan ini?")) return;
+
+    try {
+      const { error } = await supabase
+        .from("search_savings_history")
+        .delete()
+        .eq("id", historyId);
+
+      if (error) throw error;
+
+      toast.success("Riwayat berhasil dihapus.");
+      qc.invalidateQueries({ queryKey: ["user-savings-history", user?.id] });
+      qc.invalidateQueries({ queryKey: ["admin-reports"] });
+    } catch (err: any) {
+      console.error("Error deleting history:", err);
+      toast.error("Gagal menghapus riwayat: " + err.message);
+    }
+  };
+
+  const handleRestoreHistory = async (historyEntry: any) => {
+    if (!wishlistBasket?.id) return;
+    if (!confirm("Membuka riwayat ini akan menggantikan daftar belanja Anda saat ini. Lanjutkan?")) return;
+
+    try {
+      let historicalItems: any[] = [];
+      try {
+        if (historyEntry.search_query.startsWith("{")) {
+          const parsed = JSON.parse(historyEntry.search_query);
+          historicalItems = parsed.items || [];
+        }
+      } catch (e) {
+        console.error("Failed to parse historical items as JSON:", e);
+      }
+
+      if (historicalItems.length === 0) {
+        toast.error("Format data riwayat lama tidak mendukung untuk dibuka kembali.");
+        return;
+      }
+
+      // 1. Delete current wishlist items
+      const { error: deleteError } = await supabase
+        .from("basket_items")
+        .delete()
+        .eq("basket_id", wishlistBasket.id);
+
+      if (deleteError) throw deleteError;
+
+      // 2. Insert historical items
+      const insertRows = historicalItems.map((item: any) => ({
+        basket_id: wishlistBasket.id,
+        product_id: item.product_id,
+        quantity: item.quantity,
+        unit: item.unit || "unit"
+      }));
+
+      const { error: insertError } = await supabase
+        .from("basket_items")
+        .insert(insertRows);
+
+      if (insertError) throw insertError;
+
+      toast.success("Daftar belanja berhasil dipulihkan dari riwayat!");
+      qc.invalidateQueries({ queryKey: ["wishlist-items", wishlistBasket.id] });
+    } catch (err: any) {
+      console.error("Error restoring history:", err);
+      toast.error("Gagal memulihkan daftar belanja: " + err.message);
+    }
+  };
 
   const handleOpenLock = (feature: string) => {
     setLockedFeatureName(feature);
@@ -498,10 +583,21 @@ function WishlistPage() {
       });
       const searchQueryText = queryParts.join(", ") || "Keranjang Belanja";
 
+      // Serialize both readable text summary and raw items for restoration
+      const structuredQuery = JSON.stringify({
+        text: searchQueryText,
+        items: (items ?? []).map((item: any) => ({
+          product_id: item.product_id,
+          quantity: item.quantity,
+          name: item.product?.name || "Produk",
+          unit: item.unit || "unit"
+        }))
+      });
+
       const { error } = await supabase.from("search_savings_history").insert({
         user_id: user.id,
         savings_amount: maxSavings,
-        search_query: searchQueryText,
+        search_query: structuredQuery,
       });
 
       if (error) throw error;
@@ -943,6 +1039,75 @@ function WishlistPage() {
                 )}
                 {isSaving ? "Menyimpan..." : isSaved ? "Penghematan Disimpan" : "Simpan ke Riwayat"}
               </Button>
+
+              {savedHistories && savedHistories.length > 0 && (
+                <div className="mt-4 pt-4 border-t border-white/20 space-y-2">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-white/70">
+                    Riwayat Tersimpan ({savedHistories.length})
+                  </p>
+                  <div className="max-h-40 overflow-y-auto space-y-2 pr-1 custom-scrollbar">
+                    {savedHistories.map((h: any) => {
+                      let displayQuery = h.search_query;
+                      let isRestorable = false;
+                      try {
+                        if (h.search_query.startsWith("{")) {
+                          const parsed = JSON.parse(h.search_query);
+                          displayQuery = parsed.text || "Detail Belanja";
+                          isRestorable = parsed.items && parsed.items.length > 0;
+                        }
+                      } catch (e) {
+                        // fallback
+                      }
+
+                      const dateLabel = new Date(h.created_at).toLocaleDateString("id-ID", {
+                        day: "numeric",
+                        month: "short",
+                        hour: "2-digit",
+                        minute: "2-digit"
+                      });
+
+                      return (
+                        <div
+                          key={h.id}
+                          className="flex items-center justify-between gap-2 bg-white/10 backdrop-blur-md border border-white/10 shadow-inner rounded-xl p-2.5 hover:bg-white/15 transition-all text-xs"
+                        >
+                          <div className="min-w-0 flex-1">
+                            <div className="flex justify-between items-baseline gap-1.5">
+                              <span className="font-extrabold text-white">{idr(h.savings_amount)}</span>
+                              <span className="text-[9px] text-white/60 font-medium">{dateLabel}</span>
+                            </div>
+                            <p className="text-[10px] text-white/80 truncate mt-0.5" title={displayQuery}>
+                              {displayQuery}
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-1 shrink-0">
+                            {isRestorable && (
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                onClick={() => handleRestoreHistory(h)}
+                                className="h-7 w-7 text-white hover:bg-white/20 hover:text-white rounded-md cursor-pointer"
+                                title="Buka/Pulihkan Riwayat"
+                              >
+                                <FolderOpen className="h-3.5 w-3.5" />
+                              </Button>
+                            )}
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              onClick={() => handleDeleteHistory(h.id)}
+                              className="h-7 w-7 text-red-300 hover:text-red-100 hover:bg-red-900/40 rounded-md cursor-pointer"
+                              title="Hapus Riwayat"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </Button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
             </div>
           )}
 

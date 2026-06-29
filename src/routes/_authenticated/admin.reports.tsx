@@ -311,6 +311,26 @@ function AdminReports() {
 
     filteredSavings.forEach((s: any) => {
       if (!s.query) return;
+
+      try {
+        const trimmed = s.query.trim();
+        if (trimmed.startsWith("{")) {
+          const parsed = JSON.parse(trimmed);
+          if (parsed.items && Array.isArray(parsed.items)) {
+            parsed.items.forEach((item: any) => {
+              const name = item.name;
+              if (name) {
+                counts[name] = (counts[name] ?? 0) + 1;
+              }
+            });
+            return;
+          }
+        }
+      } catch (e) {
+        // Fallback to legacy format
+      }
+
+      // Legacy fallback
       const itemsList = s.query.split(",");
       itemsList.forEach((item: string) => {
         const cleanName = item.split("(")[0].trim();
