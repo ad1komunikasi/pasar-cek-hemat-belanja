@@ -271,10 +271,22 @@ function GoogleButton({ flow }: { flow: "login" | "register" }) {
   const [busy, setBusy] = useState(false);
   async function signIn() {
     setBusy(true);
+
+    // PENTING: redirectTo harus mengarah ke /auth/callback — bukan langsung ke /dashboard.
+    // Jika diarahkan langsung ke /dashboard di deployment lama, Supabase akan mendapat
+    // error 404 DEPLOYMENT_NOT_FOUND karena URL origin bisa berbeda dari deployment aktif.
+    // Route /auth/callback bertugas menukar token dan me-redirect ke /dashboard.
+    const callbackUrl = `${window.location.origin}/auth/callback`;
+
     const res = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${window.location.origin}/dashboard?flow=${flow}`,
+        redirectTo: callbackUrl,
+        queryParams: {
+          // Simpan flow (login/register) sebagai parameter tambahan jika diperlukan
+          // untuk analitik atau logika onboarding di callback.
+          prompt: "select_account",
+        },
       },
     });
     if (res.error) {

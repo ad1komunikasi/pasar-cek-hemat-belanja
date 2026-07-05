@@ -20,6 +20,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as MarketsIndexRouteImport } from './routes/markets.index'
 import { Route as MarketsIdRouteImport } from './routes/markets.$id'
 import { Route as FeaturesSlugRouteImport } from './routes/features.$slug'
+import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
 import { Route as AuthenticatedWishlistRouteImport } from './routes/_authenticated/wishlist'
 import { Route as AuthenticatedSmartBasketRouteImport } from './routes/_authenticated/smart-basket'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
@@ -99,6 +100,11 @@ const FeaturesSlugRoute = FeaturesSlugRouteImport.update({
   id: '/$slug',
   path: '/$slug',
   getParentRoute: () => FeaturesRoute,
+} as any)
+const AuthCallbackRoute = AuthCallbackRouteImport.update({
+  id: '/callback',
+  path: '/callback',
+  getParentRoute: () => AuthRoute,
 } as any)
 const AuthenticatedWishlistRoute = AuthenticatedWishlistRouteImport.update({
   id: '/wishlist',
@@ -239,7 +245,7 @@ const AuthenticatedAdminAuthMonitorRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/auth': typeof AuthRoute
+  '/auth': typeof AuthRouteWithChildren
   '/features': typeof FeaturesRouteWithChildren
   '/markets': typeof MarketsRouteWithChildren
   '/pricing': typeof PricingRoute
@@ -258,6 +264,7 @@ export interface FileRoutesByFullPath {
   '/settings': typeof AuthenticatedSettingsRoute
   '/smart-basket': typeof AuthenticatedSmartBasketRoute
   '/wishlist': typeof AuthenticatedWishlistRoute
+  '/auth/callback': typeof AuthCallbackRoute
   '/features/$slug': typeof FeaturesSlugRoute
   '/markets/$id': typeof MarketsIdRoute
   '/markets/': typeof MarketsIndexRoute
@@ -276,7 +283,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/auth': typeof AuthRoute
+  '/auth': typeof AuthRouteWithChildren
   '/features': typeof FeaturesRouteWithChildren
   '/pricing': typeof PricingRoute
   '/reset-password': typeof ResetPasswordRoute
@@ -292,6 +299,7 @@ export interface FileRoutesByTo {
   '/settings': typeof AuthenticatedSettingsRoute
   '/smart-basket': typeof AuthenticatedSmartBasketRoute
   '/wishlist': typeof AuthenticatedWishlistRoute
+  '/auth/callback': typeof AuthCallbackRoute
   '/features/$slug': typeof FeaturesSlugRoute
   '/markets/$id': typeof MarketsIdRoute
   '/markets': typeof MarketsIndexRoute
@@ -312,7 +320,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
-  '/auth': typeof AuthRoute
+  '/auth': typeof AuthRouteWithChildren
   '/features': typeof FeaturesRouteWithChildren
   '/markets': typeof MarketsRouteWithChildren
   '/pricing': typeof PricingRoute
@@ -331,6 +339,7 @@ export interface FileRoutesById {
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/smart-basket': typeof AuthenticatedSmartBasketRoute
   '/_authenticated/wishlist': typeof AuthenticatedWishlistRoute
+  '/auth/callback': typeof AuthCallbackRoute
   '/features/$slug': typeof FeaturesSlugRoute
   '/markets/$id': typeof MarketsIdRoute
   '/markets/': typeof MarketsIndexRoute
@@ -370,6 +379,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/smart-basket'
     | '/wishlist'
+    | '/auth/callback'
     | '/features/$slug'
     | '/markets/$id'
     | '/markets/'
@@ -404,6 +414,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/smart-basket'
     | '/wishlist'
+    | '/auth/callback'
     | '/features/$slug'
     | '/markets/$id'
     | '/markets'
@@ -442,6 +453,7 @@ export interface FileRouteTypes {
     | '/_authenticated/settings'
     | '/_authenticated/smart-basket'
     | '/_authenticated/wishlist'
+    | '/auth/callback'
     | '/features/$slug'
     | '/markets/$id'
     | '/markets/'
@@ -462,7 +474,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
-  AuthRoute: typeof AuthRoute
+  AuthRoute: typeof AuthRouteWithChildren
   FeaturesRoute: typeof FeaturesRouteWithChildren
   MarketsRoute: typeof MarketsRouteWithChildren
   PricingRoute: typeof PricingRoute
@@ -548,6 +560,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/features/$slug'
       preLoaderRoute: typeof FeaturesSlugRouteImport
       parentRoute: typeof FeaturesRoute
+    }
+    '/auth/callback': {
+      id: '/auth/callback'
+      path: '/callback'
+      fullPath: '/auth/callback'
+      preLoaderRoute: typeof AuthCallbackRouteImport
+      parentRoute: typeof AuthRoute
     }
     '/_authenticated/wishlist': {
       id: '/_authenticated/wishlist'
@@ -804,6 +823,16 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
 const AuthenticatedRouteRouteWithChildren =
   AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
 
+interface AuthRouteChildren {
+  AuthCallbackRoute: typeof AuthCallbackRoute
+}
+
+const AuthRouteChildren: AuthRouteChildren = {
+  AuthCallbackRoute: AuthCallbackRoute,
+}
+
+const AuthRouteWithChildren = AuthRoute._addFileChildren(AuthRouteChildren)
+
 interface FeaturesRouteChildren {
   FeaturesSlugRoute: typeof FeaturesSlugRoute
 }
@@ -832,7 +861,7 @@ const MarketsRouteWithChildren =
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
-  AuthRoute: AuthRoute,
+  AuthRoute: AuthRouteWithChildren,
   FeaturesRoute: FeaturesRouteWithChildren,
   MarketsRoute: MarketsRouteWithChildren,
   PricingRoute: PricingRoute,
