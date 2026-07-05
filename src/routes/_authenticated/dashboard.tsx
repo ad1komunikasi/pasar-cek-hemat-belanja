@@ -120,6 +120,7 @@ function DashboardPage() {
 
   // AI Prediction State
   const [selectedAiProduct, setSelectedAiProduct] = useState("beras");
+  const [activeTab, setActiveTab] = useState("savings");
 
   // Alert State
   const [alerts, setAlerts] = useState<PriceAlert[]>([]);
@@ -499,7 +500,11 @@ function DashboardPage() {
                     <td className="p-3.5 text-right">
                       <Button
                         variant="link"
-                        onClick={() => setSelectedAiProduct(key)}
+                        onClick={() => {
+                          setSelectedAiProduct(key);
+                          setActiveTab("prediction");
+                          document.getElementById("main-features-tabs")?.scrollIntoView({ behavior: "smooth" });
+                        }}
                         className="text-xs font-semibold text-[var(--color-brand-blue)] hover:text-[var(--color-brand-green)] p-0 h-auto"
                       >
                         Lihat Proyeksi →
@@ -531,8 +536,8 @@ function DashboardPage() {
       {/* Main Premium Features Split View */}
       <div className="grid gap-6 lg:grid-cols-3 mb-8">
         <div className="lg:col-span-2 space-y-6">
-          <div className="rounded-lg border border-[var(--color-gray-100)] bg-white overflow-hidden shadow-sm">
-            <Tabs defaultValue="savings" className="w-full">
+          <div id="main-features-tabs" className="rounded-lg border border-[var(--color-gray-100)] bg-white overflow-hidden shadow-sm">
+            <Tabs value={activeTab} onValueChange={(val: any) => setActiveTab(val)} className="w-full">
               <div className="border-b border-[var(--color-gray-100)] px-6 py-4 bg-[var(--color-gray-50)]/50">
                 <TabsList className="bg-transparent border-0 gap-2 p-0 h-auto flex flex-wrap">
                   <TabsTrigger
