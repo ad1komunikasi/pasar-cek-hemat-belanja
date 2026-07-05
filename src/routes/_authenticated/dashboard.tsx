@@ -258,9 +258,10 @@ function DashboardPage() {
             .eq("user_id", user.id),
           supabase
             .from("smart_baskets")
-            .select("id", { count: "exact", head: true })
+            .select("id")
             .eq("user_id", user.id)
-            .eq("name", "Keranjang Saya"),
+            .eq("name", "Keranjang Saya")
+            .maybeSingle(),
           supabase
             .from("smart_baskets")
             .select("id")
@@ -268,6 +269,15 @@ function DashboardPage() {
             .eq("name", "Daftar Belanja Pintar")
             .maybeSingle(),
         ]);
+
+      let basketItemsCount = 0;
+      if (baskets.data) {
+        const { count } = await supabase
+          .from("basket_items")
+          .select("id", { count: "exact", head: true })
+          .eq("basket_id", baskets.data.id);
+        basketItemsCount = count ?? 0;
+      }
 
       let wishlistCount = 0;
       if (wishlistBasket.data) {
@@ -282,7 +292,7 @@ function DashboardPage() {
         priceUpdates: pricesRes.count ?? 0,
         markets: marketsRes.count ?? 0,
         unread: unread.count ?? 0,
-        baskets: baskets.count ?? 0,
+        baskets: basketItemsCount,
         wishlist: wishlistCount,
       };
     },
