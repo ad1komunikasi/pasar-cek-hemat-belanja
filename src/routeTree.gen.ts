@@ -14,10 +14,10 @@ import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as PricingRouteImport } from './routes/pricing'
 import { Route as MarketsRouteImport } from './routes/markets'
 import { Route as FeaturesRouteImport } from './routes/features'
-import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as MarketsIndexRouteImport } from './routes/markets.index'
+import { Route as AuthIndexRouteImport } from './routes/auth.index'
 import { Route as MarketsIdRouteImport } from './routes/markets.$id'
 import { Route as FeaturesSlugRouteImport } from './routes/features.$slug'
 import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
@@ -72,11 +72,6 @@ const FeaturesRoute = FeaturesRouteImport.update({
   path: '/features',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthRoute = AuthRouteImport.update({
-  id: '/auth',
-  path: '/auth',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
   id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
@@ -91,6 +86,11 @@ const MarketsIndexRoute = MarketsIndexRouteImport.update({
   path: '/',
   getParentRoute: () => MarketsRoute,
 } as any)
+const AuthIndexRoute = AuthIndexRouteImport.update({
+  id: '/auth/',
+  path: '/auth/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const MarketsIdRoute = MarketsIdRouteImport.update({
   id: '/$id',
   path: '/$id',
@@ -102,9 +102,9 @@ const FeaturesSlugRoute = FeaturesSlugRouteImport.update({
   getParentRoute: () => FeaturesRoute,
 } as any)
 const AuthCallbackRoute = AuthCallbackRouteImport.update({
-  id: '/callback',
-  path: '/callback',
-  getParentRoute: () => AuthRoute,
+  id: '/auth/callback',
+  path: '/auth/callback',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedWishlistRoute = AuthenticatedWishlistRouteImport.update({
   id: '/wishlist',
@@ -245,7 +245,6 @@ const AuthenticatedAdminAuthMonitorRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/auth': typeof AuthRouteWithChildren
   '/features': typeof FeaturesRouteWithChildren
   '/markets': typeof MarketsRouteWithChildren
   '/pricing': typeof PricingRoute
@@ -267,6 +266,7 @@ export interface FileRoutesByFullPath {
   '/auth/callback': typeof AuthCallbackRoute
   '/features/$slug': typeof FeaturesSlugRoute
   '/markets/$id': typeof MarketsIdRoute
+  '/auth/': typeof AuthIndexRoute
   '/markets/': typeof MarketsIndexRoute
   '/admin/auth-monitor': typeof AuthenticatedAdminAuthMonitorRoute
   '/admin/markets': typeof AuthenticatedAdminMarketsRoute
@@ -283,7 +283,6 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/auth': typeof AuthRouteWithChildren
   '/features': typeof FeaturesRouteWithChildren
   '/pricing': typeof PricingRoute
   '/reset-password': typeof ResetPasswordRoute
@@ -302,6 +301,7 @@ export interface FileRoutesByTo {
   '/auth/callback': typeof AuthCallbackRoute
   '/features/$slug': typeof FeaturesSlugRoute
   '/markets/$id': typeof MarketsIdRoute
+  '/auth': typeof AuthIndexRoute
   '/markets': typeof MarketsIndexRoute
   '/admin/auth-monitor': typeof AuthenticatedAdminAuthMonitorRoute
   '/admin/markets': typeof AuthenticatedAdminMarketsRoute
@@ -320,7 +320,6 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
-  '/auth': typeof AuthRouteWithChildren
   '/features': typeof FeaturesRouteWithChildren
   '/markets': typeof MarketsRouteWithChildren
   '/pricing': typeof PricingRoute
@@ -342,6 +341,7 @@ export interface FileRoutesById {
   '/auth/callback': typeof AuthCallbackRoute
   '/features/$slug': typeof FeaturesSlugRoute
   '/markets/$id': typeof MarketsIdRoute
+  '/auth/': typeof AuthIndexRoute
   '/markets/': typeof MarketsIndexRoute
   '/_authenticated/admin/auth-monitor': typeof AuthenticatedAdminAuthMonitorRoute
   '/_authenticated/admin/markets': typeof AuthenticatedAdminMarketsRoute
@@ -360,7 +360,6 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/auth'
     | '/features'
     | '/markets'
     | '/pricing'
@@ -382,6 +381,7 @@ export interface FileRouteTypes {
     | '/auth/callback'
     | '/features/$slug'
     | '/markets/$id'
+    | '/auth/'
     | '/markets/'
     | '/admin/auth-monitor'
     | '/admin/markets'
@@ -398,7 +398,6 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/auth'
     | '/features'
     | '/pricing'
     | '/reset-password'
@@ -417,6 +416,7 @@ export interface FileRouteTypes {
     | '/auth/callback'
     | '/features/$slug'
     | '/markets/$id'
+    | '/auth'
     | '/markets'
     | '/admin/auth-monitor'
     | '/admin/markets'
@@ -434,7 +434,6 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/_authenticated'
-    | '/auth'
     | '/features'
     | '/markets'
     | '/pricing'
@@ -456,6 +455,7 @@ export interface FileRouteTypes {
     | '/auth/callback'
     | '/features/$slug'
     | '/markets/$id'
+    | '/auth/'
     | '/markets/'
     | '/_authenticated/admin/auth-monitor'
     | '/_authenticated/admin/markets'
@@ -474,12 +474,13 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
-  AuthRoute: typeof AuthRouteWithChildren
   FeaturesRoute: typeof FeaturesRouteWithChildren
   MarketsRoute: typeof MarketsRouteWithChildren
   PricingRoute: typeof PricingRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   TrustRoute: typeof TrustRoute
+  AuthCallbackRoute: typeof AuthCallbackRoute
+  AuthIndexRoute: typeof AuthIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -519,13 +520,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FeaturesRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/auth': {
-      id: '/auth'
-      path: '/auth'
-      fullPath: '/auth'
-      preLoaderRoute: typeof AuthRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/_authenticated': {
       id: '/_authenticated'
       path: ''
@@ -547,6 +541,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MarketsIndexRouteImport
       parentRoute: typeof MarketsRoute
     }
+    '/auth/': {
+      id: '/auth/'
+      path: '/auth'
+      fullPath: '/auth/'
+      preLoaderRoute: typeof AuthIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/markets/$id': {
       id: '/markets/$id'
       path: '/$id'
@@ -563,10 +564,10 @@ declare module '@tanstack/react-router' {
     }
     '/auth/callback': {
       id: '/auth/callback'
-      path: '/callback'
+      path: '/auth/callback'
       fullPath: '/auth/callback'
       preLoaderRoute: typeof AuthCallbackRouteImport
-      parentRoute: typeof AuthRoute
+      parentRoute: typeof rootRouteImport
     }
     '/_authenticated/wishlist': {
       id: '/_authenticated/wishlist'
@@ -823,16 +824,6 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
 const AuthenticatedRouteRouteWithChildren =
   AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
 
-interface AuthRouteChildren {
-  AuthCallbackRoute: typeof AuthCallbackRoute
-}
-
-const AuthRouteChildren: AuthRouteChildren = {
-  AuthCallbackRoute: AuthCallbackRoute,
-}
-
-const AuthRouteWithChildren = AuthRoute._addFileChildren(AuthRouteChildren)
-
 interface FeaturesRouteChildren {
   FeaturesSlugRoute: typeof FeaturesSlugRoute
 }
@@ -861,12 +852,13 @@ const MarketsRouteWithChildren =
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
-  AuthRoute: AuthRouteWithChildren,
   FeaturesRoute: FeaturesRouteWithChildren,
   MarketsRoute: MarketsRouteWithChildren,
   PricingRoute: PricingRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   TrustRoute: TrustRoute,
+  AuthCallbackRoute: AuthCallbackRoute,
+  AuthIndexRoute: AuthIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
