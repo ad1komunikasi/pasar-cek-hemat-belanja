@@ -41,10 +41,7 @@ export function CelenganAyamIcon({ className = "w-12 h-12", ...props }: Celengan
         fill="url(#clayGrad)"
       />
       {/* Neck and Head */}
-      <path
-        d="M32 18C32 12 36 8 42 8C46 8 49 11 48 16C47 22 42 24 36 24"
-        fill="url(#clayGrad)"
-      />
+      <path d="M32 18C32 12 36 8 42 8C46 8 49 11 48 16C47 22 42 24 36 24" fill="url(#clayGrad)" />
       {/* Comb */}
       <path
         d="M40 8C39 5 41 2 43 2C45 2 46 4 46 6C48 4 50 5 50 7C50 9 48 10 46 10C46 12 44 13 42 13C41 13 40 10 40 8Z"

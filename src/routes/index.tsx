@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useSettings } from "@/hooks/use-settings-context";
 import {
   ShoppingBasket,
   MapPin,
@@ -26,6 +27,8 @@ import {
   Search,
   Map as MapIcon,
   Package,
+  Sun,
+  Moon,
 } from "lucide-react";
 import { CelenganAyamIcon } from "@/components/celengan-ayam-icon";
 import heroImg from "@/assets/hero-illustration.png";
@@ -178,15 +181,18 @@ function SectionTitle({
 function Navbar() {
   const { user } = useAuth();
   const [open, setOpen] = useState(false);
+  const { theme, setTheme, lang, setLang, t } = useSettings();
+
   const links = [
-    { href: "#beranda", label: "Beranda" },
-    { href: "#fitur", label: "Fitur" },
-    { href: "#cara-kerja", label: "Cara Kerja" },
-    { href: "#harga", label: "Harga" },
-    { href: "#faq", label: "FAQ" },
+    { href: "#beranda", label: t("nav.home") },
+    { href: "#fitur", label: t("nav.features") },
+    { href: "#cara-kerja", label: t("nav.howItWorks") },
+    { href: "#harga", label: t("nav.pricing") },
+    { href: "#faq", label: t("nav.faq") },
   ];
+
   return (
-    <header className="sticky top-0 z-50 bg-white/85 backdrop-blur-lg border-b border-border/60">
+    <header className="sticky top-0 z-50 bg-card/85 backdrop-blur-lg border-b border-border/60 text-foreground transition-colors duration-200">
       <nav className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
         <Logo />
         <ul className="hidden md:flex items-center gap-8">
@@ -202,31 +208,81 @@ function Navbar() {
           ))}
         </ul>
 
-        {/* Desktop Auth Actions */}
-        <div className="hidden md:flex items-center gap-3">
+        {/* Desktop Auth Actions & Toggles */}
+        <div className="hidden md:flex items-center gap-4">
+          {/* Theme Toggler */}
+          <button
+            onClick={() => setTheme(theme === "light" ? "dark" : "light")}
+            className="p-2 rounded-xl text-muted-foreground hover:text-primary hover:bg-muted/50 transition-colors cursor-pointer"
+            aria-label="Toggle theme"
+            title={t("common.theme")}
+          >
+            {theme === "light" ? (
+              <Moon className="h-5 w-5 text-zinc-700 dark:text-zinc-300" />
+            ) : (
+              <Sun className="h-5 w-5 text-yellow-500" />
+            )}
+          </button>
+
+          {/* Language Selector */}
+          <button
+            onClick={() => setLang(lang === "id" ? "en" : "id")}
+            className="flex items-center justify-center font-bold text-xs border border-border rounded-xl px-3 py-2 text-muted-foreground hover:text-primary hover:bg-muted/50 transition-all cursor-pointer"
+            aria-label="Toggle language"
+            title={t("common.language")}
+          >
+            {lang === "id" ? "EN" : "ID"}
+          </button>
+
+          <span className="h-5 w-px bg-border/60 mx-1" />
+
           {user ? (
-            <CTAButton href="/dashboard">Buka Aplikasi</CTAButton>
+            <CTAButton href="/dashboard">{t("nav.backToApp")}</CTAButton>
           ) : (
             <>
               <a
                 href="/auth?tab=login"
                 className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
               >
-                Masuk
+                {t("nav.login")}
               </a>
-              <CTAButton href="/dashboard">Buka Aplikasi</CTAButton>
+              <CTAButton href="/dashboard">{t("nav.backToApp")}</CTAButton>
             </>
           )}
         </div>
 
-        {/* Mobile Header Buttons */}
+        {/* Mobile Header Buttons & Toggles */}
         <div className="flex items-center gap-2 md:hidden">
+          {/* Quick theme control on mobile */}
+          <button
+            onClick={() => setTheme(theme === "light" ? "dark" : "light")}
+            className="p-1.5 rounded-lg text-muted-foreground hover:bg-muted transition-colors cursor-pointer"
+            aria-label="Toggle theme"
+          >
+            {theme === "light" ? (
+              <Moon className="h-4.5 w-4.5 text-zinc-700 dark:text-zinc-300" />
+            ) : (
+              <Sun className="h-4.5 w-4.5 text-yellow-500" />
+            )}
+          </button>
+
+          {/* Quick language control on mobile */}
+          <button
+            onClick={() => setLang(lang === "id" ? "en" : "id")}
+            className="px-2 py-1 text-xs font-bold border border-border rounded-lg text-muted-foreground hover:bg-muted transition-colors cursor-pointer"
+            aria-label="Toggle language"
+          >
+            {lang === "id" ? "EN" : "ID"}
+          </button>
+
+          <span className="h-4 w-px bg-border/60 mx-0.5" />
+
           {user ? (
             <a
               href="/dashboard"
               className="text-xs font-semibold text-white bg-gradient-primary px-3 py-2 rounded-xl shadow-soft hover:shadow-elevated transition-all"
             >
-              Dashboard
+              {t("nav.dashboard")}
             </a>
           ) : (
             <>
@@ -234,20 +290,14 @@ function Navbar() {
                 href="/auth?tab=login"
                 className="text-xs font-semibold text-muted-foreground hover:text-primary px-3 py-2 rounded-xl border border-border hover:bg-muted/50 transition-all"
               >
-                Masuk
-              </a>
-              <a
-                href="/dashboard"
-                className="text-xs font-semibold text-white bg-gradient-primary px-3 py-2 rounded-xl shadow-soft hover:shadow-elevated transition-all"
-              >
-                Buka Aplikasi
+                {t("nav.login")}
               </a>
             </>
           )}
           <button
             onClick={() => setOpen(!open)}
             aria-label="Menu"
-            className="p-2 rounded-lg hover:bg-muted"
+            className="p-2 rounded-lg hover:bg-muted text-foreground"
           >
             {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
@@ -256,7 +306,7 @@ function Navbar() {
 
       {/* Mobile Menu Dropdown */}
       {open && (
-        <div className="md:hidden border-t border-border bg-white px-4 py-6 space-y-6">
+        <div className="md:hidden border-t border-border bg-card px-4 py-6 space-y-6">
           <div className="space-y-1">
             {links.map((l) => (
               <a
@@ -272,7 +322,7 @@ function Navbar() {
           <div className="pt-6 border-t border-border flex flex-col gap-3">
             {user ? (
               <CTAButton href="/dashboard" className="w-full" onClick={() => setOpen(false)}>
-                Buka Dashboard
+                {t("nav.dashboard")}
               </CTAButton>
             ) : (
               <>
@@ -281,10 +331,10 @@ function Navbar() {
                   onClick={() => setOpen(false)}
                   className="flex w-full items-center justify-center rounded-2xl border border-border px-6 py-3 text-sm font-semibold text-foreground hover:bg-muted/50 transition-all duration-200"
                 >
-                  Masuk
+                  {t("nav.login")}
                 </a>
                 <CTAButton href="/dashboard" className="w-full" onClick={() => setOpen(false)}>
-                  Buka Aplikasi
+                  {t("nav.backToApp")}
                 </CTAButton>
               </>
             )}
@@ -297,32 +347,51 @@ function Navbar() {
 
 /* ---------------- Hero ---------------- */
 
+/* ---------------- Hero ---------------- */
+
 function Hero() {
   const { user } = useAuth();
+  const { t, lang } = useSettings();
+  const listItems =
+    lang === "id"
+      ? ["Data Harga Harian", "Pasar Terdekat", "Gratis Digunakan"]
+      : ["Daily Price Data", "Nearest Markets", "Free to Use"];
+
   return (
     <section id="beranda" className="relative overflow-hidden bg-gradient-hero">
       <div className="absolute -top-24 -right-24 h-96 w-96 rounded-full bg-accent/15 blur-3xl" />
       <div className="absolute -bottom-32 -left-20 h-96 w-96 rounded-full bg-primary/10 blur-3xl" />
       <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-16 md:py-24 grid lg:grid-cols-2 gap-12 items-center">
         <div className="animate-fade-up">
-          <div className="inline-flex items-center gap-2 rounded-full bg-white/80 backdrop-blur px-4 py-1.5 text-xs font-semibold text-primary border border-border mb-6">
-            🇮🇩 Untuk Keluarga Indonesia
+          <div className="inline-flex items-center gap-2 rounded-full bg-card/80 backdrop-blur px-4 py-1.5 text-xs font-semibold text-primary border border-border mb-6">
+            🇮🇩 {lang === "id" ? "Untuk Keluarga Indonesia" : "For Indonesian Families"}
           </div>
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-foreground leading-[1.1]">
-            Cari Harga Sembako <span className="text-accent">Termurah</span> Tanpa Keliling Pasar
+            {lang === "id" ? (
+              <>
+                Cari Harga Sembako <span className="text-accent">Termurah</span> Tanpa Keliling
+                Pasar
+              </>
+            ) : (
+              <>
+                Find the <span className="text-accent">Cheapest</span> Grocery Prices Without
+                Wandering
+              </>
+            )}
           </h1>
           <p className="mt-6 text-base md:text-lg text-muted-foreground max-w-xl">
-            PasarCek membantu Anda membandingkan harga sembako antar pasar terdekat secara real-time
-            sehingga pengeluaran rumah tangga lebih hemat.
+            {t("landing.hero.subtitle")}
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
-            <CTAButton href={user ? "/dashboard" : "/auth?tab=register"}>Coba Gratis</CTAButton>
+            <CTAButton href={user ? "/dashboard" : "/auth?tab=register"}>
+              {t("landing.hero.cta")}
+            </CTAButton>
             <CTAButton href="#cara-kerja" variant="secondary">
-              Lihat Cara Kerja
+              {t("landing.hero.watch")}
             </CTAButton>
           </div>
           <ul className="mt-8 flex flex-wrap gap-x-6 gap-y-3">
-            {["Data Harga Harian", "Pasar Terdekat", "Gratis Digunakan"].map((t) => (
+            {listItems.map((t) => (
               <li key={t} className="flex items-center gap-2 text-sm text-foreground/80">
                 <span className="grid h-5 w-5 place-items-center rounded-full bg-success/15 text-success">
                   <Check className="h-3 w-3" strokeWidth={3} />
@@ -350,19 +419,32 @@ function Hero() {
 /* ---------------- Stats ---------------- */
 
 function Stats() {
+  const { lang } = useSettings();
   const stats = [
-    { icon: Users, value: "100.000+", label: "Pengguna Terdaftar" },
-    { icon: Store, value: "500+", label: "Pasar Terpantau" },
-    { icon: Database, value: "50.000+", label: "Update Harga Harian" },
-    { icon: CelenganAyamIcon, value: "Rp2 M+", label: "Potensi Penghematan" },
+    {
+      icon: Users,
+      value: "100.000+",
+      label: lang === "id" ? "Pengguna Terdaftar" : "Registered Users",
+    },
+    { icon: Store, value: "500+", label: lang === "id" ? "Pasar Terpantau" : "Monitored Markets" },
+    {
+      icon: Database,
+      value: "50.000+",
+      label: lang === "id" ? "Update Harga Harian" : "Daily Price Updates",
+    },
+    {
+      icon: CelenganAyamIcon,
+      value: "Rp2 M+",
+      label: lang === "id" ? "Potensi Penghematan" : "Potential Savings",
+    },
   ];
   return (
-    <section className="bg-white py-14">
+    <section className="bg-card py-14 border-y border-border/40 transition-colors duration-200">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 grid grid-cols-2 lg:grid-cols-4 gap-4">
         {stats.map((s) => (
           <div
             key={s.label}
-            className="rounded-2xl bg-secondary/60 border border-border p-6 text-center hover:shadow-card transition-shadow"
+            className="rounded-2xl bg-secondary/30 border border-border p-6 text-center hover:shadow-card transition-all"
           >
             <div className="mx-auto grid h-12 w-12 place-items-center rounded-xl bg-gradient-primary text-primary-foreground mb-3">
               <s.icon className="h-6 w-6" />
@@ -381,35 +463,49 @@ function Stats() {
 /* ---------------- Problems ---------------- */
 
 function Problems() {
+  const { t, lang } = useSettings();
   const problems = [
     {
       icon: TrendingDown,
-      title: "Harga berubah setiap hari",
-      desc: "Tidak ada acuan harga yang jelas dari satu hari ke hari berikutnya.",
+      title: lang === "id" ? "Harga berubah setiap hari" : "Prices change daily",
+      desc:
+        lang === "id"
+          ? "Tidak ada acuan harga yang jelas dari satu hari ke hari berikutnya."
+          : "No clear price references from one day to the next.",
     },
     {
       icon: Search,
-      title: "Harus survei pasar satu per satu",
-      desc: "Buang waktu dan tenaga keliling pasar hanya untuk cek harga.",
+      title: lang === "id" ? "Harus survei pasar satu per satu" : "Survey markets one by one",
+      desc:
+        lang === "id"
+          ? "Buang waktu dan tenaga keliling pasar hanya untuk cek harga."
+          : "Wastes time and energy visiting markets manually just to compare.",
     },
     {
       icon: Frown,
-      title: "Tidak tahu pasar termurah",
-      desc: "Akhirnya belanja di tempat yang sama meski belum tentu paling murah.",
+      title: lang === "id" ? "Tidak tahu pasar termurah" : "Unaware of cheapest market",
+      desc:
+        lang === "id"
+          ? "Akhirnya belanja di tempat yang sama meski belum tentu paling murah."
+          : "Ending up shopping at the same place, even if it's not the cheapest.",
     },
     {
       icon: Wallet,
-      title: "Pengeluaran membengkak",
-      desc: "Tanpa data harga, anggaran rumah tangga sulit dikontrol.",
+      title: lang === "id" ? "Pengeluaran membengkak" : "Budget bloat",
+      desc:
+        lang === "id"
+          ? "Tanpa data harga, anggaran rumah tangga sulit dikontrol."
+          : "Without pricing trends, household budgets are hard to control.",
     },
   ];
+
   return (
     <section className="py-20">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <SectionTitle
-          eyebrow="Masalah Sehari-hari"
-          title="Masih Mengalami Masalah Ini Saat Belanja?"
-          subtitle="Sebagian besar keluarga Indonesia membuang uang lebih banyak karena kurangnya informasi harga."
+          eyebrow={lang === "id" ? "Masalah Sehari-hari" : "Daily Problems"}
+          title={t("landing.problem.title")}
+          subtitle={t("landing.problem.subtitle")}
         />
         <div className="grid lg:grid-cols-2 gap-10 items-center">
           <img
@@ -424,7 +520,7 @@ function Problems() {
             {problems.map((p) => (
               <div
                 key={p.title}
-                className="rounded-2xl bg-white border border-border p-6 hover:shadow-card hover:-translate-y-1 transition-all"
+                className="rounded-2xl bg-card border border-border p-6 hover:shadow-card hover:-translate-y-1 transition-all"
               >
                 <div className="grid h-10 w-10 place-items-center rounded-xl bg-destructive/10 text-destructive mb-3">
                   <p.icon className="h-5 w-5" />

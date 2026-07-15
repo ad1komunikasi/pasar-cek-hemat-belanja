@@ -52,21 +52,78 @@ console.log("⏳ Bundling server dengan esbuild...");
 
 // Node.js built-ins yang tidak perlu di-bundle
 const nodeBuiltins = [
-  "node:async_hooks", "node:buffer", "node:child_process", "node:cluster",
-  "node:console", "node:crypto", "node:diagnostics_channel", "node:dns",
-  "node:events", "node:fs", "node:fs/promises", "node:http", "node:http2",
-  "node:https", "node:inspector", "node:module", "node:net", "node:os",
-  "node:path", "node:perf_hooks", "node:process", "node:querystring",
-  "node:readline", "node:stream", "node:stream/promises", "node:stream/web",
-  "node:string_decoder", "node:timers", "node:timers/promises", "node:tls",
-  "node:trace_events", "node:url", "node:util", "node:v8", "node:vm",
-  "node:wasi", "node:worker_threads", "node:zlib",
+  "node:async_hooks",
+  "node:buffer",
+  "node:child_process",
+  "node:cluster",
+  "node:console",
+  "node:crypto",
+  "node:diagnostics_channel",
+  "node:dns",
+  "node:events",
+  "node:fs",
+  "node:fs/promises",
+  "node:http",
+  "node:http2",
+  "node:https",
+  "node:inspector",
+  "node:module",
+  "node:net",
+  "node:os",
+  "node:path",
+  "node:perf_hooks",
+  "node:process",
+  "node:querystring",
+  "node:readline",
+  "node:stream",
+  "node:stream/promises",
+  "node:stream/web",
+  "node:string_decoder",
+  "node:timers",
+  "node:timers/promises",
+  "node:tls",
+  "node:trace_events",
+  "node:url",
+  "node:util",
+  "node:v8",
+  "node:vm",
+  "node:wasi",
+  "node:worker_threads",
+  "node:zlib",
   // Tanpa prefix node:
-  "async_hooks", "buffer", "child_process", "cluster", "console", "crypto",
-  "diagnostics_channel", "dns", "events", "fs", "fs/promises", "http",
-  "http2", "https", "inspector", "module", "net", "os", "path", "perf_hooks",
-  "process", "querystring", "readline", "stream", "string_decoder", "timers",
-  "tls", "url", "util", "v8", "vm", "worker_threads", "zlib",
+  "async_hooks",
+  "buffer",
+  "child_process",
+  "cluster",
+  "console",
+  "crypto",
+  "diagnostics_channel",
+  "dns",
+  "events",
+  "fs",
+  "fs/promises",
+  "http",
+  "http2",
+  "https",
+  "inspector",
+  "module",
+  "net",
+  "os",
+  "path",
+  "perf_hooks",
+  "process",
+  "querystring",
+  "readline",
+  "stream",
+  "string_decoder",
+  "timers",
+  "tls",
+  "url",
+  "util",
+  "v8",
+  "vm",
+  "worker_threads",
+  "zlib",
 ];
 
 let bundleSuccess = false;
@@ -184,8 +241,8 @@ writeFileSync(
       experimentalResponseStreaming: true,
     },
     null,
-    2
-  )
+    2,
+  ),
 );
 console.log("✓ Created .vc-config.json");
 
@@ -206,8 +263,8 @@ writeFileSync(
       ],
     },
     null,
-    2
-  )
+    2,
+  ),
 );
 console.log("✓ Created config.json");
 
@@ -219,16 +276,18 @@ const indexSize = indexExists ? statSync(indexMjsPath).size : 0;
 
 // Hitung total chunks yang dihasilkan esbuild
 const { readdirSync } = await import("fs");
-const allChunks = readdirSync(serverFunc).filter(
-  (f) => f.endsWith(".mjs") || f.endsWith(".js")
-);
+const allChunks = readdirSync(serverFunc).filter((f) => f.endsWith(".mjs") || f.endsWith(".js"));
 
 console.log("\n✅ Vercel Build Output API siap:");
 console.log(`   static/          → ${existsSync(vercelStatic) ? "OK" : "MISSING"}`);
-console.log(`   index.mjs        → ${indexExists ? `OK (${indexSize} bytes, entry chunk)` : "MISSING"}`);
+console.log(
+  `   index.mjs        → ${indexExists ? `OK (${indexSize} bytes, entry chunk)` : "MISSING"}`,
+);
 console.log(`   server chunks    → ${allChunks.length} files`);
 console.log(`   .vc-config.json  → OK`);
-console.log(`   config.json      → ${existsSync(join(vercelOut, "config.json")) ? "OK" : "MISSING"}`);
+console.log(
+  `   config.json      → ${existsSync(join(vercelOut, "config.json")) ? "OK" : "MISSING"}`,
+);
 
 // index.mjs dengan splitting memang kecil — cukup pastikan ia ada dan berisi export
 if (!indexExists) {
@@ -245,4 +304,3 @@ if (!indexContent.includes("export") || !indexContent.includes("default")) {
 }
 
 console.log("\n🚀 Siap untuk di-deploy ke Vercel!");
-

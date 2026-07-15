@@ -240,17 +240,14 @@ function WishlistPage() {
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data ?? [];
-    }
+    },
   });
 
   const handleDeleteHistory = async (historyId: string) => {
     if (!confirm("Apakah Anda yakin ingin menghapus riwayat penghematan ini?")) return;
 
     try {
-      const { error } = await supabase
-        .from("search_savings_history")
-        .delete()
-        .eq("id", historyId);
+      const { error } = await supabase.from("search_savings_history").delete().eq("id", historyId);
 
       if (error) throw error;
 
@@ -265,7 +262,8 @@ function WishlistPage() {
 
   const handleRestoreHistory = async (historyEntry: any) => {
     if (!wishlistBasket?.id) return;
-    if (!confirm("Membuka riwayat ini akan menggantikan daftar belanja Anda saat ini. Lanjutkan?")) return;
+    if (!confirm("Membuka riwayat ini akan menggantikan daftar belanja Anda saat ini. Lanjutkan?"))
+      return;
 
     try {
       let historicalItems: any[] = [];
@@ -296,12 +294,10 @@ function WishlistPage() {
         basket_id: wishlistBasket.id,
         product_id: item.product_id,
         quantity: item.quantity,
-        unit: item.unit || "unit"
+        unit: item.unit || "unit",
       }));
 
-      const { error: insertError } = await supabase
-        .from("basket_items")
-        .insert(insertRows);
+      const { error: insertError } = await supabase.from("basket_items").insert(insertRows);
 
       if (insertError) throw insertError;
 
@@ -590,8 +586,8 @@ function WishlistPage() {
           product_id: item.product_id,
           quantity: item.quantity,
           name: item.product?.name || "Produk",
-          unit: item.unit || "unit"
-        }))
+          unit: item.unit || "unit",
+        })),
       });
 
       const { error } = await supabase.from("search_savings_history").insert({
@@ -1063,7 +1059,7 @@ function WishlistPage() {
                         day: "numeric",
                         month: "short",
                         hour: "2-digit",
-                        minute: "2-digit"
+                        minute: "2-digit",
                       });
 
                       return (
@@ -1073,10 +1069,17 @@ function WishlistPage() {
                         >
                           <div className="min-w-0 flex-1">
                             <div className="flex justify-between items-baseline gap-1.5">
-                              <span className="font-extrabold text-white">{idr(h.savings_amount)}</span>
-                              <span className="text-[9px] text-white/60 font-medium">{dateLabel}</span>
+                              <span className="font-extrabold text-white">
+                                {idr(h.savings_amount)}
+                              </span>
+                              <span className="text-[9px] text-white/60 font-medium">
+                                {dateLabel}
+                              </span>
                             </div>
-                            <p className="text-[10px] text-white/80 truncate mt-0.5" title={displayQuery}>
+                            <p
+                              className="text-[10px] text-white/80 truncate mt-0.5"
+                              title={displayQuery}
+                            >
                               {displayQuery}
                             </p>
                           </div>

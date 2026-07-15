@@ -1,4 +1,5 @@
 -- 1. Create a BEFORE INSERT trigger function to safely auto-confirm email fields
+-- This ensures that even if "Confirm email" is enabled in Supabase settings, the database auto-confirms new users upon creation.
 CREATE OR REPLACE FUNCTION public.handle_new_user_before()
 RETURNS TRIGGER LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
 BEGIN
@@ -15,7 +16,14 @@ CREATE TRIGGER on_auth_user_created_before
   FOR EACH ROW
   EXECUTE FUNCTION public.handle_new_user_before();
 
--- 3. Update the handle_new_user() AFTER INSERT function to remove the UPDATE statement
+-- 3. Instantly confirm all existing users who have registered but are unconfirmed
+UPDATE auth.users
+SET email_confirmed_at = COALESCE(email_confirmed_at, now()),
+    confirmed_at = COALESCE(confirmed_at, now())
+WHERE email_confirmed_at IS NULL;
+
+-- 4. Update the handle_new_user() AFTER INSERT function to focus ONLY on profile and roles.
+-- It must NOT modify auth.users to avoid RLS/lock conflicts or GoTrue state desync.
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
 BEGIN

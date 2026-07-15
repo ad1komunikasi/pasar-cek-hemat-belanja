@@ -145,7 +145,8 @@ function AdminDashboard() {
             Admin Dashboard
           </h1>
           <p className="mt-2 text-sm text-[var(--color-gray-500)] sm:text-base">
-            Enterprise Console — pantau performa finansial, verifikasi status premium, dan logs aktivitas platform.
+            Enterprise Console — pantau performa finansial, verifikasi status premium, dan logs
+            aktivitas platform.
           </p>
         </div>
       </div>
@@ -191,7 +192,11 @@ function AdminDashboard() {
             <div className="h-64 w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={chartData} margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--color-gray-100)" />
+                  <CartesianGrid
+                    strokeDasharray="3 3"
+                    vertical={false}
+                    stroke="var(--color-gray-100)"
+                  />
                   <XAxis
                     dataKey="date"
                     tickLine={false}
@@ -208,7 +213,12 @@ function AdminDashboard() {
                     formatter={(value) => [idr(Number(value)), "Pendapatan"]}
                     labelStyle={{ fontWeight: "bold", fontSize: 12 }}
                   />
-                  <Bar dataKey="revenue" fill="var(--color-brand-blue)" radius={[4, 4, 0, 0]} maxBarSize={40} />
+                  <Bar
+                    dataKey="revenue"
+                    fill="var(--color-brand-blue)"
+                    radius={[4, 4, 0, 0]}
+                    maxBarSize={40}
+                  />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -231,15 +241,9 @@ function AdminDashboard() {
               <table className="w-full text-left border-collapse text-xs">
                 <thead>
                   <tr className="border-b border-[var(--color-gray-100)] bg-[var(--color-gray-50)]/50">
-                    <th className="p-3 font-semibold text-[var(--color-gray-500)]">
-                      Tanggal
-                    </th>
-                    <th className="p-3 font-semibold text-[var(--color-gray-500)]">
-                      User
-                    </th>
-                    <th className="p-3 font-semibold text-[var(--color-gray-500)]">
-                      Paket
-                    </th>
+                    <th className="p-3 font-semibold text-[var(--color-gray-500)]">Tanggal</th>
+                    <th className="p-3 font-semibold text-[var(--color-gray-500)]">User</th>
+                    <th className="p-3 font-semibold text-[var(--color-gray-500)]">Paket</th>
                     <th className="p-3 font-semibold text-[var(--color-gray-500)] text-right">
                       Nominal
                     </th>
@@ -298,9 +302,7 @@ function AdminDashboard() {
           {/* Verification Requests Box */}
           <div className="rounded-lg border border-[var(--color-gray-100)] bg-white p-6 shadow-sm">
             <div className="mb-4 flex justify-between items-baseline border-b border-[var(--color-gray-100)] pb-3">
-              <h3 className="text-sm font-bold text-[var(--color-ink)]">
-                Antrean Verifikasi
-              </h3>
+              <h3 className="text-sm font-bold text-[var(--color-ink)]">Antrean Verifikasi</h3>
               {stats?.pending && stats.pending > 0 ? (
                 <span className="inline-flex h-5 items-center justify-center rounded-full bg-red-100 px-2 text-[10px] font-semibold text-red-600 animate-pulse">
                   {stats.pending} Baru
@@ -329,7 +331,9 @@ function AdminDashboard() {
                     </span>
                   </div>
                   <div className="mt-2.5 flex justify-between items-center gap-2 border-t border-[var(--color-gray-100)]/60 pt-2">
-                    <span className="text-[10px] text-[var(--color-gray-500)]">{o.package?.name}</span>
+                    <span className="text-[10px] text-[var(--color-gray-500)]">
+                      {o.package?.name}
+                    </span>
                     <Link
                       to="/admin/orders"
                       className="text-[10px] font-semibold text-[var(--color-brand-blue)] hover:text-[var(--color-brand-green)] transition-colors"
@@ -352,18 +356,22 @@ function AdminDashboard() {
           {/* New User Registrations Box */}
           <div className="rounded-lg border border-[var(--color-gray-100)] bg-white p-6 shadow-sm">
             <div className="mb-4 border-b border-[var(--color-gray-100)] pb-3">
-              <h3 className="text-sm font-bold text-[var(--color-ink)]">
-                User Registrasi Terkini
-              </h3>
+              <h3 className="text-sm font-bold text-[var(--color-ink)]">User Registrasi Terkini</h3>
             </div>
             <div className="divide-y divide-[var(--color-gray-100)]">
               {(recentUsers ?? []).map((u: any) => (
                 <div key={u.id} className="py-2.5 flex justify-between items-center gap-3">
                   <div className="min-w-0">
-                    <p className="text-xs font-semibold text-[var(--color-ink)] truncate">{u.full_name ?? "User Baru"}</p>
-                    <p className="text-[10px] text-[var(--color-gray-500)] truncate mt-0.5">{u.email}</p>
+                    <p className="text-xs font-semibold text-[var(--color-ink)] truncate">
+                      {u.full_name ?? "User Baru"}
+                    </p>
+                    <p className="text-[10px] text-[var(--color-gray-500)] truncate mt-0.5">
+                      {u.email}
+                    </p>
                   </div>
-                  <span className="text-[10px] text-[var(--color-gray-500)] shrink-0">{fmtDate(u.created_at)}</span>
+                  <span className="text-[10px] text-[var(--color-gray-500)] shrink-0">
+                    {fmtDate(u.created_at)}
+                  </span>
                 </div>
               ))}
               {(recentUsers ?? []).length === 0 && (

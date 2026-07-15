@@ -11,6 +11,7 @@ import { useEffect, type ReactNode } from "react";
 import { Toaster } from "sonner";
 import { AuthProvider } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
+import { SettingsProvider } from "@/hooks/use-settings-context";
 
 import appCss from "../styles.css?url";
 
@@ -164,6 +165,20 @@ function RootShell({ children }: { children: ReactNode }) {
     <html lang="id">
       <head>
         <HeadContent />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              try {
+                var theme = localStorage.getItem('pasarcek_theme');
+                if (theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                  document.documentElement.classList.add('dark');
+                } else {
+                  document.documentElement.classList.remove('dark');
+                }
+              } catch (e) {}
+            `,
+          }}
+        />
       </head>
       <body>
         {children}
@@ -188,8 +203,10 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <Outlet />
-        <Toaster richColors position="top-right" />
+        <SettingsProvider>
+          <Outlet />
+          <Toaster richColors position="top-right" />
+        </SettingsProvider>
       </AuthProvider>
     </QueryClientProvider>
   );

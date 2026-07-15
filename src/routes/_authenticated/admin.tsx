@@ -1,6 +1,20 @@
 import { createFileRoute, Outlet, redirect, Link, useRouterState } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
-import { Shield, Users, Package, ShoppingCart, CreditCard, Store, Boxes, BarChart3, Settings, LogIn, Menu, X, ArrowLeft } from "lucide-react";
+import {
+  Shield,
+  Users,
+  Package,
+  ShoppingCart,
+  CreditCard,
+  Store,
+  Boxes,
+  BarChart3,
+  Settings,
+  LogIn,
+  Menu,
+  X,
+  ArrowLeft,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 
@@ -9,7 +23,10 @@ export const Route = createFileRoute("/_authenticated/admin")({
   beforeLoad: async () => {
     const { data } = await supabase.auth.getUser();
     if (!data.user) throw redirect({ to: "/auth" });
-    const { data: roles } = await supabase.from("user_roles").select("role").eq("user_id", data.user.id);
+    const { data: roles } = await supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", data.user.id);
     const isAdmin = (roles ?? []).some((r) => r.role === "admin" || r.role === "super_admin");
     if (!isAdmin) throw redirect({ to: "/dashboard" });
   },
@@ -44,11 +61,7 @@ function AdminLayout() {
               className="rounded-md p-1 hover:bg-white/10 lg:hidden focus:outline-none"
               aria-label="Toggle Menu"
             >
-              {isMobileMenuOpen ? (
-                <X className="h-6 w-6" />
-              ) : (
-                <Menu className="h-6 w-6" />
-              )}
+              {isMobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
             </button>
             <Link to="/admin" className="flex items-center gap-2 font-bold">
               <Shield className="h-5 w-5" /> PasarCek Admin
@@ -70,10 +83,12 @@ function AdminLayout() {
             onClick={() => setIsMobileMenuOpen(false)}
           />
         )}
-        <aside className={cn(
-          "fixed bottom-0 top-[57px] left-0 z-40 w-56 border-r border-[var(--color-gray-100)] bg-white p-3 transition-transform duration-200 ease-in-out lg:sticky lg:h-[calc(100vh-57px)] lg:translate-x-0",
-          isMobileMenuOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
-        )}>
+        <aside
+          className={cn(
+            "fixed bottom-0 top-[57px] left-0 z-40 w-56 border-r border-[var(--color-gray-100)] bg-white p-3 transition-transform duration-200 ease-in-out lg:sticky lg:h-[calc(100vh-57px)] lg:translate-x-0",
+            isMobileMenuOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0",
+          )}
+        >
           <nav className="flex flex-col gap-1">
             {adminNav.map((n) => {
               const active = n.exact ? path === n.to : path.startsWith(n.to);
@@ -84,10 +99,13 @@ function AdminLayout() {
                   onClick={() => setIsMobileMenuOpen(false)}
                   className={cn(
                     "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium",
-                    active ? "bg-[var(--color-ink)] text-white" : "text-[var(--color-gray-700)] hover:bg-[var(--color-gray-50)]"
+                    active
+                      ? "bg-[var(--color-ink)] text-white"
+                      : "text-[var(--color-gray-700)] hover:bg-[var(--color-gray-50)]",
                   )}
                 >
-                  <n.icon className="h-4 w-4" />{n.label}
+                  <n.icon className="h-4 w-4" />
+                  {n.label}
                 </Link>
               );
             })}
