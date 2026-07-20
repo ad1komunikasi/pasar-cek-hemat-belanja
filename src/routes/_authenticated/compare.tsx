@@ -2,9 +2,9 @@ import { createFileRoute } from "@tanstack/react-router";
 import { AppShell, PageHeader, EmptyState } from "@/components/app-shell";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { idr } from "@/lib/format";
-import { getDeterministicBenchmarkPrices } from "@/lib/benchmark";
+import { getDeterministicBenchmarkPrices, mergeWithDefaultMarkets } from "@/lib/benchmark";
 import {
   Select,
   SelectContent,
@@ -51,19 +51,26 @@ function ComparePage() {
       (await supabase.from("products").select("id,name,category,unit").order("name")).data ?? [],
   });
 
-  const { data: cities } = useQuery({
-    queryKey: ["cities"],
-    queryFn: async () => {
-      const { data } = await supabase.from("markets").select("city");
-      const cityList = (data ?? [])
-        .map((r: any) => r.city?.trim())
-        .filter((c: string | undefined): c is string => Boolean(c));
-      return Array.from(new Set(cityList)).sort((a, b) => a.localeCompare(b, "id"));
-    },
+  const { data: dbMarkets } = useQuery({
+    queryKey: ["markets-list"],
+    queryFn: async () =>
+      (await supabase.from("markets").select("id,name,city,address").order("name")).data ?? [],
   });
 
+  // Combine DB markets with standard default markets (including Depok, JakBar, JakUt, Bogor, Bekasi, Tangerang)
+  const allMarkets = useMemo(() => mergeWithDefaultMarkets(dbMarkets as any), [dbMarkets]);
+
+  // Dynamically extract and sort unique cities from all active/available markets
+  const cities = useMemo(() => {
+    const citySet = new Set<string>();
+    allMarkets.forEach((m: any) => {
+      if (m.city?.trim()) citySet.add(m.city.trim());
+    });
+    return Array.from(citySet).sort((a, b) => a.localeCompare(b, "id"));
+  }, [allMarkets]);
+
   const { data: rows } = useQuery({
-    queryKey: ["compare", productId, city],
+    queryKey: ["compare", productId, city, allMarkets],
     enabled: !!productId,
     queryFn: async () => {
       const today = new Date().toLocaleDateString("en-CA");
@@ -81,19 +88,7 @@ function ComparePage() {
         dateToUse = today;
       }
 
-      // Always fetch products and markets first to ensure complete coverage
-      const { data: products } = await supabase
-        .from("products")
-        .select("id,name,category,unit")
-        .order("name");
-      const { data: markets } = await supabase
-        .from("markets")
-        .select("id,name,city,address")
-        .order("name");
-
-      if (!products || !markets) return [];
-
-      const selectedProduct = products.find((p) => p.id === productId);
+      const selectedProduct = (products ?? []).find((p: any) => p.id === productId);
       if (!selectedProduct) return [];
 
       const query = supabase
@@ -114,7 +109,7 @@ function ComparePage() {
 
       const benchmarkPrices = getDeterministicBenchmarkPrices(
         [selectedProduct] as any[],
-        markets as any[],
+        allMarkets as any[],
         dateToUse,
       );
 
