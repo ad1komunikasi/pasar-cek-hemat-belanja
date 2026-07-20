@@ -120,6 +120,8 @@ function AdminMarkets() {
     qc.invalidateQueries({ queryKey: ["admin-markets"] });
     qc.invalidateQueries({ queryKey: ["markets-public"] });
     qc.invalidateQueries({ queryKey: ["markets-list"] });
+    qc.invalidateQueries({ queryKey: ["cities"] });
+    qc.invalidateQueries({ queryKey: ["compare"] });
   }
 
   async function remove(id: string) {
@@ -127,6 +129,8 @@ function AdminMarkets() {
     qc.invalidateQueries({ queryKey: ["admin-markets"] });
     qc.invalidateQueries({ queryKey: ["markets-public"] });
     qc.invalidateQueries({ queryKey: ["markets-list"] });
+    qc.invalidateQueries({ queryKey: ["cities"] });
+    qc.invalidateQueries({ queryKey: ["compare"] });
   }
 
   async function handleAiSearch() {

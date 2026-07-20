@@ -1,8 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { AppShell, PageHeader, EmptyState } from "@/components/app-shell";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { idr } from "@/lib/format";
 import { getDeterministicBenchmarkPrices } from "@/lib/benchmark";
 import {
@@ -20,8 +20,30 @@ export const Route = createFileRoute("/_authenticated/compare")({
 });
 
 function ComparePage() {
+  const qc = useQueryClient();
   const [productId, setProductId] = useState<string>("");
   const [city, setCity] = useState<string>("all");
+
+  // Subscribe to real-time changes on the markets table to auto-update cities and comparison data
+  useEffect(() => {
+    const channel = supabase
+      .channel("realtime-markets-compare")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "markets" },
+        () => {
+          qc.invalidateQueries({ queryKey: ["cities"] });
+          qc.invalidateQueries({ queryKey: ["compare"] });
+          qc.invalidateQueries({ queryKey: ["markets-list"] });
+          qc.invalidateQueries({ queryKey: ["markets-public"] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [qc]);
 
   const { data: products } = useQuery({
     queryKey: ["products-list"],
@@ -33,7 +55,10 @@ function ComparePage() {
     queryKey: ["cities"],
     queryFn: async () => {
       const { data } = await supabase.from("markets").select("city");
-      return Array.from(new Set((data ?? []).map((r: any) => r.city)));
+      const cityList = (data ?? [])
+        .map((r: any) => r.city?.trim())
+        .filter((c: string | undefined): c is string => Boolean(c));
+      return Array.from(new Set(cityList)).sort((a, b) => a.localeCompare(b, "id"));
     },
   });
 
