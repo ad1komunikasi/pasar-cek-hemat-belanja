@@ -9,6 +9,7 @@ import {
 } from "@tanstack/react-router";
 import { useEffect, type ReactNode } from "react";
 import { Toaster } from "sonner";
+import { Analytics } from "@vercel/analytics/react";
 import { AuthProvider } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { SettingsProvider } from "@/hooks/use-settings-context";
@@ -207,6 +208,7 @@ function RootComponent() {
         <SettingsProvider>
           <Outlet />
           <Toaster richColors position="top-right" />
+          <Analytics />
         </SettingsProvider>
       </AuthProvider>
     </QueryClientProvider>
