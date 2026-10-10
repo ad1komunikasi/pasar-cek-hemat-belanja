@@ -17,14 +17,14 @@ tahu harus belanja di mana sebelum keluar rumah.
 
 ## Teknologi
 
-| Bagian     | Stack                                                          |
-| ---------- | -------------------------------------------------------------- |
-| Framework  | [TanStack Start](https://tanstack.com/start) (React 19, SSR)   |
-| Routing    | TanStack Router (file-based, `src/routes/`)                    |
-| Data       | Supabase (Postgres, Auth, Storage, RLS) + TanStack Query       |
-| Styling    | Tailwind CSS v4, komponen shadcn/ui (Radix)                    |
-| Hosting    | Vercel (`npm run build:vercel` → `.vercel/output`)             |
-| Integrasi  | Google Identity Services, Google Maps, Gemini, Resend          |
+| Bagian    | Stack                                                        |
+| --------- | ------------------------------------------------------------ |
+| Framework | [TanStack Start](https://tanstack.com/start) (React 19, SSR) |
+| Routing   | TanStack Router (file-based, `src/routes/`)                  |
+| Data      | Supabase (Postgres, Auth, Storage, RLS) + TanStack Query     |
+| Styling   | Tailwind CSS v4, komponen shadcn/ui (Radix)                  |
+| Hosting   | Vercel (`npm run build:vercel` → `.vercel/output`)           |
+| Integrasi | Google Identity Services, Google Maps, Gemini, Resend        |
 
 ## Menjalankan secara lokal
 
@@ -40,32 +40,32 @@ Aplikasi berjalan di `http://localhost:3000` (atau port yang ditampilkan Vite).
 
 ### Variabel lingkungan
 
-| Variabel                         | Wajib | Keterangan                                                     |
-| -------------------------------- | :---: | -------------------------------------------------------------- |
-| `VITE_SUPABASE_URL`              |  ✓   | URL proyek Supabase                                            |
-| `VITE_SUPABASE_PUBLISHABLE_KEY`  |  ✓   | Publishable key Supabase                                       |
-| `SUPABASE_SERVICE_ROLE_KEY`      |       | Hanya di server, untuk operasi admin                           |
-| `VITE_GOOGLE_CLIENT_ID`          |       | Web client ID Google untuk login (tanpa ini, login Google memakai redirect OAuth Supabase) |
-| `VITE_GOOGLE_MAPS_API_KEY`       |       | Peta Google; tanpa ini peta memakai Leaflet                    |
-| `GEMINI_API_KEY`                 |       | Fitur AI (laporan admin, saran produk/pasar)                   |
-| `VITE_RESEND_API_KEY`            |       | Pengiriman email transaksional                                 |
+| Variabel                        | Wajib | Keterangan                                                                                 |
+| ------------------------------- | :---: | ------------------------------------------------------------------------------------------ |
+| `VITE_SUPABASE_URL`             |   ✓   | URL proyek Supabase                                                                        |
+| `VITE_SUPABASE_PUBLISHABLE_KEY` |   ✓   | Publishable key Supabase                                                                   |
+| `SUPABASE_SERVICE_ROLE_KEY`     |       | Hanya di server, untuk operasi admin                                                       |
+| `VITE_GOOGLE_CLIENT_ID`         |       | Web client ID Google untuk login (tanpa ini, login Google memakai redirect OAuth Supabase) |
+| `VITE_GOOGLE_MAPS_API_KEY`      |       | Peta Google; tanpa ini peta memakai Leaflet                                                |
+| `GEMINI_API_KEY`                |       | Fitur AI (laporan admin, saran produk/pasar)                                               |
+| `VITE_RESEND_API_KEY`           |       | Pengiriman email transaksional                                                             |
 
 > Jangan pernah meng-commit `.env.local` atau service role key.
 
 **Login Google:** daftarkan domain (termasuk `http://localhost:<port>` untuk development) di
-Google Cloud Console → Credentials → *Authorized JavaScript origins*, dan pakai client ID yang sama
+Google Cloud Console → Credentials → _Authorized JavaScript origins_, dan pakai client ID yang sama
 di Supabase → Authentication → Providers → Google.
 
 ## Skrip
 
-| Perintah               | Fungsi                                              |
-| ---------------------- | --------------------------------------------------- |
-| `npm run dev`          | Server development                                  |
-| `npm run build`        | Build produksi (`dist/`)                            |
-| `npm run build:vercel` | Build + susun output Vercel (`.vercel/output`)      |
-| `npm run preview`      | Pratinjau hasil build                               |
-| `npm run lint`         | ESLint                                              |
-| `npm run format`       | Prettier                                            |
+| Perintah               | Fungsi                                         |
+| ---------------------- | ---------------------------------------------- |
+| `npm run dev`          | Server development                             |
+| `npm run build`        | Build produksi (`dist/`)                       |
+| `npm run build:vercel` | Build + susun output Vercel (`.vercel/output`) |
+| `npm run preview`      | Pratinjau hasil build                          |
+| `npm run lint`         | ESLint                                         |
+| `npm run format`       | Prettier                                       |
 
 ## Struktur folder
 
