@@ -1,4 +1,5 @@
 import { ReactNode, useState } from "react";
+import { LogoMark } from "@/components/site/logo";
 import { Link, useRouter, useRouterState } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
@@ -58,10 +59,8 @@ export function AppShell({ children }: { children: ReactNode }) {
       {/* Mobile topbar */}
       <header className="sticky top-0 z-40 flex h-14 items-center justify-between border-b border-[var(--color-gray-100)] bg-card px-4 lg:hidden">
         <Link to="/dashboard" className="flex items-center gap-2 font-bold tracking-tight group">
-          <div className="grid h-8 w-8 place-items-center rounded-lg bg-gradient-primary text-white shadow-soft group-hover:scale-105 transition-transform duration-200">
-            <ShoppingBasket className="h-4.5 w-4.5" />
-          </div>
-          <span className="font-display text-lg font-bold text-primary">PasarCek</span>
+          <LogoMark className="h-8 w-8 transition-transform duration-200 group-hover:-rotate-6" />
+          <BrandName />
         </Link>
         <div className="flex items-center gap-2">
           {/* Quick Controls in Mobile Header */}
@@ -103,10 +102,8 @@ export function AppShell({ children }: { children: ReactNode }) {
         >
           <div className="flex flex-col">
             <div className="hidden h-14 items-center gap-2 border-b border-[var(--color-gray-100)] px-5 font-bold tracking-tight lg:flex">
-              <div className="grid h-8 w-8 place-items-center rounded-lg bg-gradient-primary text-white shadow-soft">
-                <ShoppingBasket className="h-4.5 w-4.5" />
-              </div>
-              <span className="font-display text-lg font-bold text-primary">PasarCek</span>
+              <LogoMark className="h-8 w-8" />
+              <BrandName />
             </div>
             <nav className="flex flex-col gap-1 p-3">
               {nav.map((n) => {
@@ -370,5 +367,14 @@ export function Section({
       )}
       {children}
     </section>
+  );
+}
+
+function BrandName() {
+  return (
+    <span className="font-display text-lg font-extrabold tracking-[-0.03em]">
+      <span className="text-[#1e3a8a] dark:text-[#c3d2fa]">Pasar</span>
+      <span className="text-[#127a79] dark:text-[#3fc2bf]">Cek</span>
+    </span>
   );
 }

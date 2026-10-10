@@ -12,8 +12,10 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as FeaturesRouteImport } from './routes/features'
+import { Route as KetentuanRouteImport } from './routes/ketentuan'
 import { Route as MarketsRouteImport } from './routes/markets'
 import { Route as PricingRouteImport } from './routes/pricing'
+import { Route as PrivasiRouteImport } from './routes/privasi'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as TrustRouteImport } from './routes/trust'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
@@ -61,6 +63,11 @@ const FeaturesRoute = FeaturesRouteImport.update({
   path: '/features',
   getParentRoute: () => rootRouteImport,
 } as any)
+const KetentuanRoute = KetentuanRouteImport.update({
+  id: '/ketentuan',
+  path: '/ketentuan',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const MarketsRoute = MarketsRouteImport.update({
   id: '/markets',
   path: '/markets',
@@ -69,6 +76,11 @@ const MarketsRoute = MarketsRouteImport.update({
 const PricingRoute = PricingRouteImport.update({
   id: '/pricing',
   path: '/pricing',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrivasiRoute = PrivasiRouteImport.update({
+  id: '/privasi',
+  path: '/privasi',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
@@ -246,8 +258,10 @@ const AuthenticatedOrdersIdRoute = AuthenticatedOrdersIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/features': typeof FeaturesRouteWithChildren
+  '/ketentuan': typeof KetentuanRoute
   '/markets': typeof MarketsRouteWithChildren
   '/pricing': typeof PricingRoute
+  '/privasi': typeof PrivasiRoute
   '/reset-password': typeof ResetPasswordRoute
   '/trust': typeof TrustRoute
   '/admin': typeof AuthenticatedAdminRouteWithChildren
@@ -284,7 +298,9 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/features': typeof FeaturesRouteWithChildren
+  '/ketentuan': typeof KetentuanRoute
   '/pricing': typeof PricingRoute
+  '/privasi': typeof PrivasiRoute
   '/reset-password': typeof ResetPasswordRoute
   '/trust': typeof TrustRoute
   '/cart': typeof AuthenticatedCartRoute
@@ -321,8 +337,10 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/features': typeof FeaturesRouteWithChildren
+  '/ketentuan': typeof KetentuanRoute
   '/markets': typeof MarketsRouteWithChildren
   '/pricing': typeof PricingRoute
+  '/privasi': typeof PrivasiRoute
   '/reset-password': typeof ResetPasswordRoute
   '/trust': typeof TrustRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRouteWithChildren
@@ -361,8 +379,10 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/features'
+    | '/ketentuan'
     | '/markets'
     | '/pricing'
+    | '/privasi'
     | '/reset-password'
     | '/trust'
     | '/admin'
@@ -399,7 +419,9 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/features'
+    | '/ketentuan'
     | '/pricing'
+    | '/privasi'
     | '/reset-password'
     | '/trust'
     | '/cart'
@@ -435,8 +457,10 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/features'
+    | '/ketentuan'
     | '/markets'
     | '/pricing'
+    | '/privasi'
     | '/reset-password'
     | '/trust'
     | '/_authenticated/admin'
@@ -475,8 +499,10 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   FeaturesRoute: typeof FeaturesRouteWithChildren
+  KetentuanRoute: typeof KetentuanRoute
   MarketsRoute: typeof MarketsRouteWithChildren
   PricingRoute: typeof PricingRoute
+  PrivasiRoute: typeof PrivasiRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   TrustRoute: typeof TrustRoute
   AuthCallbackRoute: typeof AuthCallbackRoute
@@ -506,6 +532,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FeaturesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/ketentuan': {
+      id: '/ketentuan'
+      path: '/ketentuan'
+      fullPath: '/ketentuan'
+      preLoaderRoute: typeof KetentuanRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/markets': {
       id: '/markets'
       path: '/markets'
@@ -518,6 +551,13 @@ declare module '@tanstack/react-router' {
       path: '/pricing'
       fullPath: '/pricing'
       preLoaderRoute: typeof PricingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/privasi': {
+      id: '/privasi'
+      path: '/privasi'
+      fullPath: '/privasi'
+      preLoaderRoute: typeof PrivasiRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/reset-password': {
@@ -853,8 +893,10 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   FeaturesRoute: FeaturesRouteWithChildren,
+  KetentuanRoute: KetentuanRoute,
   MarketsRoute: MarketsRouteWithChildren,
   PricingRoute: PricingRoute,
+  PrivasiRoute: PrivasiRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   TrustRoute: TrustRoute,
   AuthCallbackRoute: AuthCallbackRoute,

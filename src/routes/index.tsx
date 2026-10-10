@@ -1,42 +1,36 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { createFileRoute } from "@tanstack/react-router";
+import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import { toast } from "sonner";
+import {
+  ArrowDown,
+  ArrowRight,
+  ArrowUpRight,
+  Bell,
+  Check,
+  LineChart,
+  ListChecks,
+  MapPin,
+  Plus,
+  Scale,
+  ShoppingBasket,
+} from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
 import { useSettings } from "@/hooks/use-settings-context";
+import { cn } from "@/lib/utils";
+import { SiteHeader } from "@/components/site/site-header";
+import { SiteFooter } from "@/components/site/site-footer";
+import { MarketField } from "@/components/site/market-field";
+import { useReveal } from "@/components/site/use-reveal";
+import heroImg from "@/assets/hero-illustration.jpg";
+import problemImg from "@/assets/problem-illustration.jpg";
+import familyImg from "@/assets/family-illustration.jpg";
 import {
-  ShoppingBasket,
-  MapPin,
-  BarChart3,
-  Bell,
-  Heart,
-  ListChecks,
-  Check,
-  Sparkles,
-  TrendingDown,
-  Clock,
-  Wallet,
-  Brain,
-  Menu,
-  X,
-  ChevronDown,
-  Store,
-  Users,
-  Database,
-  Frown,
-  Search,
-  Map as MapIcon,
-  Package,
-  Sun,
-  Moon,
-} from "lucide-react";
-import { CelenganAyamIcon } from "@/components/celengan-ayam-icon";
-import heroImg from "@/assets/hero-illustration.png";
-import problemImg from "@/assets/problem-illustration.png";
-import familyImg from "@/assets/family-illustration.png";
-import mockupImg from "@/assets/app-mockup.png";
-import cookingOilImg from "@/assets/cooking-oil.png";
-import shallotsImg from "@/assets/shallots.png";
+  recordedLabel,
+  rupiah,
+  useMarketBoards,
+  type CommodityBoard,
+} from "@/components/site/use-market-prices";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -108,480 +102,626 @@ export const Route = createFileRoute("/")({
   component: LandingPage,
 });
 
-/* ---------------- Reusable bits ---------------- */
+/* ---------------- Helpers ---------------- */
 
-function Logo() {
-  return (
-    <a href="#top" className="flex items-center gap-2 group">
-      <div className="grid h-9 w-9 place-items-center rounded-xl bg-gradient-primary text-primary-foreground shadow-soft">
-        <ShoppingBasket className="h-5 w-5" />
-      </div>
-      <span className="font-display text-xl font-bold text-primary">PasarCek</span>
-    </a>
-  );
+function useTx() {
+  const { lang } = useSettings();
+  return { lang, tx: (id: string, en: string) => (lang === "id" ? id : en) };
 }
 
-function CTAButton({
+function useCountUp(target: number, duration = 700) {
+  const [value, setValue] = useState(target);
+  const fromRef = useRef(target);
+  useEffect(() => {
+    const from = fromRef.current;
+    if (from === target) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      fromRef.current = target;
+      setValue(target);
+      return;
+    }
+    let raf = 0;
+    const start = performance.now();
+    const step = (now: number) => {
+      const k = Math.min(1, (now - start) / duration);
+      const eased = 1 - Math.pow(1 - k, 3);
+      const v = from + (target - from) * eased;
+      setValue(v);
+      if (k < 1) raf = requestAnimationFrame(step);
+      else fromRef.current = target;
+    };
+    raf = requestAnimationFrame(step);
+    return () => {
+      cancelAnimationFrame(raf);
+      fromRef.current = target;
+    };
+  }, [target, duration]);
+  return value;
+}
+
+const pct = (n: number) => (n * 100).toFixed(0) + "%";
+
+function PrimaryButton({
+  href,
   children,
-  variant = "primary",
-  href = "#cta",
-  className = "",
-  onClick,
+  tone = "tarp",
+  className,
 }: {
-  children: React.ReactNode;
-  variant?: "primary" | "secondary" | "white";
-  href?: string;
+  href: string;
+  children: ReactNode;
+  tone?: "tarp" | "paper" | "turmeric";
   className?: string;
-  onClick?: () => void;
 }) {
-  const base =
-    "inline-flex items-center justify-center gap-2 rounded-2xl px-6 py-3 text-sm font-semibold transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0";
-  const styles = {
-    primary: "bg-gradient-primary text-primary-foreground shadow-card hover:shadow-elevated",
-    secondary: "bg-surface text-primary border border-border hover:border-accent hover:text-accent",
-    white: "bg-white text-primary shadow-card hover:shadow-elevated",
-  } as const;
   return (
-    <a href={href} onClick={onClick} className={`${base} ${styles[variant]} ${className}`}>
+    <a
+      href={href}
+      className={cn(
+        "group inline-flex h-12 items-center gap-2 rounded-md px-5 text-[0.95rem] font-medium transition-[background-color,transform] duration-200 active:translate-y-px",
+        tone === "tarp" &&
+          "bg-tarp text-primary-foreground hover:bg-tarp-ink dark:hover:bg-leaf",
+        tone === "paper" && "bg-[#f4efe4] text-[#0f1d47] hover:bg-white",
+        tone === "turmeric" && "bg-turmeric text-[#2a1d03] hover:bg-[#f2bf4d]",
+        className,
+      )}
+    >
       {children}
+      <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-0.5" />
     </a>
   );
 }
 
-function SectionTitle({
-  eyebrow,
-  title,
-  subtitle,
-  center = true,
-}: {
-  eyebrow?: string;
-  title: string;
-  subtitle?: string;
-  center?: boolean;
-}) {
+function SectionLabel({ n, children, className }: { n: string; children: ReactNode; className?: string }) {
   return (
-    <div className={`${center ? "text-center mx-auto" : ""} max-w-3xl mb-12`}>
-      {eyebrow && (
-        <div
-          className={`inline-flex items-center gap-2 rounded-full bg-accent/10 px-4 py-1.5 text-xs font-semibold text-accent mb-4`}
-        >
-          <Sparkles className="h-3.5 w-3.5" /> {eyebrow}
-        </div>
-      )}
-      <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-foreground leading-tight">
-        {title}
-      </h2>
-      {subtitle && <p className="mt-4 text-base md:text-lg text-muted-foreground">{subtitle}</p>}
+    <div className={cn("eyebrow flex items-center gap-3 text-foreground/55", className)}>
+      <span className="text-chili">{n}</span>
+      <span className="h-px w-8 bg-current opacity-40" />
+      {children}
     </div>
   );
 }
 
-/* ---------------- Navbar ---------------- */
-
-function Navbar() {
-  const { user } = useAuth();
-  const [open, setOpen] = useState(false);
-  const { theme, setTheme, lang, setLang, t } = useSettings();
-
-  const links = [
-    { href: "#beranda", label: t("nav.home") },
-    { href: "#fitur", label: t("nav.features") },
-    { href: "#cara-kerja", label: t("nav.howItWorks") },
-    { href: "#harga", label: t("nav.pricing") },
-    { href: "#faq", label: t("nav.faq") },
-  ];
-
+/** Hand-drawn marker stroke under a word. */
+function Scribble({ className }: { className?: string }) {
   return (
-    <header className="sticky top-0 z-50 bg-card/85 backdrop-blur-lg border-b border-border/60 text-foreground transition-colors duration-200">
-      <nav className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-        <Logo />
-        <ul className="hidden md:flex items-center gap-8">
-          {links.map((l) => (
-            <li key={l.href}>
-              <a
-                href={l.href}
-                className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
-              >
-                {l.label}
-              </a>
-            </li>
-          ))}
-        </ul>
+    <svg
+      viewBox="0 0 300 24"
+      preserveAspectRatio="none"
+      aria-hidden
+      className={cn("absolute -bottom-2 left-0 h-[0.32em] w-full overflow-visible", className)}
+    >
+      <path
+        d="M3 15C60 7 140 4 297 10M18 20c70-6 160-8 262-4"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="5"
+        strokeLinecap="round"
+        pathLength={1}
+        className="[stroke-dasharray:1] [stroke-dashoffset:1] [animation:draw_1.1s_0.6s_cubic-bezier(.6,0,.2,1)_forwards]"
+      />
+      <style>{`@keyframes draw{to{stroke-dashoffset:0}}`}</style>
+    </svg>
+  );
+}
 
-        {/* Desktop Auth Actions & Toggles */}
-        <div className="hidden md:flex items-center gap-4">
-          {/* Theme Toggler */}
-          <button
-            onClick={() => setTheme(theme === "light" ? "dark" : "light")}
-            className="p-2 rounded-xl text-muted-foreground hover:text-primary hover:bg-muted/50 transition-colors cursor-pointer"
-            aria-label="Toggle theme"
-            title={t("common.theme")}
-          >
-            {theme === "light" ? (
-              <Moon className="h-5 w-5 text-zinc-700 dark:text-zinc-300" />
-            ) : (
-              <Sun className="h-5 w-5 text-yellow-500" />
+/** A picture taped to the price board — the PasarCek characters live in these. */
+function Snapshot({
+  src,
+  alt,
+  label,
+  tilt = -1.5,
+  float = false,
+  eager = false,
+  labelAt = "bottom-left",
+  className,
+  imgClassName,
+}: {
+  src: string;
+  alt: string;
+  label?: ReactNode;
+  tilt?: number;
+  float?: boolean;
+  eager?: boolean;
+  labelAt?: "bottom-left" | "bottom-right" | "top-right";
+  className?: string;
+  imgClassName?: string;
+}) {
+  return (
+    <div className={cn(float && "animate-float [animation-duration:7s]", className)}>
+      <figure
+        className="relative rounded-[16px] border border-rule bg-card p-2 shadow-elevated transition-transform duration-500 hover:rotate-0"
+        style={{ transform: `rotate(${tilt}deg)` }}
+      >
+        <span
+          aria-hidden
+          className="absolute -top-3 left-1/2 z-10 h-6 w-24 -translate-x-1/2 rotate-[-3deg] bg-turmeric/55 mix-blend-multiply dark:mix-blend-normal dark:bg-turmeric/40"
+        />
+        <img
+          src={src}
+          alt={alt}
+          width={900}
+          height={900}
+          loading={eager ? "eager" : "lazy"}
+          fetchPriority={eager ? "high" : undefined}
+          decoding="async"
+          className={cn("block h-full w-full rounded-[10px] object-cover", imgClassName)}
+        />
+        {label && (
+          <figcaption
+            className={cn(
+              "eyebrow absolute rounded-sm",
+              labelAt === "bottom-left" && "bottom-5 left-5",
+              labelAt === "bottom-right" && "bottom-5 right-5",
+              labelAt === "top-right" && "right-5 top-5",
             )}
-          </button>
-
-          {/* Language Selector */}
-          <button
-            onClick={() => setLang(lang === "id" ? "en" : "id")}
-            className="flex items-center justify-center font-bold text-xs border border-border rounded-xl px-3 py-2 text-muted-foreground hover:text-primary hover:bg-muted/50 transition-all cursor-pointer"
-            aria-label="Toggle language"
-            title={t("common.language")}
           >
-            {lang === "id" ? "EN" : "ID"}
-          </button>
-
-          <span className="h-5 w-px bg-border/60 mx-1" />
-
-          {user ? (
-            <CTAButton href="/dashboard">{t("nav.backToApp")}</CTAButton>
-          ) : (
-            <>
-              <a
-                href="/auth?tab=login"
-                className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
-              >
-                {t("nav.login")}
-              </a>
-              <CTAButton href="/dashboard">{t("nav.backToApp")}</CTAButton>
-            </>
-          )}
-        </div>
-
-        {/* Mobile Header Buttons & Toggles */}
-        <div className="flex items-center gap-2 md:hidden">
-          {/* Quick theme control on mobile */}
-          <button
-            onClick={() => setTheme(theme === "light" ? "dark" : "light")}
-            className="p-1.5 rounded-lg text-muted-foreground hover:bg-muted transition-colors cursor-pointer"
-            aria-label="Toggle theme"
-          >
-            {theme === "light" ? (
-              <Moon className="h-4.5 w-4.5 text-zinc-700 dark:text-zinc-300" />
-            ) : (
-              <Sun className="h-4.5 w-4.5 text-yellow-500" />
-            )}
-          </button>
-
-          {/* Quick language control on mobile */}
-          <button
-            onClick={() => setLang(lang === "id" ? "en" : "id")}
-            className="px-2 py-1 text-xs font-bold border border-border rounded-lg text-muted-foreground hover:bg-muted transition-colors cursor-pointer"
-            aria-label="Toggle language"
-          >
-            {lang === "id" ? "EN" : "ID"}
-          </button>
-
-          <span className="h-4 w-px bg-border/60 mx-0.5" />
-
-          {user ? (
-            <a
-              href="/dashboard"
-              className="text-xs font-semibold text-white bg-gradient-primary px-3 py-2 rounded-xl shadow-soft hover:shadow-elevated transition-all"
-            >
-              {t("nav.dashboard")}
-            </a>
-          ) : (
-            <>
-              <a
-                href="/auth?tab=login"
-                className="text-xs font-semibold text-muted-foreground hover:text-primary px-3 py-2 rounded-xl border border-border hover:bg-muted/50 transition-all"
-              >
-                {t("nav.login")}
-              </a>
-            </>
-          )}
-          <button
-            onClick={() => setOpen(!open)}
-            aria-label="Menu"
-            className="p-2 rounded-lg hover:bg-muted text-foreground"
-          >
-            {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-          </button>
-        </div>
-      </nav>
-
-      {/* Mobile Menu Dropdown */}
-      {open && (
-        <div className="md:hidden border-t border-border bg-card px-4 py-6 space-y-6">
-          <div className="space-y-1">
-            {links.map((l) => (
-              <a
-                key={l.href}
-                href={l.href}
-                onClick={() => setOpen(false)}
-                className="block text-base font-semibold text-foreground py-2.5 px-3 rounded-xl hover:bg-muted/50 transition-colors"
-              >
-                {l.label}
-              </a>
-            ))}
-          </div>
-          <div className="pt-6 border-t border-border flex flex-col gap-3">
-            {user ? (
-              <CTAButton href="/dashboard" className="w-full" onClick={() => setOpen(false)}>
-                {t("nav.dashboard")}
-              </CTAButton>
-            ) : (
-              <>
-                <a
-                  href="/auth?tab=login"
-                  onClick={() => setOpen(false)}
-                  className="flex w-full items-center justify-center rounded-2xl border border-border px-6 py-3 text-sm font-semibold text-foreground hover:bg-muted/50 transition-all duration-200"
-                >
-                  {t("nav.login")}
-                </a>
-                <CTAButton href="/dashboard" className="w-full" onClick={() => setOpen(false)}>
-                  {t("nav.backToApp")}
-                </CTAButton>
-              </>
-            )}
-          </div>
-        </div>
-      )}
-    </header>
+            <span className="block rounded-sm bg-[#fbf8f1]/92 px-2 py-1 text-[10px] text-[#131a2e] backdrop-blur-sm">
+              {label}
+            </span>
+          </figcaption>
+        )}
+      </figure>
+    </div>
   );
 }
 
 /* ---------------- Hero ---------------- */
 
-/* ---------------- Hero ---------------- */
+const HERO_PICKS = ["Cabai Rawit", "Cabai Merah", "Daging Ayam", "Telur Ayam", "Bawang Merah", "Bawang Putih", "Beras Premium"];
 
 function Hero() {
   const { user } = useAuth();
-  const { t, lang } = useSettings();
-  const listItems =
-    lang === "id"
-      ? ["Data Harga Harian", "Pasar Terdekat", "Gratis Digunakan"]
-      : ["Daily Price Data", "Nearest Markets", "Free to Use"];
+  const { tx, lang } = useTx();
+  const { data: boards = [] } = useMarketBoards();
+  // Lead with whichever everyday staple has the widest gap in the latest log, and open the board on it.
+  const candidates = HERO_PICKS.map((n) => boards.find((b) => b.name === n)).filter(
+    (b): b is CommodityBoard => !!b,
+  );
+  const lead = [...candidates].sort((a, b) => b.max - b.min - (a.max - a.min))[0] ?? boards[0];
+  const picks = lead
+    ? [lead, ...candidates.filter((b) => b.name !== lead.name)].slice(0, 5)
+    : candidates;
+  const [active, setActive] = useState(0);
+  const [pinned, setPinned] = useState(false);
+
+  useEffect(() => {
+    if (pinned || picks.length < 2) return;
+    const id = window.setInterval(() => setActive((i) => (i + 1) % picks.length), 4800);
+    return () => window.clearInterval(id);
+  }, [pinned, picks.length]);
+
+  const board = picks[active] ?? boards[0];
+  const spread = lead ? lead.max - lead.min : 0;
+  const marketCount = new Set(boards.flatMap((b) => b.quotes.map((q) => q.market))).size;
 
   return (
-    <section id="beranda" className="relative overflow-hidden bg-gradient-hero">
-      <div className="absolute -top-24 -right-24 h-96 w-96 rounded-full bg-accent/15 blur-3xl" />
-      <div className="absolute -bottom-32 -left-20 h-96 w-96 rounded-full bg-primary/10 blur-3xl" />
-      <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-16 md:py-24 grid lg:grid-cols-2 gap-12 items-center">
-        <div className="animate-fade-up">
-          <div className="inline-flex items-center gap-2 rounded-full bg-card/80 backdrop-blur px-4 py-1.5 text-xs font-semibold text-primary border border-border mb-6">
-            🇮🇩 {lang === "id" ? "Untuk Keluarga Indonesia" : "For Indonesian Families"}
+    <section id="beranda" className="relative overflow-hidden">
+      <MarketField className="[mask-image:radial-gradient(ellipse_80%_32%_at_100%_0%,#000_20%,transparent_100%)] lg:[mask-image:radial-gradient(ellipse_75%_70%_at_60%_40%,#000_35%,transparent_100%)]" />
+      <div className="relative mx-auto grid max-w-[1240px] grid-cols-1 gap-14 px-5 pb-20 pt-12 sm:px-8 md:pt-16 lg:grid-cols-12 lg:gap-10 lg:pb-28">
+        <div className="lg:col-span-6 lg:pt-6">
+          <div className="eyebrow flex items-center gap-2.5 text-foreground/60 animate-rise">
+            <span className="relative flex h-2 w-2">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-leaf opacity-60" />
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-leaf" />
+            </span>
+            {tx("Papan harga pasar", "Market price board")} · Jakarta
           </div>
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-foreground leading-[1.1]">
-            {lang === "id" ? (
-              <>
-                Cari Harga Sembako <span className="text-accent">Termurah</span> Tanpa Keliling
-                Pasar
-              </>
+
+          <h1 className="display-xl mt-7 text-[clamp(2.75rem,6vw,5.1rem)] text-foreground animate-rise [animation-delay:80ms]">
+            {lead ? (
+              lang === "id" ? (
+                <>
+                  {lead.name} yang sama, beda{" "}
+                  <span className="relative inline-block whitespace-nowrap text-chili">
+                    {rupiah(spread)}
+                    <Scribble className="text-turmeric" />
+                  </span>{" "}
+                  sekilo.
+                </>
+              ) : (
+                <>
+                  Same {lead.name.toLowerCase()}.{" "}
+                  <span className="relative inline-block whitespace-nowrap text-chili">
+                    {rupiah(spread)}
+                    <Scribble className="text-turmeric" />
+                  </span>{" "}
+                  apart per kilo.
+                </>
+              )
             ) : (
-              <>
-                Find the <span className="text-accent">Cheapest</span> Grocery Prices Without
-                Wandering
-              </>
+              tx("Cek harga dulu, baru ke pasar.", "Check prices first, then go.")
             )}
           </h1>
-          <p className="mt-6 text-base md:text-lg text-muted-foreground max-w-xl">
-            {t("landing.hero.subtitle")}
+
+          <p className="mt-8 max-w-[34rem] text-lg leading-relaxed text-foreground/70 animate-rise [animation-delay:160ms]">
+            {tx(
+              `Itu selisih antara ${lead ? lead.quotes[0].market : "satu pasar"} dan ${lead ? lead.quotes[lead.quotes.length - 1].market : "pasar lain"} di catatan terakhir kami. PasarCek mencatat harga sembako di pasar sekitar Anda setiap hari, supaya Anda tahu harus belanja di mana sebelum keluar rumah.`,
+              `That's the gap between ${lead ? lead.quotes[0].market : "one market"} and ${lead ? lead.quotes[lead.quotes.length - 1].market : "another"} in our latest log. PasarCek logs staple prices at the markets near you every day, so you know where to shop before you leave the house.`,
+            )}
           </p>
-          <div className="mt-8 flex flex-wrap gap-3">
-            <CTAButton href={user ? "/dashboard" : "/auth?tab=register"}>
-              {t("landing.hero.cta")}
-            </CTAButton>
-            <CTAButton href="#cara-kerja" variant="secondary">
-              {t("landing.hero.watch")}
-            </CTAButton>
+
+          <div className="mt-10 flex flex-wrap items-center gap-x-6 gap-y-4 animate-rise [animation-delay:240ms]">
+            <PrimaryButton href={user ? "/dashboard" : "/auth?tab=register"}>
+              {user ? tx("Buka papan harga", "Open price board") : tx("Mulai cek harga — gratis", "Start checking — free")}
+            </PrimaryButton>
+            <a
+              href="#cara-kerja"
+              className="group inline-flex items-center gap-2 text-[0.95rem] font-medium text-foreground/80 underline decoration-foreground/25 underline-offset-[6px] transition-colors hover:text-foreground hover:decoration-foreground"
+            >
+              {tx("Lihat cara kerjanya", "See how it works")}
+              <ArrowDown className="h-4 w-4 transition-transform group-hover:translate-y-0.5" />
+            </a>
           </div>
-          <ul className="mt-8 flex flex-wrap gap-x-6 gap-y-3">
-            {listItems.map((t) => (
-              <li key={t} className="flex items-center gap-2 text-sm text-foreground/80">
-                <span className="grid h-5 w-5 place-items-center rounded-full bg-success/15 text-success">
-                  <Check className="h-3 w-3" strokeWidth={3} />
+
+          <dl className="mt-14 grid max-w-lg grid-cols-3 border-t border-rule pt-5 animate-rise [animation-delay:320ms]">
+            {[
+              [String(marketCount || 6), tx("pasar dipantau", "markets tracked")],
+              [String(boards.length || 20), tx("komoditas", "staples")],
+              [tx("Harian", "Daily"), tx("pembaruan", "updates")],
+            ].map(([v, l]) => (
+              <div key={l}>
+                <dt className="font-display text-3xl font-semibold tracking-tight">{v}</dt>
+                <dd className="mt-1 text-sm text-foreground/55">{l}</dd>
+              </div>
+            ))}
+          </dl>
+        </div>
+
+        <div className="relative lg:col-span-6 lg:h-[640px]">
+          <Snapshot
+            src={heroImg}
+            alt={tx(
+              "Ibu rumah tangga mengecek harga sembako di PasarCek sebelum belanja",
+              "A home cook checking staple prices on PasarCek before shopping",
+            )}
+            label={tx("Cek dulu di HP", "Checked on the phone first")}
+            labelAt="top-right"
+            tilt={2}
+            float
+            eager
+            className="ml-auto w-[86%] animate-rise [animation-delay:120ms] sm:w-[62%] lg:absolute lg:right-0 lg:top-0 lg:w-[64%]"
+            imgClassName="aspect-[4/5] object-[50%_20%]"
+          />
+          {board && (
+            <div className="relative z-10 -mt-28 mr-8 sm:-mt-64 sm:mr-auto sm:w-[22rem] lg:absolute lg:bottom-0 lg:left-0 lg:mt-0 lg:w-[20rem]">
+              <PriceBoard
+                compact
+                boards={picks}
+                active={active}
+                onPick={(i) => {
+                  setActive(i);
+                  setPinned(true);
+                }}
+              />
+            </div>
+          )}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function PriceBoard({
+  boards,
+  active,
+  onPick,
+  compact = false,
+}: {
+  boards: CommodityBoard[];
+  active: number;
+  onPick: (i: number) => void;
+  compact?: boolean;
+}) {
+  const { tx, lang } = useTx();
+  const b = boards[active];
+  if (!b) return null;
+  const range = b.max - b.min || 1;
+
+  return (
+    <figure className="relative animate-rise [animation-delay:260ms]">
+      <div className="relative rotate-[-1deg] rounded-[14px] border border-rule bg-card shadow-elevated transition-transform duration-500 hover:rotate-0">
+        <div className="flex items-center justify-between border-b border-rule px-5 py-3.5">
+          <span className="eyebrow text-foreground/55">
+            {tx("Harga per", "Price per")} {b.unit}
+          </span>
+          <span className="eyebrow flex items-center gap-1.5 text-foreground/55">
+            <span className="h-1.5 w-1.5 rounded-full bg-leaf" />
+            {tx("dicatat", "logged")} {recordedLabel(b.recordedAt, lang)}
+          </span>
+        </div>
+
+        <div className="flex gap-1 overflow-x-auto border-b border-rule px-3 py-2.5 [mask-image:linear-gradient(90deg,#000_85%,transparent)] [scrollbar-width:none]">
+          {boards.map((x, i) => (
+            <button
+              key={x.name}
+              type="button"
+              onClick={() => onPick(i)}
+              className={cn(
+                "shrink-0 rounded-md px-3 py-1.5 text-[0.82rem] transition-colors",
+                i === active
+                  ? "bg-foreground text-background"
+                  : "text-foreground/60 hover:bg-secondary hover:text-foreground",
+              )}
+            >
+              {x.name}
+            </button>
+          ))}
+        </div>
+
+        <ol key={b.name} className="px-5 py-3">
+          {b.quotes.slice(0, compact ? 4 : 6).map((q, i) => {
+            const isBest = i === 0;
+            const w = 18 + ((q.price - b.min) / range) * 82;
+            return (
+              <li
+                key={q.market}
+                className="grid grid-cols-[1fr_auto] items-center gap-x-4 border-b border-dashed border-rule py-2.5 last:border-0 animate-rise"
+                style={{ animationDelay: `${i * 55}ms` }}
+              >
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className={cn("truncate text-[0.95rem]", isBest ? "font-semibold" : "text-foreground/80")}>
+                      {q.market}
+                    </span>
+                    {isBest && !compact && (
+                      <span className="eyebrow rounded-sm bg-leaf/15 px-1.5 py-0.5 text-[10px] text-leaf">
+                        {tx("termurah", "cheapest")}
+                      </span>
+                    )}
+                  </div>
+                  <div className="mt-1.5 h-[5px] overflow-hidden rounded-full bg-secondary">
+                    <div
+                      className={cn(
+                        "h-full rounded-full transition-[width] duration-700 ease-out",
+                        isBest ? "bg-leaf" : i === b.quotes.length - 1 ? "bg-chili/80" : "bg-foreground/25",
+                      )}
+                      style={{ width: `${w}%` }}
+                    />
+                  </div>
+                </div>
+                <span className={cn("font-mono text-[0.95rem] tabular", isBest && "font-bold text-leaf")}>
+                  {rupiah(q.price)}
                 </span>
-                {t}
+              </li>
+            );
+          })}
+        </ol>
+
+        <figcaption className="flex items-end justify-between gap-4 rounded-b-[14px] border-t border-rule bg-secondary/60 px-5 py-4">
+          <div>
+            <div className="eyebrow text-foreground/50">{tx("Selisih termurah–termahal", "Cheapest-to-priciest gap")}</div>
+            <div className="mt-1 font-display text-2xl font-semibold tracking-tight">
+              {rupiah(b.max - b.min)}
+              <span className="ml-2 font-mono text-sm font-normal text-chili">
+                {pct((b.max - b.min) / b.min)}
+              </span>
+            </div>
+          </div>
+          <div className="flex gap-1" aria-hidden>
+            {boards.map((x, i) => (
+              <span
+                key={x.name}
+                className={cn("h-1 rounded-full transition-all duration-500", i === active ? "w-6 bg-foreground" : "w-2 bg-foreground/20")}
+              />
+            ))}
+          </div>
+        </figcaption>
+      </div>
+
+      {/* stamp */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute -right-[15.5rem] bottom-2 hidden rotate-[-8deg] xl:block rounded-full border-2 border-chili/80 px-4 py-2 font-mono text-[11px] font-bold uppercase tracking-[0.18em] text-chili [animation:stamp_.6s_1.2s_both]"
+      >
+        {tx("Cek dulu · baru belanja", "Check first · then shop")}
+      </div>
+    </figure>
+  );
+}
+
+/* ---------------- Problem: two receipts ---------------- */
+
+const WEEKLY: [name: string, qty: number][] = [
+  ["Beras Premium", 5],
+  ["Telur Ayam", 2],
+  ["Daging Ayam", 1],
+  ["Minyak Goreng", 2],
+  ["Bawang Merah", 0.5],
+  ["Cabai Merah", 0.5],
+];
+
+function basketTotals(boards: CommodityBoard[], items: [string, number][]) {
+  const markets = new Set(boards.flatMap((b) => b.quotes.map((q) => q.market)));
+  const out: { market: string; total: number; lines: { name: string; qty: number; unit: string; cost: number }[] }[] = [];
+  for (const market of markets) {
+    let total = 0;
+    const lines = [];
+    let complete = true;
+    for (const [name, qty] of items) {
+      const b = boards.find((x) => x.name === name);
+      const q = b?.quotes.find((x) => x.market === market);
+      if (!b || !q) {
+        complete = false;
+        break;
+      }
+      const cost = q.price * qty;
+      total += cost;
+      lines.push({ name, qty, unit: b.unit, cost });
+    }
+    if (complete) out.push({ market, total, lines });
+  }
+  return out.sort((a, b) => a.total - b.total);
+}
+
+function Receipt({
+  market,
+  lines,
+  total,
+  tone,
+  className,
+  style,
+}: {
+  market: string;
+  lines: { name: string; qty: number; unit: string; cost: number }[];
+  total: number;
+  tone: "best" | "worst";
+  className?: string;
+  style?: CSSProperties;
+}) {
+  const { tx } = useTx();
+  const qty = (q: number, u: string) => `${String(q).replace(".", ",")} ${u === "liter" ? "L" : u}`;
+  return (
+    <div
+      data-reveal
+      style={style}
+      className={cn(
+        "relative w-full max-w-[19rem] drop-shadow-[0_18px_22px_rgb(15_29_71/0.16)]",
+        className,
+      )}
+    >
+      <div className="receipt-edge bg-[#fdfbf6] px-6 pb-10 pt-6 font-mono text-[12.5px] text-[#1a2033] dark:bg-[#ece7da]">
+      <div className="text-center">
+        <div className="font-bold uppercase tracking-[0.2em]">{market}</div>
+        <div className="mt-1 text-[10.5px] uppercase tracking-[0.18em] text-[#1a2033]/55">
+          {tx("belanja mingguan", "weekly shop")}
+        </div>
+      </div>
+      <div className="my-4 border-t border-dashed border-[#1a2033]/30" />
+      <ul className="space-y-1.5">
+        {lines.map((l) => (
+          <li key={l.name} className="flex justify-between gap-3">
+            <span className="truncate">
+              {l.name} <span className="text-[#1a2033]/50">{qty(l.qty, l.unit)}</span>
+            </span>
+            <span className="tabular">{new Intl.NumberFormat("id-ID").format(l.cost)}</span>
+          </li>
+        ))}
+      </ul>
+      <div className="my-4 border-t border-dashed border-[#1a2033]/30" />
+      <div className="flex justify-between text-[15px] font-bold">
+        <span>TOTAL</span>
+        <span className="tabular">{rupiah(total)}</span>
+      </div>
+      </div>
+      {tone === "best" && (
+        <div className="absolute -right-3 -top-3 rotate-[8deg] bg-[#fdfbf6] rounded-sm border-2 border-[#127a79] px-2 py-1 text-[10px] font-bold uppercase tracking-[0.2em] text-[#127a79]">
+          {tx("termurah", "cheapest")}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function Problem() {
+  const { tx } = useTx();
+  const { data: boards = [] } = useMarketBoards();
+  const totals = basketTotals(boards, WEEKLY);
+  const best = totals[0];
+  const worst = totals[totals.length - 1];
+  const diff = best && worst ? worst.total - best.total : 0;
+
+  const points = [
+    [
+      tx("Harga bergerak setiap hari", "Prices move every day"),
+      tx(
+        "Cabai bisa naik turun ribuan rupiah dalam seminggu. Tanpa catatan, Anda hanya bisa mengira-ngira.",
+        "Chili can swing by thousands of rupiah in a week. Without a record, you're guessing.",
+      ),
+    ],
+    [
+      tx("Keliling pasar itu mahal", "Market-hopping costs money"),
+      tx(
+        "Ongkos ojek dan waktu dua jam sering habis hanya untuk membandingkan harga.",
+        "Ojek fares and two hours of your morning, just to compare prices.",
+      ),
+    ],
+    [
+      tx("Kebiasaan bukan berarti termurah", "Habit isn't the cheapest"),
+      tx(
+        "Pasar langganan terasa aman, tapi belum tentu memberi harga terbaik minggu ini.",
+        "Your usual market feels safe, but it may not have this week's best prices.",
+      ),
+    ],
+  ];
+
+  return (
+    <section id="harga-hari-ini" className="relative border-t border-rule bg-paper-deep/60">
+      <div className="mx-auto grid max-w-[1240px] grid-cols-1 gap-16 px-5 py-24 sm:px-8 md:py-32 lg:grid-cols-12 lg:gap-10">
+        <div className="lg:col-span-6">
+          <SectionLabel n="01">{tx("Masalahnya", "The problem")}</SectionLabel>
+          <h2 data-reveal className="mt-6 text-[clamp(2.2rem,4.6vw,3.9rem)] font-bold leading-[1.02]">
+            {tx(
+              "Harga di pasar tidak pernah sama. Selama ini Anda hanya tidak melihatnya.",
+              "Market prices are never the same. You just couldn't see it.",
+            )}
+          </h2>
+          <ol className="mt-12 border-t border-rule">
+            {points.map(([title, desc], i) => (
+              <li
+                key={title}
+                data-reveal
+                style={{ ["--reveal-delay" as string]: `${i * 90}ms` }}
+                className="grid grid-cols-[2.5rem_1fr] gap-x-4 border-b border-rule py-6"
+              >
+                <span className="font-mono text-sm text-foreground/40">0{i + 1}</span>
+                <div>
+                  <h3 className="text-xl font-semibold tracking-tight">{title}</h3>
+                  <p className="mt-1.5 max-w-md leading-relaxed text-foreground/65">{desc}</p>
+                </div>
               </li>
             ))}
-          </ul>
+          </ol>
         </div>
-        <div className="relative animate-fade-up">
-          <div className="absolute inset-0 bg-gradient-primary opacity-20 blur-3xl rounded-full" />
-          <img
-            src={heroImg}
-            alt="Ibu rumah tangga membandingkan harga sembako dengan PasarCek"
-            width={1024}
-            height={1024}
-            className="relative w-full max-w-xl mx-auto animate-float"
-          />
-        </div>
-      </div>
-    </section>
-  );
-}
 
-/* ---------------- Stats ---------------- */
-
-function Stats() {
-  const { lang } = useSettings();
-  const stats = [
-    {
-      icon: Users,
-      value: "100.000+",
-      label: lang === "id" ? "Pengguna Terdaftar" : "Registered Users",
-    },
-    { icon: Store, value: "500+", label: lang === "id" ? "Pasar Terpantau" : "Monitored Markets" },
-    {
-      icon: Database,
-      value: "50.000+",
-      label: lang === "id" ? "Update Harga Harian" : "Daily Price Updates",
-    },
-    {
-      icon: CelenganAyamIcon,
-      value: "Rp2 M+",
-      label: lang === "id" ? "Potensi Penghematan" : "Potential Savings",
-    },
-  ];
-  return (
-    <section className="bg-card py-14 border-y border-border/40 transition-colors duration-200">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {stats.map((s) => (
-          <div
-            key={s.label}
-            className="rounded-2xl bg-secondary/30 border border-border p-6 text-center hover:shadow-card transition-all"
-          >
-            <div className="mx-auto grid h-12 w-12 place-items-center rounded-xl bg-gradient-primary text-primary-foreground mb-3">
-              <s.icon className="h-6 w-6" />
-            </div>
-            <div className="text-2xl md:text-3xl font-bold font-display text-primary">
-              {s.value}
-            </div>
-            <div className="text-xs md:text-sm text-muted-foreground mt-1">{s.label}</div>
-          </div>
-        ))}
-      </div>
-    </section>
-  );
-}
-
-/* ---------------- Problems ---------------- */
-
-function Problems() {
-  const { t, lang } = useSettings();
-  const problems = [
-    {
-      icon: TrendingDown,
-      title: lang === "id" ? "Harga berubah setiap hari" : "Prices change daily",
-      desc:
-        lang === "id"
-          ? "Tidak ada acuan harga yang jelas dari satu hari ke hari berikutnya."
-          : "No clear price references from one day to the next.",
-    },
-    {
-      icon: Search,
-      title: lang === "id" ? "Harus survei pasar satu per satu" : "Survey markets one by one",
-      desc:
-        lang === "id"
-          ? "Buang waktu dan tenaga keliling pasar hanya untuk cek harga."
-          : "Wastes time and energy visiting markets manually just to compare.",
-    },
-    {
-      icon: Frown,
-      title: lang === "id" ? "Tidak tahu pasar termurah" : "Unaware of cheapest market",
-      desc:
-        lang === "id"
-          ? "Akhirnya belanja di tempat yang sama meski belum tentu paling murah."
-          : "Ending up shopping at the same place, even if it's not the cheapest.",
-    },
-    {
-      icon: Wallet,
-      title: lang === "id" ? "Pengeluaran membengkak" : "Budget bloat",
-      desc:
-        lang === "id"
-          ? "Tanpa data harga, anggaran rumah tangga sulit dikontrol."
-          : "Without pricing trends, household budgets are hard to control.",
-    },
-  ];
-
-  return (
-    <section className="py-20">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <SectionTitle
-          eyebrow={lang === "id" ? "Masalah Sehari-hari" : "Daily Problems"}
-          title={t("landing.problem.title")}
-          subtitle={t("landing.problem.subtitle")}
-        />
-        <div className="grid lg:grid-cols-2 gap-10 items-center">
-          <img
-            src={problemImg}
-            alt="Frustrasi saat belanja di pasar"
-            width={900}
-            height={900}
-            loading="lazy"
-            className="w-full max-w-md mx-auto"
-          />
-          <div className="grid sm:grid-cols-2 gap-4">
-            {problems.map((p) => (
-              <div
-                key={p.title}
-                className="rounded-2xl bg-card border border-border p-6 hover:shadow-card hover:-translate-y-1 transition-all"
-              >
-                <div className="grid h-10 w-10 place-items-center rounded-xl bg-destructive/10 text-destructive mb-3">
-                  <p.icon className="h-5 w-5" />
-                </div>
-                <h3 className="font-semibold text-foreground">{p.title}</h3>
-                <p className="text-sm text-muted-foreground mt-1">{p.desc}</p>
+        <div className="relative lg:col-span-6 lg:pl-6">
+          {best && worst && best.market !== worst.market ? (
+            <>
+              <p data-reveal className="max-w-sm text-foreground/65 lg:ml-auto lg:text-right">
+                {tx(
+                  "Daftar belanja yang sama, dihitung dengan harga hari ini di dua pasar Jakarta:",
+                  "The same shopping list, priced today at two Jakarta markets:",
+                )}
+              </p>
+              <Snapshot
+                src={problemImg}
+                alt={tx(
+                  "Pembeli bingung membandingkan harga di pasar dengan daftar belanja dan kalkulator",
+                  "A shopper puzzling over prices at the market with a list and a calculator",
+                )}
+                label={tx("Sebelum: menebak-nebak harga", "Before: guessing the prices")}
+                labelAt="top-right"
+                tilt={-2}
+                className="mt-8 w-[88%] sm:w-[70%] lg:ml-auto lg:w-[78%]"
+                imgClassName="aspect-[5/4] object-[50%_25%]"
+              />
+              <div className="relative z-10 -mt-24 flex flex-col items-center gap-6 sm:-mt-40 sm:flex-row sm:items-start sm:justify-center lg:justify-end">
+                <Receipt
+                  market={worst.market}
+                  lines={worst.lines}
+                  total={worst.total}
+                  tone="worst"
+                  className="sm:-rotate-2 sm:translate-y-6"
+                />
+                <Receipt
+                  market={best.market}
+                  lines={best.lines}
+                  total={best.total}
+                  tone="best"
+                  className="sm:rotate-[1.5deg]"
+                  style={{ ["--reveal-delay" as string]: "140ms" }}
+                />
               </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-/* ---------------- Why PasarCek ---------------- */
-
-function Why() {
-  const items = [
-    {
-      icon: BarChart3,
-      title: "Data Real-time",
-      desc: "Harga sembako diperbarui setiap hari dari pasar tradisional terverifikasi.",
-    },
-    {
-      icon: Store,
-      title: "Bandingkan Banyak Pasar",
-      desc: "Lihat harga komoditas yang sama di berbagai pasar dalam satu layar.",
-    },
-    {
-      icon: Clock,
-      title: "Hemat Waktu & Transport",
-      desc: "Tidak perlu keliling — cukup buka aplikasi sebelum berangkat.",
-    },
-    {
-      icon: Brain,
-      title: "Keputusan Belanja Cerdas",
-      desc: "Belanja berdasarkan data, bukan tebakan. Anggaran lebih terkontrol.",
-    },
-  ];
-  return (
-    <section className="py-20 bg-secondary/40">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <SectionTitle
-          eyebrow="Mengapa PasarCek"
-          title="Kenapa Ribuan Keluarga Memilih PasarCek?"
-          subtitle="Dirancang untuk membantu ibu rumah tangga Indonesia berbelanja lebih cerdas setiap hari."
-        />
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
-          {items.map((i) => (
-            <div
-              key={i.title}
-              className="group rounded-3xl bg-white border border-border p-6 hover:shadow-elevated hover:-translate-y-2 transition-all"
-            >
-              <div className="grid h-14 w-14 place-items-center rounded-2xl bg-gradient-primary text-primary-foreground mb-4 group-hover:scale-110 transition-transform">
-                <i.icon className="h-7 w-7" />
+              <div data-reveal className="mt-14 flex items-baseline justify-center gap-4 lg:justify-end">
+                <span className="eyebrow text-foreground/55">{tx("Selisih seminggu", "Weekly difference")}</span>
+                <span className="font-display text-5xl font-bold tracking-tight text-leaf">{rupiah(diff)}</span>
               </div>
-              <h3 className="font-display font-semibold text-lg text-foreground">{i.title}</h3>
-              <p className="text-sm text-muted-foreground mt-2">{i.desc}</p>
-            </div>
-          ))}
+              <p data-reveal className="mt-2 text-center text-sm text-foreground/50 lg:text-right">
+                {tx(
+                  `Kira-kira ${rupiah(diff * 52)} setahun, untuk satu keluarga.`,
+                  `Roughly ${rupiah(diff * 52)} a year, for one household.`,
+                )}
+              </p>
+            </>
+          ) : null}
         </div>
       </div>
     </section>
@@ -592,84 +732,102 @@ function Why() {
 
 function Features() {
   const { user } = useAuth();
+  const { tx } = useTx();
   const features = [
     {
-      icon: BarChart3,
-      tag: "Harga Hari Ini",
-      title: "Harga Sembako Selalu Terbaru",
-      desc: "Lihat harga beras, cabai, telur, ayam, minyak, gula, bawang, dan kebutuhan pokok lainnya — diperbarui harian.",
+      icon: LineChart,
+      title: tx("Harga hari ini", "Today's prices"),
+      desc: tx(
+        "Beras, cabai, telur, ayam, minyak, bawang — dicatat dari pasar-pasar terdekat setiap pagi.",
+        "Rice, chili, eggs, chicken, oil, shallots — logged from nearby markets every morning.",
+      ),
       href: "/prices",
     },
     {
-      icon: MapIcon,
-      tag: "Lokasi",
-      title: "Temukan Pasar Terdekat",
-      desc: "Berbasis lokasi Anda, lihat pasar tradisional terdekat lengkap dengan jam buka dan rating.",
-      href: "/markets",
-    },
-    {
-      icon: BarChart3,
-      tag: "Perbandingan",
-      title: "Bandingkan Harga Antar Pasar",
-      desc: "Lihat harga komoditas yang sama di beberapa pasar sekaligus dalam satu tabel.",
+      icon: Scale,
+      title: tx("Bandingkan pasar", "Compare markets"),
+      desc: tx(
+        "Satu komoditas, beberapa pasar, satu tabel. Termurah langsung terlihat.",
+        "One staple, several markets, one table. The cheapest stands out.",
+      ),
       href: "/compare",
     },
     {
-      icon: ListChecks,
-      tag: "Wishlist",
-      title: "Daftar Belanja Pintar",
-      desc: "Buat daftar kebutuhan sebelum berangkat agar belanja lebih terorganisir dan tidak boros.",
-      href: "/wishlist",
+      icon: MapPin,
+      title: tx("Pasar terdekat", "Nearby markets"),
+      desc: tx(
+        "Peta pasar tradisional di sekitar Anda, lengkap dengan jam buka dan rute.",
+        "A map of traditional markets around you, with opening hours and directions.",
+      ),
+      href: "/markets",
+    },
+    {
+      icon: ShoppingBasket,
+      title: "Smart Basket",
+      desc: tx(
+        "Masukkan daftar belanja, kami hitung pasar mana yang totalnya paling murah.",
+        "Enter your list, we work out which market gives the lowest total.",
+      ),
+      href: "/smart-basket",
     },
     {
       icon: Bell,
-      tag: "Notifikasi",
-      title: "Notifikasi Harga Turun",
-      desc: "Dapatkan pemberitahuan otomatis saat harga komoditas favorit Anda turun.",
+      title: tx("Alarm harga turun", "Price-drop alerts"),
+      desc: tx(
+        "Tentukan harga incaran. Kami kabari begitu harganya tercapai.",
+        "Set a target price. We'll tell you the moment it's reached.",
+      ),
       href: "/notifications",
     },
     {
-      icon: Heart,
-      tag: "Favorit",
-      title: "Pasar Favorit",
-      desc: "Simpan pasar favorit Anda untuk akses cepat ke harga dan promo terbaru.",
-      href: "/favorites",
+      icon: ListChecks,
+      title: tx("Daftar belanja", "Shopping list"),
+      desc: tx(
+        "Catatan belanja yang tahu harga — total perkiraan sebelum berangkat.",
+        "A list that knows prices — an estimated total before you go.",
+      ),
+      href: "/wishlist",
     },
   ];
+
   return (
-    <section id="fitur" className="py-20">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <SectionTitle
-          eyebrow="Fitur Unggulan"
-          title="Semua yang Anda Butuhkan Untuk Belanja Lebih Hemat"
-        />
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
-          {features.map((f) => (
-            <Link
-              key={f.title}
-              to={user ? f.href : "/auth?tab=register"}
-              className="block rounded-3xl bg-white border border-border p-6 hover:shadow-card hover:border-[var(--color-brand-blue)] transition-all cursor-pointer group"
-            >
-              <div className="flex items-center gap-3 mb-4">
-                <div className="grid h-11 w-11 place-items-center rounded-xl bg-accent/10 text-accent group-hover:bg-[var(--color-brand-blue)] group-hover:text-white transition-colors">
-                  <f.icon className="h-5 w-5" />
-                </div>
-                <span className="text-xs font-semibold text-accent uppercase tracking-wider">
-                  {f.tag}
+    <section id="fitur" className="border-t border-rule">
+      <div className="mx-auto grid max-w-[1240px] grid-cols-1 gap-12 px-5 py-24 sm:px-8 md:py-32 lg:grid-cols-12 lg:gap-10">
+        <div className="lg:col-span-4">
+          <div className="lg:sticky lg:top-36">
+            <SectionLabel n="02">{tx("Isinya", "What's inside")}</SectionLabel>
+            <h2 data-reveal className="mt-6 text-[clamp(2.2rem,4.2vw,3.5rem)] font-bold leading-[1.02]">
+              {tx("Enam alat untuk berhenti menebak.", "Six tools to stop guessing.")}
+            </h2>
+            <p data-reveal className="mt-6 max-w-sm leading-relaxed text-foreground/65">
+              {tx(
+                "Dibuat untuk orang yang belanja sendiri ke pasar — bukan untuk analis. Buka, lihat, berangkat.",
+                "Built for people who do their own market run — not for analysts. Open, look, go.",
+              )}
+            </p>
+          </div>
+        </div>
+
+        <ul className="border-t border-rule lg:col-span-8">
+          {features.map((f, i) => (
+            <li key={f.href} data-reveal style={{ ["--reveal-delay" as string]: `${(i % 3) * 70}ms` }}>
+              <a
+                href={user ? f.href : "/auth?tab=register"}
+                className="group grid grid-cols-[2.25rem_1fr_auto] items-start gap-x-5 border-b border-rule py-7 transition-colors sm:grid-cols-[3rem_14rem_1fr_auto] sm:items-center"
+              >
+                <span className="font-mono text-sm text-foreground/40 transition-colors group-hover:text-chili">
+                  0{i + 1}
                 </span>
-              </div>
-              <h3 className="font-display font-semibold text-lg text-foreground group-hover:text-[var(--color-brand-blue)] transition-colors">
-                {f.title}
-              </h3>
-              <p className="text-sm text-muted-foreground mt-2">{f.desc}</p>
-            </Link>
+                <h3 className="flex items-center gap-3 text-xl font-semibold tracking-tight sm:text-[1.35rem]">
+                  <f.icon className="h-5 w-5 shrink-0 text-tarp transition-transform duration-300 group-hover:-rotate-6" strokeWidth={1.75} />
+                  {f.title}
+                </h3>
+                <p className="col-start-2 mt-2 leading-relaxed text-foreground/65 sm:col-start-3 sm:mt-0">{f.desc}</p>
+                <ArrowUpRight className="col-start-3 row-start-1 h-5 w-5 text-foreground/30 transition-all duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-foreground sm:col-start-4" />
+              </a>
+            </li>
           ))}
-        </div>
-        <div className="mt-12 text-center">
-          <CTAButton href={user ? "/dashboard" : "/auth?tab=register"}>
-            Coba Semua Fitur Gratis
-          </CTAButton>
-        </div>
+        </ul>
       </div>
     </section>
   );
@@ -678,337 +836,199 @@ function Features() {
 /* ---------------- How it works ---------------- */
 
 function HowItWorks() {
+  const { tx } = useTx();
   const steps = [
-    {
-      icon: MapPin,
-      title: "Pilih Lokasi",
-      desc: "Aktifkan GPS atau pilih area belanja Anda secara manual.",
-    },
-    {
-      icon: BarChart3,
-      title: "Bandingkan Harga",
-      desc: "Lihat harga komoditas yang Anda butuhkan di berbagai pasar terdekat.",
-    },
-    {
-      icon: ShoppingBasket,
-      title: "Belanja di Pasar Termurah",
-      desc: "Berangkat ke pasar dengan total belanja paling hemat.",
-    },
+    [
+      tx("Pilih area Anda", "Pick your area"),
+      tx("Izinkan lokasi, atau pilih kota dan pasar secara manual.", "Share your location, or pick a city and markets yourself."),
+    ],
+    [
+      tx("Lihat siapa termurah", "See who's cheapest"),
+      tx("Bandingkan harga hari ini untuk barang yang Anda butuhkan.", "Compare today's prices for the things you need."),
+    ],
+    [
+      tx("Berangkat dengan rencana", "Leave with a plan"),
+      tx("Datang ke pasar yang tepat, dengan perkiraan total di tangan.", "Head to the right market with an estimated total in hand."),
+    ],
   ];
   return (
-    <section id="cara-kerja" className="py-20 bg-secondary/40">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <SectionTitle eyebrow="Cara Kerja" title="Hanya 3 Langkah Untuk Belanja Lebih Hemat" />
-        <div className="grid md:grid-cols-3 gap-6 relative">
-          {steps.map((s, i) => (
-            <div
-              key={s.title}
-              className="relative rounded-3xl bg-white border border-border p-8 text-center hover:shadow-card transition-all"
-            >
-              <div className="absolute -top-4 left-1/2 -translate-x-1/2 grid h-8 w-8 place-items-center rounded-full bg-gradient-primary text-primary-foreground text-sm font-bold shadow-card">
+    <section id="cara-kerja" className="border-t border-rule bg-paper-deep/60">
+      <div className="mx-auto max-w-[1240px] px-5 py-24 sm:px-8 md:py-28">
+        <div className="flex flex-col justify-between gap-6 md:flex-row md:items-end">
+          <div>
+            <SectionLabel n="03">{tx("Cara kerja", "How it works")}</SectionLabel>
+            <h2 data-reveal className="mt-6 max-w-xl text-[clamp(2.2rem,4.2vw,3.5rem)] font-bold leading-[1.02]">
+              {tx("Tiga langkah, sebelum kopi pagi habis.", "Three steps, before your coffee's done.")}
+            </h2>
+          </div>
+          <p data-reveal className="max-w-xs border-l-2 border-turmeric pl-4 leading-relaxed text-foreground/65">
+            {tx(
+              "Tanpa install. PasarCek berjalan langsung di browser HP Anda — buka, cek, berangkat.",
+              "Nothing to install. PasarCek runs right in your phone's browser — open, check, go.",
+            )}
+          </p>
+        </div>
+        <ol className="relative mt-16 grid gap-12 md:grid-cols-3 md:gap-8">
+          <div aria-hidden className="absolute left-0 right-0 top-[2.1rem] hidden border-t border-dashed border-foreground/25 md:block" />
+          {steps.map(([title, desc], i) => (
+            <li key={title} data-reveal style={{ ["--reveal-delay" as string]: `${i * 120}ms` }} className="relative">
+              <div className="relative inline-grid h-[4.2rem] w-[4.2rem] place-items-center rounded-full border border-rule bg-background font-display text-2xl font-bold">
                 {i + 1}
               </div>
-              <div className="mx-auto grid h-16 w-16 place-items-center rounded-2xl bg-gradient-primary text-primary-foreground mt-2 mb-4">
-                <s.icon className="h-8 w-8" />
-              </div>
-              <h3 className="font-display font-semibold text-xl text-foreground">{s.title}</h3>
-              <p className="text-sm text-muted-foreground mt-2">{s.desc}</p>
-            </div>
+              <h3 className="mt-6 text-2xl font-semibold tracking-tight">{title}</h3>
+              <p className="mt-2 max-w-xs leading-relaxed text-foreground/65">{desc}</p>
+            </li>
           ))}
-        </div>
+        </ol>
       </div>
     </section>
   );
 }
 
-/* ---------------- App Preview ---------------- */
+/* ---------------- Smart Basket (interactive) ---------------- */
 
-function AppPreview() {
-  const screens = [
-    "Home",
-    "Harga Hari Ini",
-    "Pasar Terdekat",
-    "Bandingkan Harga",
-    "Smart Basket",
-    "Profil",
-  ];
-  return (
-    <section className="py-20">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <SectionTitle
-          eyebrow="Preview Aplikasi"
-          title="Lihat Tampilan Aplikasi"
-          subtitle="Antarmuka yang bersih, ramah, dan mudah dipahami siapa saja."
-        />
-        <div className="relative rounded-3xl bg-gradient-hero p-8 md:p-12 border border-border overflow-hidden">
-          <div className="absolute -top-20 -right-20 h-72 w-72 rounded-full bg-accent/20 blur-3xl" />
-
-          <div className="relative flex items-center justify-center animate-float">
-            {/* Phone Simulator Frame */}
-            <div className="relative w-full max-w-[325px] h-[600px] rounded-[3rem] border-[10px] border-slate-900 bg-background shadow-elevated overflow-hidden select-none flex flex-col text-left">
-              {/* Phone Speaker & Camera (Notch) */}
-              <div className="absolute top-2 left-1/2 -translate-x-1/2 w-28 h-5 bg-slate-900 rounded-full z-30 flex items-center justify-center">
-                <div className="w-2.5 h-2.5 bg-slate-800 rounded-full ml-auto mr-4" />
-              </div>
-
-              {/* Status Bar */}
-              <div className="px-5 pt-3 pb-1 flex justify-between items-center text-[10px] font-bold text-foreground/75 z-20 bg-white">
-                <span>09:41</span>
-                <div className="flex items-center gap-1.5">
-                  <svg className="w-3 h-3 fill-current" viewBox="0 0 24 24">
-                    <path d="M12 3c-4.97 0-9 4.03-9 9 0 2.12.74 4.07 1.97 5.61L4.35 19.4c-.39.39-.39 1.02 0 1.41.39.39 1.02.39 1.41 0l1.9-1.9C9.07 19.64 10.47 20 12 20c4.97 0 9-4.03 9-9s-4.03-9-9-9zm0 15c-3.31 0-6-2.69-6-6s2.69-6 6-6 6 2.69 6 6-2.69 6-6 6z" />
-                  </svg>
-                  <span className="w-3.5 h-2 bg-foreground/75 rounded-xs inline-block" />
-                </div>
-              </div>
-
-              {/* App Navbar */}
-              <div className="px-4 py-2.5 flex items-center justify-between border-b border-border bg-white z-10">
-                <div className="flex items-center gap-1.5">
-                  <div className="grid h-6 w-6 place-items-center rounded-lg bg-gradient-primary text-white shadow-soft">
-                    <ShoppingBasket className="h-3.5 w-3.5" />
-                  </div>
-                  <span className="font-display text-sm font-extrabold text-primary">PasarCek</span>
-                </div>
-                <div className="flex items-center gap-1 text-[10px] font-semibold text-accent">
-                  <MapPin className="h-3.5 w-3.5" />
-                  <span>Pasar Santa</span>
-                </div>
-              </div>
-
-              {/* Scrollable Simulator App Content */}
-              <div
-                className="flex-1 overflow-y-auto px-3.5 py-4 space-y-4 bg-secondary/35"
-                style={{ scrollbarWidth: "none" }}
-              >
-                {/* Search Bar */}
-                <div className="relative shadow-soft rounded-2xl">
-                  <Search className="absolute left-3.5 top-3 h-4 w-4 text-muted-foreground/60" />
-                  <input
-                    type="text"
-                    placeholder="Cari minyak, bawang merah..."
-                    disabled
-                    className="w-full rounded-2xl bg-white border border-border/80 pl-10 pr-3.5 py-2.5 text-xs text-muted-foreground placeholder:text-muted-foreground/50"
-                  />
-                </div>
-
-                {/* Categories Tab */}
-                <div className="flex gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: "none" }}>
-                  {["Semua", "Minyak", "Bawang", "Beras", "Cabai"].map((cat, idx) => (
-                    <span
-                      key={cat}
-                      className={`px-3 py-1.5 rounded-full text-[10px] font-semibold whitespace-nowrap transition-colors border ${
-                        idx === 1 || idx === 2
-                          ? "bg-primary text-primary-foreground border-primary"
-                          : "bg-white text-muted-foreground border-border/80 shadow-xs"
-                      }`}
-                    >
-                      {cat}
-                    </span>
-                  ))}
-                </div>
-
-                {/* Section Title */}
-                <div className="flex items-center justify-between px-1">
-                  <span className="text-[10px] font-extrabold text-muted-foreground/80 uppercase tracking-wider">
-                    Harga Hari Ini
-                  </span>
-                  <span className="text-[9px] font-bold text-accent">Lihat Semua</span>
-                </div>
-
-                {/* Minyak Goreng Product Card */}
-                <div className="bg-white rounded-2xl border border-border/80 p-3.5 shadow-soft flex flex-col gap-3 hover:shadow-card transition-shadow">
-                  <div className="flex items-center gap-3">
-                    <div className="w-14 h-14 shrink-0 rounded-xl bg-slate-50 border border-border/60 flex items-center justify-center overflow-hidden">
-                      <img
-                        src={cookingOilImg}
-                        alt="Minyak Goreng"
-                        className="w-full h-full object-contain p-0.5"
-                      />
-                    </div>
-                    <div>
-                      <span className="inline-block px-1.5 py-0.5 rounded bg-accent/10 text-accent text-[8px] font-extrabold uppercase tracking-wider mb-1">
-                        Minyak Goreng
-                      </span>
-                      <h4 className="font-display font-bold text-xs text-foreground leading-tight">
-                        Minyak Goreng Premium 2L
-                      </h4>
-                    </div>
-                  </div>
-
-                  <div className="border-t border-border/60 pt-3 space-y-2">
-                    <div className="text-[9px] font-bold text-muted-foreground/60 uppercase tracking-wider">
-                      Bandingkan Pasar:
-                    </div>
-
-                    <div className="flex items-center justify-between text-xs py-1.5 px-2.5 rounded-xl bg-accent/5 border border-accent/10 text-foreground">
-                      <span className="font-medium text-foreground/80">Pasar Santa</span>
-                      <div className="flex items-center gap-1.5">
-                        <span className="font-bold text-primary">Rp33.500</span>
-                        <span className="text-[8px] font-extrabold bg-accent text-white px-1.5 py-0.5 rounded uppercase tracking-wider">
-                          Termurah
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center justify-between text-xs py-1.5 px-2.5 rounded-xl bg-transparent text-foreground/80">
-                      <span>Pasar Kebayoran</span>
-                      <span className="font-bold text-foreground">Rp35.000</span>
-                    </div>
-
-                    <div className="flex items-center justify-between text-xs py-1.5 px-2.5 rounded-xl bg-transparent text-foreground/80">
-                      <span>Pasar Blok M</span>
-                      <span className="font-bold text-foreground">Rp36.200</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Bawang Merah Product Card */}
-                <div className="bg-white rounded-2xl border border-border/80 p-3.5 shadow-soft flex flex-col gap-3 hover:shadow-card transition-shadow">
-                  <div className="flex items-center gap-3">
-                    <div className="w-14 h-14 shrink-0 rounded-xl bg-slate-50 border border-border/60 flex items-center justify-center overflow-hidden">
-                      <img
-                        src={shallotsImg}
-                        alt="Bawang Merah"
-                        className="w-full h-full object-contain p-0.5"
-                      />
-                    </div>
-                    <div>
-                      <span className="inline-block px-1.5 py-0.5 rounded bg-accent/10 text-accent text-[8px] font-extrabold uppercase tracking-wider mb-1">
-                        Bumbu Dapur
-                      </span>
-                      <h4 className="font-display font-bold text-xs text-foreground leading-tight">
-                        Bawang Merah Brebes 1kg
-                      </h4>
-                    </div>
-                  </div>
-
-                  <div className="border-t border-border/60 pt-3 space-y-2">
-                    <div className="text-[9px] font-bold text-muted-foreground/60 uppercase tracking-wider">
-                      Bandingkan Pasar:
-                    </div>
-
-                    <div className="flex items-center justify-between text-xs py-1.5 px-2.5 rounded-xl bg-accent/5 border border-accent/10 text-foreground">
-                      <span className="font-medium text-foreground/80">Pasar Kebayoran</span>
-                      <div className="flex items-center gap-1.5">
-                        <span className="font-bold text-primary">Rp38.000</span>
-                        <span className="text-[8px] font-extrabold bg-accent text-white px-1.5 py-0.5 rounded uppercase tracking-wider">
-                          Termurah
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center justify-between text-xs py-1.5 px-2.5 rounded-xl bg-transparent text-foreground/80">
-                      <span>Pasar Blok M</span>
-                      <span className="font-bold text-foreground">Rp39.500</span>
-                    </div>
-
-                    <div className="flex items-center justify-between text-xs py-1.5 px-2.5 rounded-xl bg-transparent text-foreground/80">
-                      <span>Pasar Santa</span>
-                      <span className="font-bold text-foreground">Rp40.000</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Bottom Navigation Bar */}
-              <div className="px-6 py-2.5 border-t border-border bg-white flex justify-between items-center text-[9px] font-bold text-muted-foreground z-10">
-                <div className="flex flex-col items-center gap-0.5 text-primary">
-                  <ShoppingBasket className="h-4 w-4" />
-                  <span>Home</span>
-                </div>
-                <div className="flex flex-col items-center gap-0.5 hover:text-primary transition-colors">
-                  <MapPin className="h-4 w-4" />
-                  <span>Pasar</span>
-                </div>
-                <div className="flex flex-col items-center gap-0.5 hover:text-primary transition-colors">
-                  <Package className="h-4 w-4" />
-                  <span>Produk</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="relative mt-8 flex flex-wrap justify-center gap-2">
-            {screens.map((s) => (
-              <span
-                key={s}
-                className="rounded-full bg-white/70 backdrop-blur px-4 py-1.5 text-xs font-semibold text-primary border border-border"
-              >
-                {s}
-              </span>
-            ))}
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-/* ---------------- Smart Basket ---------------- */
+const BASKET_CHOICES: [name: string, qty: number][] = [
+  ["Beras Premium", 5],
+  ["Telur Ayam", 1],
+  ["Daging Ayam", 1],
+  ["Minyak Goreng", 2],
+  ["Cabai Merah", 0.5],
+  ["Bawang Merah", 0.5],
+  ["Bawang Putih", 0.25],
+  ["Gula Pasir", 1],
+  ["Tempe", 1],
+  ["Ikan Kembung", 1],
+];
 
 function SmartBasket() {
   const { user } = useAuth();
-  const markets = [
-    { name: "Pasar A", price: "Rp205.000", best: false },
-    { name: "Pasar B", price: "Rp195.000", best: true },
-    { name: "Pasar C", price: "Rp215.000", best: false },
-  ];
+  const { tx } = useTx();
+  const { data: boards = [] } = useMarketBoards();
+  const available = BASKET_CHOICES.filter(([n]) => boards.some((b) => b.name === n));
+  const [picked, setPicked] = useState<string[]>([
+    "Beras Premium",
+    "Telur Ayam",
+    "Daging Ayam",
+    "Minyak Goreng",
+    "Cabai Merah",
+  ]);
+  const items = available.filter(([n]) => picked.includes(n));
+  const totals = items.length ? basketTotals(boards, items) : [];
+  const best = totals[0];
+  const worst = totals[totals.length - 1];
+  const saving = best && worst ? worst.total - best.total : 0;
+  const shown = useCountUp(saving);
+  const maxTotal = worst?.total || 1;
+  const minTotal = best?.total || 0;
+
+  const toggle = (n: string) =>
+    setPicked((p) => (p.includes(n) ? p.filter((x) => x !== n) : [...p, n]));
+
   return (
-    <section className="py-20 bg-gradient-navy text-white relative overflow-hidden">
-      <div className="absolute top-0 right-0 h-96 w-96 rounded-full bg-accent/20 blur-3xl" />
-      <div className="absolute bottom-0 left-0 h-96 w-96 rounded-full bg-primary-glow/20 blur-3xl" />
-      <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 grid lg:grid-cols-2 gap-12 items-center">
-        <div>
-          <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-1.5 text-xs font-semibold mb-5 backdrop-blur">
-            <Sparkles className="h-3.5 w-3.5" /> Killer Feature
+    <section id="smart-basket" className="grain relative overflow-hidden bg-[#0f1d47] text-[#f4efe4]">
+      <MarketField tone="light" className="opacity-70 [mask-image:linear-gradient(90deg,transparent,#000_30%,#000_70%,transparent)]" />
+      <div className="relative z-10 mx-auto grid max-w-[1240px] grid-cols-1 gap-14 px-5 py-24 sm:px-8 md:py-32 lg:grid-cols-12 lg:gap-12">
+        <div className="lg:col-span-5">
+          <div className="eyebrow flex items-center gap-3 text-[#f4efe4]/55">
+            <span className="text-turmeric">04</span>
+            <span className="h-px w-8 bg-current opacity-40" />
+            Smart Basket
           </div>
-          <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold leading-tight">
-            Smart Basket: Temukan Pasar Paling Hemat Secara Otomatis
+          <h2 data-reveal className="mt-6 text-[clamp(2.2rem,4.4vw,3.7rem)] font-bold leading-[1.02]">
+            {tx("Bukan barang termurah. Pasar termurah.", "Not the cheapest item. The cheapest market.")}
           </h2>
-          <p className="mt-5 text-white/80 text-base md:text-lg">
-            Masukkan daftar belanja Anda dan PasarCek akan menghitung pasar mana yang memberikan
-            total biaya paling murah.
+          <p data-reveal className="mt-6 max-w-md text-lg leading-relaxed text-[#f4efe4]/70">
+            {tx(
+              "Tidak ada yang mau ke tiga pasar untuk tiga barang. Smart Basket menjumlahkan seluruh daftar Anda di tiap pasar, lalu menunjuk satu tempat dengan total paling hemat.",
+              "Nobody visits three markets for three items. Smart Basket totals your whole list at every market and points to the one place with the lowest bill.",
+            )}
           </p>
-          <div className="mt-8">
-            <CTAButton href={user ? "/smart-basket" : "/auth?tab=register"} variant="white">
-              Coba Smart Basket
-            </CTAButton>
+          <div data-reveal className="mt-8">
+            <div className="eyebrow text-[#f4efe4]/45">{tx("Coba — ketuk untuk ubah daftar", "Try it — tap to edit the list")}</div>
+            <div className="mt-4 flex flex-wrap gap-2">
+              {available.map(([n, q]) => {
+                const on = picked.includes(n);
+                const unit = boards.find((b) => b.name === n)?.unit === "liter" ? "L" : "kg";
+                return (
+                  <button
+                    key={n}
+                    type="button"
+                    onClick={() => toggle(n)}
+                    aria-pressed={on}
+                    className={cn(
+                      "inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm transition-all duration-200",
+                      on
+                        ? "border-turmeric bg-turmeric text-[#2a1d03]"
+                        : "border-white/15 text-[#f4efe4]/70 hover:border-white/40 hover:text-[#f4efe4]",
+                    )}
+                  >
+                    {on ? <Check className="h-3.5 w-3.5" strokeWidth={3} /> : <Plus className="h-3.5 w-3.5" />}
+                    {n}
+                    <span className={cn("font-mono text-[11px]", on ? "text-[#2a1d03]/60" : "text-[#f4efe4]/40")}>
+                      {String(q).replace(".", ",")}
+                      {unit}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </div>
-        <div className="rounded-3xl bg-white/10 backdrop-blur-xl border border-white/20 p-6 md:p-8 shadow-elevated">
-          <div className="text-xs uppercase tracking-wider text-white/60 font-semibold mb-3">
-            Daftar Belanja
-          </div>
-          <ul className="space-y-2 mb-6">
-            {["Beras 5 kg", "Telur 2 kg", "Cabai 1 kg"].map((i) => (
-              <li
-                key={i}
-                className="flex items-center gap-3 rounded-xl bg-white/10 px-4 py-3 text-sm"
-              >
-                <Check className="h-4 w-4 text-success" strokeWidth={3} /> {i}
-              </li>
-            ))}
-          </ul>
-          <div className="text-xs uppercase tracking-wider text-white/60 font-semibold mb-3">
-            Hasil Perbandingan
-          </div>
-          <div className="space-y-2">
-            {markets.map((m) => (
-              <div
-                key={m.name}
-                className={`flex items-center justify-between rounded-xl px-4 py-3 ${m.best ? "bg-success text-white" : "bg-white/10"}`}
-              >
-                <span className="font-semibold text-sm">{m.name}</span>
-                <span className="font-display font-bold flex items-center gap-2">
-                  {m.price} {m.best && <Check className="h-4 w-4" strokeWidth={3} />}
-                </span>
+
+        <div className="lg:col-span-7 lg:pl-8">
+          <div data-reveal className="rounded-[14px] border border-white/12 bg-white/[0.04] p-6 backdrop-blur-sm sm:p-8">
+            <div className="flex items-baseline justify-between">
+              <span className="eyebrow text-[#f4efe4]/50">{tx("Total per pasar", "Total per market")}</span>
+              <span className="font-mono text-xs text-[#f4efe4]/45">
+                {items.length} {tx("barang", "items")}
+              </span>
+            </div>
+
+            {totals.length ? (
+              <ul className="mt-6 space-y-3.5">
+                {totals.map((t, i) => {
+                  const w = 30 + ((t.total - minTotal) / (maxTotal - minTotal || 1)) * 70;
+                  return (
+                    <li key={t.market} className="grid grid-cols-[1fr_auto] items-center gap-x-4 gap-y-1.5 sm:grid-cols-[10.5rem_1fr_auto]">
+                      <span className={cn("truncate text-[0.95rem]", i === 0 ? "font-semibold text-turmeric" : "text-[#f4efe4]/75")}>
+                        {t.market}
+                      </span>
+                      <div className="order-last col-span-2 h-2 overflow-hidden rounded-full bg-white/8 sm:order-none sm:col-span-1 sm:h-2.5">
+                        <div
+                          className={cn(
+                            "h-full rounded-full transition-[width] duration-700 ease-out",
+                            i === 0 ? "bg-turmeric" : "bg-white/25",
+                          )}
+                          style={{ width: `${w}%` }}
+                        />
+                      </div>
+                      <span className={cn("font-mono text-sm tabular", i === 0 && "font-bold text-turmeric")}>
+                        {rupiah(t.total)}
+                      </span>
+                    </li>
+                  );
+                })}
+              </ul>
+            ) : (
+              <p className="mt-8 text-[#f4efe4]/55">{tx("Pilih minimal satu barang.", "Pick at least one item.")}</p>
+            )}
+
+            <div className="mt-8 flex flex-col justify-between gap-6 border-t border-white/12 pt-6 sm:flex-row sm:items-end">
+              <div>
+                <div className="eyebrow text-[#f4efe4]/50">
+                  {tx("Belanja di", "Shop at")} {best ? best.market : "—"}, {tx("hemat", "save")}
+                </div>
+                <div className="mt-2 font-display text-[clamp(2.6rem,5vw,3.6rem)] font-bold leading-none tracking-tight text-turmeric tabular">
+                  {rupiah(shown)}
+                </div>
+                <div className="mt-2 text-sm text-[#f4efe4]/50">
+                  {tx("dibanding pasar termahal untuk daftar ini", "versus the priciest market for this list")}
+                </div>
               </div>
-            ))}
-          </div>
-          <div className="mt-6 rounded-2xl bg-gradient-primary p-5 text-center">
-            <div className="text-xs uppercase tracking-wider opacity-90">Hemat Hari Ini</div>
-            <div className="text-3xl font-display font-bold mt-1">Rp20.000</div>
+              <PrimaryButton tone="turmeric" href={user ? "/smart-basket" : "/auth?tab=register"}>
+                {tx("Pakai daftar saya", "Use my own list")}
+              </PrimaryButton>
+            </div>
           </div>
         </div>
       </div>
@@ -1016,106 +1036,24 @@ function SmartBasket() {
   );
 }
 
-/* ---------------- Use cases ---------------- */
+/* ---------------- Who it's for ---------------- */
 
-function UseCases() {
-  const personas = [
-    {
-      emoji: "👩‍🍳",
-      title: "Ibu Rumah Tangga",
-      desc: "Atur anggaran belanja harian dengan lebih percaya diri.",
-    },
-    {
-      emoji: "👨‍👩‍👧",
-      title: "Keluarga Muda",
-      desc: "Optimalkan pengeluaran rumah tangga di awal pernikahan.",
-    },
-    {
-      emoji: "💼",
-      title: "Pekerja Sibuk",
-      desc: "Belanja efisien tanpa harus survei keliling pasar.",
-    },
-    {
-      emoji: "🎓",
-      title: "Mahasiswa & Anak Kost",
-      desc: "Hemat uang jajan & belanja bulanan dengan harga termurah.",
-    },
-  ];
+function ForWhom() {
+  const { tx } = useTx();
   return (
-    <section className="py-20">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <SectionTitle eyebrow="Untuk Siapa?" title="Siapa yang Cocok Menggunakan PasarCek?" />
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
-          {personas.map((p) => (
-            <div
-              key={p.title}
-              className="rounded-3xl bg-white border border-border p-6 text-center hover:shadow-card hover:-translate-y-1 transition-all"
-            >
-              <div className="text-5xl mb-3">{p.emoji}</div>
-              <h3 className="font-display font-semibold text-lg text-foreground">{p.title}</h3>
-              <p className="text-sm text-muted-foreground mt-2">{p.desc}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-/* ---------------- Benefits Before/After ---------------- */
-
-function Benefits() {
-  const list = [
-    "Belanja lebih hemat setiap hari",
-    "Mengurangi pengeluaran bulanan",
-    "Tidak perlu survei pasar",
-    "Keputusan belanja lebih cerdas",
-    "Hemat waktu",
-    "Hemat biaya transportasi",
-  ];
-  return (
-    <section className="py-20 bg-secondary/40">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 grid lg:grid-cols-2 gap-10 items-center">
-        <div>
-          <SectionTitle eyebrow="Manfaat" title="Apa yang Akan Anda Dapatkan?" center={false} />
-          <ul className="grid sm:grid-cols-2 gap-3">
-            {list.map((b) => (
-              <li
-                key={b}
-                className="flex items-start gap-3 rounded-2xl bg-white border border-border p-4"
-              >
-                <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-success text-white">
-                  <Check className="h-3.5 w-3.5" strokeWidth={3} />
-                </span>
-                <span className="text-sm font-medium text-foreground">{b}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-        <div className="grid sm:grid-cols-2 gap-4">
-          <div className="rounded-3xl bg-destructive/5 border border-destructive/20 p-6">
-            <div className="text-xs font-semibold uppercase tracking-wider text-destructive mb-2">
-              Sebelum
-            </div>
-            <div className="text-3xl mb-3">😩</div>
-            <h4 className="font-display font-semibold text-foreground">Bingung memilih pasar</h4>
-            <p className="text-sm text-muted-foreground mt-1">
-              Belanja tanpa data, pengeluaran tak terkontrol.
-            </p>
-          </div>
-          <div className="rounded-3xl bg-success/5 border border-success/30 p-6">
-            <div className="text-xs font-semibold uppercase tracking-wider text-success mb-2">
-              Sesudah
-            </div>
-            <div className="text-3xl mb-3">🎉</div>
-            <h4 className="font-display font-semibold text-foreground">
-              Langsung tahu pasar terbaik
-            </h4>
-            <p className="text-sm text-muted-foreground mt-1">
-              Belanja cerdas, hemat hingga 20% tiap bulan.
-            </p>
-          </div>
-        </div>
+    <section className="border-t border-rule">
+      <div className="mx-auto max-w-[1240px] px-5 py-24 sm:px-8 md:py-32">
+        <SectionLabel n="05">{tx("Untuk siapa", "Who it's for")}</SectionLabel>
+        <p data-reveal className="mt-8 max-w-5xl font-display text-[clamp(1.9rem,4vw,3.4rem)] font-semibold leading-[1.12] tracking-[-0.03em] text-foreground/35">
+          {tx("Untuk ", "For ")}
+          <span className="text-foreground">{tx("ibu yang belanja tiap pagi", "the parent shopping every morning")}</span>,{" "}
+          <span className="text-foreground">{tx("anak kos di akhir bulan", "the student at month's end")}</span>,{" "}
+          <span className="text-foreground">{tx("pemilik warung yang kulakan tiap minggu", "the warung owner restocking weekly")}</span>
+          {tx(", dan siapa pun yang pernah pulang dari pasar lalu berpikir, ", ", and anyone who's come home from the market thinking, ")}
+          <span className="relative whitespace-nowrap italic text-chili">
+            {tx("“kok mahal, ya?”", "“why was that so expensive?”")}
+          </span>
+        </p>
       </div>
     </section>
   );
@@ -1125,77 +1063,88 @@ function Benefits() {
 
 function Pricing() {
   const { user } = useAuth();
+  const { tx } = useTx();
+  const free = [
+    tx("Harga harian semua komoditas", "Daily prices for every staple"),
+    tx("Bandingkan pasar", "Compare markets"),
+    tx("Smart Basket dasar", "Basic Smart Basket"),
+    tx("3 alarm harga", "3 price alerts"),
+  ];
+  const premium = [
+    tx("Alarm harga tanpa batas", "Unlimited price alerts"),
+    tx("Prediksi harga 7 hari", "7-day price forecast"),
+    tx("Riwayat & analitik 90 hari", "90-day history & analytics"),
+    tx("Smart Basket lengkap", "Full Smart Basket"),
+    tx("Catatan total penghematan", "Savings tracker"),
+  ];
   return (
-    <section id="harga" className="py-20">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <SectionTitle
-          eyebrow="Harga"
-          title="Pilih Paket yang Sesuai"
-          subtitle="Mulai gratis, upgrade kapan saja untuk fitur lengkap."
-        />
-        <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
-          <div className="rounded-3xl bg-white border border-border p-8 hover:shadow-card transition-all">
-            <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              Free
-            </div>
-            <div className="mt-3 flex items-baseline gap-1">
-              <span className="text-5xl font-display font-bold text-foreground">Rp0</span>
-            </div>
-            <p className="text-sm text-muted-foreground mt-2">
-              Untuk memulai perjalanan hemat Anda.
-            </p>
-            <ul className="mt-6 space-y-3">
-              {[
-                "Harga harian",
-                "Bandingkan pasar",
-                "Smart Basket dasar",
-                "Notifikasi terbatas",
-              ].map((f) => (
-                <li key={f} className="flex items-center gap-2 text-sm">
-                  <Check className="h-4 w-4 text-success" strokeWidth={3} /> {f}
+    <section id="paket" className="border-t border-rule bg-paper-deep/60">
+      <div className="mx-auto grid max-w-[1240px] grid-cols-1 gap-14 px-5 py-24 sm:px-8 md:py-32 lg:grid-cols-12 lg:gap-10">
+        <div className="lg:col-span-4">
+          <SectionLabel n="06">{tx("Paket", "Plans")}</SectionLabel>
+          <h2 data-reveal className="mt-6 text-[clamp(2.2rem,4.2vw,3.5rem)] font-bold leading-[1.02]">
+            {tx("Gratis untuk dipakai. Murah untuk ditingkatkan.", "Free to use. Cheap to upgrade.")}
+          </h2>
+          <p data-reveal className="mt-6 max-w-sm leading-relaxed text-foreground/65">
+            {tx(
+              "Premium seharga kurang dari sekilo cabai sebulan — dan biasanya kembali modal di belanja pertama.",
+              "Premium costs less than a kilo of chili a month — and usually pays for itself on the first shop.",
+            )}
+          </p>
+        </div>
+
+        <div className="grid gap-5 md:grid-cols-2 lg:col-span-8">
+          <div data-reveal className="flex flex-col rounded-[14px] border border-rule bg-card p-8">
+            <div className="eyebrow text-foreground/55">{tx("Gratis", "Free")}</div>
+            <div className="mt-5 font-display text-6xl font-bold tracking-tight">Rp0</div>
+            <p className="mt-2 text-foreground/60">{tx("Selamanya, tanpa kartu.", "Forever, no card.")}</p>
+            <ul className="mt-8 flex-1 space-y-3 border-t border-rule pt-6">
+              {free.map((f) => (
+                <li key={f} className="flex items-start gap-3">
+                  <Check className="mt-0.5 h-4 w-4 shrink-0 text-leaf" strokeWidth={2.5} />
+                  <span>{f}</span>
                 </li>
               ))}
             </ul>
-            <CTAButton
+            <a
               href={user ? "/dashboard" : "/auth?tab=register"}
-              variant="secondary"
-              className="w-full mt-8"
+              className="mt-10 inline-flex h-12 items-center justify-center rounded-md border border-foreground/20 font-medium transition-colors hover:border-foreground hover:bg-foreground hover:text-background"
             >
-              Mulai Gratis
-            </CTAButton>
+              {tx("Mulai gratis", "Start free")}
+            </a>
           </div>
-          <div className="relative rounded-3xl bg-gradient-navy text-white p-8 shadow-elevated">
-            <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-warning px-4 py-1 text-xs font-bold text-warning-foreground shadow-card">
-              Paling Populer
+
+          <div
+            data-reveal
+            style={{ ["--reveal-delay" as string]: "100ms" }}
+            className="grain relative flex flex-col overflow-hidden rounded-[14px] bg-[#0f1d47] p-8 text-[#f4efe4]"
+          >
+            <div className="relative z-10 flex items-center justify-between">
+              <div className="eyebrow text-[#f4efe4]/60">Premium</div>
+              <div className="eyebrow rounded-sm bg-turmeric px-2 py-1 text-[10px] text-[#2a1d03]">
+                {tx("Paling dipilih", "Most picked")}
+              </div>
             </div>
-            <div className="text-xs font-semibold uppercase tracking-wider text-white/70">
-              Premium
+            <div className="relative z-10 mt-5 flex items-baseline gap-2">
+              <span className="font-display text-6xl font-bold tracking-tight">Rp9.900</span>
+              <span className="text-[#f4efe4]/55">/{tx("bulan", "month")}</span>
             </div>
-            <div className="mt-3 flex items-baseline gap-1">
-              <span className="text-5xl font-display font-bold">Rp9.900</span>
-              <span className="text-white/70">/bulan</span>
-            </div>
-            <p className="text-sm text-white/80 mt-2">Semua fitur untuk hemat maksimal.</p>
-            <ul className="mt-6 space-y-3">
-              {[
-                "Alert harga tanpa batas",
-                "Prediksi harga AI",
-                "Riwayat penghematan",
-                "Analitik 90 hari",
-                "Smart Basket lengkap",
-              ].map((f) => (
-                <li key={f} className="flex items-center gap-2 text-sm">
-                  <Check className="h-4 w-4 text-success" strokeWidth={3} /> {f}
+            <p className="relative z-10 mt-2 text-[#f4efe4]/65">{tx("Batalkan kapan saja.", "Cancel anytime.")}</p>
+            <ul className="relative z-10 mt-8 flex-1 space-y-3 border-t border-white/12 pt-6">
+              {premium.map((f) => (
+                <li key={f} className="flex items-start gap-3">
+                  <Check className="mt-0.5 h-4 w-4 shrink-0 text-turmeric" strokeWidth={2.5} />
+                  <span>{f}</span>
                 </li>
               ))}
             </ul>
-            <CTAButton
+            <PrimaryButton
+              tone="turmeric"
               href={user ? "/checkout?package=premium" : "/auth?tab=register"}
-              variant="white"
-              className="w-full mt-8"
+              className="relative z-10 mt-10 justify-center"
             >
-              Upgrade Premium
-            </CTAButton>
+              {tx("Ambil Premium", "Get Premium")}
+            </PrimaryButton>
           </div>
         </div>
       </div>
@@ -1206,55 +1155,71 @@ function Pricing() {
 /* ---------------- FAQ ---------------- */
 
 function FAQ() {
+  const { tx } = useTx();
   const items = [
-    {
-      q: "Apakah PasarCek gratis?",
-      a: "Ya, fitur dasar PasarCek 100% gratis. Anda bisa upgrade ke Premium kapan saja untuk fitur lanjutan.",
-    },
-    {
-      q: "Data harga berasal dari mana?",
-      a: "Data dikumpulkan dari mitra pasar tradisional, surveyor lokal terverifikasi, dan kontribusi komunitas pengguna.",
-    },
-    {
-      q: "Seberapa sering data diperbarui?",
-      a: "Harga sembako diperbarui setiap hari, dengan beberapa komoditas utama diperbarui beberapa kali sehari.",
-    },
-    {
-      q: "Apakah tersedia di seluruh Indonesia?",
-      a: "Saat ini tersedia di kota-kota besar Jawa & Sumatera, dan terus berkembang ke kota lainnya.",
-    },
-    {
-      q: "Bagaimana Smart Basket bekerja?",
-      a: "Anda memasukkan daftar belanja, lalu PasarCek menghitung total harga di setiap pasar terdekat dan menampilkan yang paling hemat.",
-    },
-    {
-      q: "Apakah saya bisa menyimpan pasar favorit?",
-      a: "Tentu. Anda bisa menyimpan pasar favorit untuk akses cepat dan menerima notifikasi khusus dari pasar tersebut.",
-    },
+    [
+      tx("Apakah PasarCek benar-benar gratis?", "Is PasarCek really free?"),
+      tx(
+        "Ya. Harga harian, perbandingan pasar, dan Smart Basket dasar gratis selamanya. Premium hanya untuk yang butuh alarm tanpa batas dan prediksi harga.",
+        "Yes. Daily prices, market comparison and basic Smart Basket are free forever. Premium is for unlimited alerts and price forecasts.",
+      ),
+    ],
+    [
+      tx("Dari mana data harganya?", "Where do the prices come from?"),
+      tx(
+        "Dari mitra pasar tradisional, surveyor lokal yang terverifikasi, dan laporan komunitas yang kami periksa ulang.",
+        "From partner traditional markets, verified local surveyors, and community reports that we cross-check.",
+      ),
+    ],
+    [
+      tx("Seberapa sering harga diperbarui?", "How often are prices updated?"),
+      tx(
+        "Setiap hari. Komoditas yang bergerak cepat seperti cabai dan bawang bisa diperbarui beberapa kali sehari.",
+        "Every day. Fast movers like chili and shallots can update several times a day.",
+      ),
+    ],
+    [
+      tx("Kota mana saja yang sudah tersedia?", "Which cities are covered?"),
+      tx(
+        "Saat ini Jakarta dan sekitarnya, lalu kota-kota besar di Jawa dan Sumatra. Daftar pasar bertambah setiap bulan.",
+        "Greater Jakarta today, then major cities in Java and Sumatra. The market list grows every month.",
+      ),
+    ],
+    [
+      tx("Bagaimana Smart Basket menghitung?", "How does Smart Basket calculate?"),
+      tx(
+        "Ia menjumlahkan harga terbaru setiap barang di daftar Anda, di setiap pasar terdekat, lalu mengurutkan totalnya dari yang paling hemat.",
+        "It sums the latest price of every item on your list at each nearby market, then ranks the totals from lowest.",
+      ),
+    ],
+    [
+      tx("Bisa menyimpan pasar langganan?", "Can I save my usual markets?"),
+      tx(
+        "Bisa. Simpan pasar favorit untuk akses cepat dan notifikasi khusus dari pasar tersebut.",
+        "Yes. Save favourite markets for quick access and alerts specific to them.",
+      ),
+    ],
   ];
-  const [open, setOpen] = useState<number | null>(0);
   return (
-    <section id="faq" className="py-20 bg-secondary/40">
-      <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
-        <SectionTitle eyebrow="FAQ" title="Pertanyaan yang Sering Ditanyakan" />
-        <div className="space-y-3">
-          {items.map((it, i) => (
-            <div key={it.q} className="rounded-2xl bg-white border border-border overflow-hidden">
-              <button
-                onClick={() => setOpen(open === i ? null : i)}
-                className="w-full flex items-center justify-between p-5 text-left"
-              >
-                <span className="font-display font-semibold text-foreground">{it.q}</span>
-                <ChevronDown
-                  className={`h-5 w-5 text-muted-foreground transition-transform ${open === i ? "rotate-180" : ""}`}
-                />
-              </button>
-              {open === i && (
-                <div className="px-5 pb-5 text-sm text-muted-foreground animate-fade-up">
-                  {it.a}
-                </div>
-              )}
-            </div>
+    <section id="faq" className="border-t border-rule">
+      <div className="mx-auto grid max-w-[1240px] grid-cols-1 gap-12 px-5 py-24 sm:px-8 md:py-32 lg:grid-cols-12 lg:gap-10">
+        <div className="lg:col-span-4">
+          <SectionLabel n="07">FAQ</SectionLabel>
+          <h2 data-reveal className="mt-6 text-[clamp(2.2rem,4.2vw,3.5rem)] font-bold leading-[1.02]">
+            {tx("Yang sering ditanyakan.", "Asked often.")}
+          </h2>
+        </div>
+        <div className="border-t border-rule lg:col-span-8">
+          {items.map(([q, a], i) => (
+            <details key={q} data-reveal open={i === 0} className="group border-b border-rule">
+              <summary className="flex cursor-pointer list-none items-center justify-between gap-6 py-6 text-lg font-medium tracking-tight sm:text-xl [&::-webkit-details-marker]:hidden">
+                {q}
+                <span className="relative grid h-8 w-8 shrink-0 place-items-center rounded-full border border-rule transition-colors group-open:border-foreground group-open:bg-foreground group-open:text-background">
+                  <Plus className="h-4 w-4 transition-transform duration-300 group-open:rotate-45" />
+                </span>
+              </summary>
+              <p className="max-w-2xl pb-7 pr-12 leading-relaxed text-foreground/65">{a}</p>
+            </details>
           ))}
         </div>
       </div>
@@ -1266,6 +1231,7 @@ function FAQ() {
 
 function FinalCTA() {
   const { user } = useAuth();
+  const { tx } = useTx();
   const [busy, setBusy] = useState(false);
 
   const handleWaitlist = async (e: React.MouseEvent) => {
@@ -1280,9 +1246,7 @@ function FinalCTA() {
       if (error) {
         toast.error("Gagal mendaftar antrean prioritas: " + error.message);
       } else {
-        toast.success(
-          "Terima kasih! Akun Anda telah dimasukkan ke daftar prioritas antrean PasarCek.",
-        );
+        toast.success("Terima kasih! Akun Anda telah dimasukkan ke daftar prioritas antrean PasarCek.");
       }
     } else {
       localStorage.setItem("waitlist_priority_signup", "true");
@@ -1294,139 +1258,77 @@ function FinalCTA() {
   };
 
   return (
-    <section id="cta" className="py-20 bg-gradient-navy text-white relative overflow-hidden">
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 h-96 w-[120%] rounded-full bg-accent/15 blur-3xl" />
-      <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 grid lg:grid-cols-2 gap-10 items-center">
-        <div>
-          <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold leading-tight">
-            Mulai Hemat Pengeluaran Belanja Mulai Hari Ini
+    <section id="cta" className="relative overflow-hidden border-t border-rule">
+      <MarketField density={26} className="[mask-image:radial-gradient(ellipse_60%_80%_at_30%_100%,#000_20%,transparent_100%)]" />
+      <div className="relative mx-auto grid max-w-[1240px] grid-cols-1 items-center gap-16 px-5 py-24 sm:px-8 md:py-32 lg:grid-cols-12 lg:gap-10">
+        <div className="lg:col-span-7">
+          <h2 data-reveal className="display-xl max-w-3xl text-[clamp(2.8rem,6.4vw,5.6rem)]">
+            {tx("Besok pagi, belanja di pasar yang tepat.", "Tomorrow morning, shop at the right market.")}
           </h2>
-          <p className="mt-5 text-white/80 text-base md:text-lg max-w-xl">
-            Ribuan keluarga sudah menggunakan PasarCek untuk membuat keputusan belanja yang lebih
-            cerdas.
+          <p data-reveal className="mt-7 max-w-lg text-lg leading-relaxed text-foreground/65">
+            {tx(
+              "Daftar butuh satu menit. Harga hari ini sudah menunggu.",
+              "Sign-up takes a minute. Today's prices are already waiting.",
+            )}
           </p>
-          <div className="mt-8 flex flex-wrap gap-3">
-            <CTAButton href={user ? "/dashboard" : "/auth?tab=register"} variant="white">
-              Akses Gratis
-            </CTAButton>
+          <div data-reveal className="mt-10 flex flex-wrap items-center gap-4">
+            <PrimaryButton href={user ? "/dashboard" : "/auth?tab=register"}>
+              {tx("Buat akun gratis", "Create a free account")}
+            </PrimaryButton>
             <button
+              type="button"
               onClick={handleWaitlist}
               disabled={busy}
-              className="inline-flex items-center justify-center gap-2 rounded-2xl px-6 py-3 text-sm font-semibold border border-white/30 text-white hover:bg-white/10 transition-all disabled:opacity-50 cursor-pointer"
+              className="inline-flex h-12 items-center rounded-md border border-foreground/20 px-5 text-[0.95rem] font-medium transition-colors hover:border-foreground disabled:opacity-50"
             >
-              {busy ? "Memproses..." : "Gabung Waitlist"}
+              {busy ? tx("Memproses…", "Working…") : tx("Gabung waitlist aplikasi", "Join the app waitlist")}
             </button>
           </div>
         </div>
-        <div className="flex justify-center">
-          <img
+        <div data-reveal className="relative lg:col-span-5">
+          <Snapshot
             src={familyImg}
-            alt="Keluarga bahagia menghemat belanja dengan PasarCek"
-            width={1024}
-            height={800}
-            loading="lazy"
-            className="w-full max-w-md animate-float"
+            alt={tx(
+              "Keluarga tersenyum setelah belanja hemat di pasar",
+              "A family smiling after a well-priced market run",
+            )}
+            label={tx("Sesudah: belanja dengan rencana", "After: shopping with a plan")}
+            tilt={1.5}
+            float
+            className="mx-auto w-[88%] sm:w-[70%] lg:w-full"
+            imgClassName="aspect-[4/5] object-[50%_30%]"
           />
+          <div
+            aria-hidden
+            className="absolute -left-2 top-10 rotate-[-10deg] rounded-full border-2 border-leaf bg-background/85 px-4 py-2 font-mono text-[11px] font-bold uppercase tracking-[0.18em] text-leaf backdrop-blur-sm sm:left-4 lg:-left-10"
+          >
+            {tx("Hemat tiap minggu", "Saving every week")}
+          </div>
         </div>
       </div>
     </section>
   );
 }
 
-/* ---------------- Footer ---------------- */
-
-function Footer() {
-  const handleUnderDev = (name: string) => (e: React.MouseEvent) => {
-    e.preventDefault();
-    toast.info(
-      `Fitur/Halaman ${name} sedang dalam pengembangan. Hubungi kami via email jika ada pertanyaan!`,
-    );
-  };
-
-  const cols = [
-    {
-      title: "Produk",
-      links: [
-        { label: "Fitur", href: "#fitur" },
-        { label: "Harga", href: "#harga" },
-        { label: "FAQ", href: "#faq" },
-      ],
-    },
-    {
-      title: "Perusahaan",
-      links: [
-        { label: "Tentang Kami", href: "/trust" },
-        { label: "Kontak", href: "#", onClick: handleUnderDev("Kontak") },
-        { label: "Blog", href: "#", onClick: handleUnderDev("Blog") },
-      ],
-    },
-    {
-      title: "Legal",
-      links: [
-        { label: "Privacy Policy", href: "/trust" },
-        { label: "Terms of Service", href: "/trust" },
-      ],
-    },
-  ];
-
-  return (
-    <footer className="bg-white border-t border-border py-14">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 grid sm:grid-cols-2 lg:grid-cols-4 gap-8">
-        <div>
-          <Logo />
-          <p className="mt-4 text-sm text-muted-foreground max-w-xs">
-            Cek harga sembako terbaru & bandingkan pasar terdekat. Belanja lebih hemat untuk
-            keluarga Indonesia.
-          </p>
-        </div>
-        {cols.map((c) => (
-          <div key={c.title}>
-            <div className="font-display font-semibold text-foreground mb-3">{c.title}</div>
-            <ul className="space-y-2">
-              {c.links.map((l) => (
-                <li key={l.label}>
-                  <a
-                    href={l.href}
-                    onClick={l.onClick}
-                    className="text-sm text-muted-foreground hover:text-primary transition-colors"
-                  >
-                    {l.label}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </div>
-        ))}
-      </div>
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 mt-10 pt-6 border-t border-border text-xs text-muted-foreground text-center">
-        © 2026 PasarCek. All Rights Reserved.
-      </div>
-    </footer>
-  );
-}
-
 /* ---------------- Page ---------------- */
 
 function LandingPage() {
+  useReveal();
   return (
-    <div id="top" className="min-h-screen bg-background">
-      <Navbar />
-      <main>
+    <div id="top" className="grain min-h-screen bg-background text-foreground">
+      <SiteHeader />
+      <main className="relative z-10">
         <Hero />
-        <Stats />
-        <Problems />
-        <Why />
+        <Problem />
         <Features />
         <HowItWorks />
-        <AppPreview />
         <SmartBasket />
-        <UseCases />
-        <Benefits />
+        <ForWhom />
         <Pricing />
         <FAQ />
         <FinalCTA />
       </main>
-      <Footer />
+      <SiteFooter />
     </div>
   );
 }

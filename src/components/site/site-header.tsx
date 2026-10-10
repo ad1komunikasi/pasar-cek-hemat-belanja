@@ -31,7 +31,7 @@ export function SiteHeader({ ticker = true }: { ticker?: boolean }) {
     { href: "/#harga-hari-ini", label: lang === "id" ? "Harga hari ini" : "Today's prices" },
     { href: "/#fitur", label: t("nav.features") },
     { href: "/#smart-basket", label: "Smart Basket" },
-    { href: "/#paket", label: t("nav.pricing") },
+    { href: "/#paket", label: lang === "id" ? "Paket" : "Plans" },
     { href: "/#faq", label: t("nav.faq") },
   ];
 

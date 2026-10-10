@@ -1,31 +1,40 @@
 import { Link } from "@tanstack/react-router";
 import { cn } from "@/lib/utils";
+import markSrc from "@/assets/brand/pasarcek-mark.png";
 
-/** Price-tag mark: the thing every pasar stall hangs over its goods. */
-export function LogoMark({ className }: { className?: string }) {
+/**
+ * The PasarCek basket icon. On dark surfaces (`onDark`) it sits on a paper tile so the
+ * brand blue stays legible.
+ */
+export function LogoMark({ className, onDark }: { className?: string; onDark?: boolean }) {
+  if (onDark) {
+    return (
+      <span className={cn("grid h-10 w-10 place-items-center rounded-[9px] bg-[#f4efe4] p-1", className)}>
+        <img src={markSrc} alt="" width={64} height={64} className="h-full w-full object-contain" />
+      </span>
+    );
+  }
   return (
-    <svg viewBox="0 0 32 32" fill="none" aria-hidden className={cn("h-8 w-8", className)}>
-      <rect width="32" height="32" rx="7" className="fill-tarp" />
-      <path
-        d="M8 9.5A1.5 1.5 0 0 1 9.5 8h7.4a2 2 0 0 1 1.4.6l6.5 6.5a2 2 0 0 1 0 2.8l-6.6 6.6a2 2 0 0 1-2.8 0L8.6 17.9A2 2 0 0 1 8 16.5z"
-        className="fill-paper"
-      />
-      <circle cx="12.6" cy="12.6" r="2" className="fill-turmeric" />
-    </svg>
+    <img
+      src={markSrc}
+      alt=""
+      width={64}
+      height={64}
+      className={cn("h-10 w-10 object-contain dark:rounded-[9px] dark:bg-[#f4efe4] dark:p-1", className)}
+    />
   );
 }
 
 export function Logo({ className, inverted }: { className?: string; inverted?: boolean }) {
   return (
-    <Link to="/" className={cn("group inline-flex items-center gap-2.5", className)}>
-      <LogoMark className="transition-transform duration-300 group-hover:-rotate-6" />
-      <span
-        className={cn(
-          "font-display text-[1.35rem] font-bold leading-none tracking-[-0.04em]",
-          inverted ? "text-[#f4efe4]" : "text-foreground",
-        )}
-      >
-        pasar<span className={inverted ? "text-turmeric" : "text-tarp"}>cek</span>
+    <Link to="/" aria-label="PasarCek" className={cn("group inline-flex items-center gap-2", className)}>
+      <LogoMark
+        onDark={inverted}
+        className="transition-transform duration-300 group-hover:-rotate-6"
+      />
+      <span className="font-display text-[1.4rem] font-extrabold leading-none tracking-[-0.035em]">
+        <span className={inverted ? "text-[#f4efe4]" : "text-[#1e3a8a] dark:text-[#c3d2fa]"}>Pasar</span>
+        <span className={inverted ? "text-[#6fd6d3]" : "text-[#127a79] dark:text-[#3fc2bf]"}>Cek</span>
       </span>
     </Link>
   );

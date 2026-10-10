@@ -23,7 +23,7 @@ export function PriceTicker({ className }: { className?: string }) {
             <span
               className={cn(
                 "tabular",
-                down && "text-[#7fd3a6]",
+                down && "text-[#6fd6d3]",
                 up && "text-[#ff8a70]",
                 !down && !up && "text-white/45",
               )}
@@ -39,7 +39,7 @@ export function PriceTicker({ className }: { className?: string }) {
   return (
     <div
       className={cn(
-        "group relative overflow-hidden bg-[#0a2e22] py-2 font-mono text-[11px] tracking-wide",
+        "group relative overflow-hidden bg-[#0f1d47] py-2 font-mono text-[11px] tracking-wide",
         className,
       )}
     >
@@ -47,8 +47,8 @@ export function PriceTicker({ className }: { className?: string }) {
         {row()}
         {row(true)}
       </div>
-      <div className="pointer-events-none absolute inset-y-0 left-0 w-16 bg-gradient-to-r from-[#0a2e22] to-transparent" />
-      <div className="pointer-events-none absolute inset-y-0 right-0 w-16 bg-gradient-to-l from-[#0a2e22] to-transparent" />
+      <div className="pointer-events-none absolute inset-y-0 left-0 w-16 bg-gradient-to-r from-[#0f1d47] to-transparent" />
+      <div className="pointer-events-none absolute inset-y-0 right-0 w-16 bg-gradient-to-l from-[#0f1d47] to-transparent" />
     </div>
   );
 }

@@ -8,8 +8,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
 import { z } from "zod";
-import { ShoppingBasket, MapPin, TrendingDown, Sparkles } from "lucide-react";
-import { CelenganAyamIcon } from "@/components/celengan-ayam-icon";
+import { ArrowLeft } from "lucide-react";
+import { Logo } from "@/components/site/logo";
+import { MarketField } from "@/components/site/market-field";
+import {
+  recordedLabel,
+  rupiah,
+  useMarketBoards,
+} from "@/components/site/use-market-prices";
 
 export const Route = createFileRoute("/auth/")({
   validateSearch: (s: Record<string, unknown>): { tab?: string } => ({
@@ -54,202 +60,24 @@ function AuthPage() {
   }, [user, loading, router]);
 
   return (
-    <div className="grid min-h-screen lg:grid-cols-2">
-      <div className="hidden bg-gradient-navy p-12 text-white lg:flex lg:flex-col lg:justify-between relative overflow-hidden">
-        {/* Glow effects */}
-        <div className="absolute -top-20 -left-20 h-96 w-96 rounded-full bg-primary/20 blur-3xl pointer-events-none" />
-        <div className="absolute -bottom-20 -right-20 h-96 w-96 rounded-full bg-accent/20 blur-3xl pointer-events-none" />
-
-        {/* Header Logo */}
-        <Link to="/" className="flex items-center gap-2 text-lg font-bold group relative z-10">
-          <div className="grid h-9 w-9 place-items-center rounded-xl bg-gradient-primary text-white shadow-soft group-hover:scale-105 transition-transform duration-200">
-            <ShoppingBasket className="h-5 w-5" />
-          </div>
-          <span className="font-display text-xl font-bold text-white tracking-tight">PasarCek</span>
-        </Link>
-
-        {/* Content & Animation */}
-        <div className="relative z-10 my-auto flex flex-col items-center">
-          <div className="text-left w-full max-w-md">
-            <h1 className="text-5xl font-black leading-tight text-white">
-              Cek Harga Dulu,
-              <br />
-              Belanja Lebih Hemat.
-            </h1>
-            <p className="mt-6 text-white/80 text-base leading-relaxed">
-              Pantau harga sembako terbaru, bandingkan antar pasar terdekat, dan temukan keranjang
-              belanja paling hemat hari ini.
-            </p>
-          </div>
-
-          {/* Interactive Animated Graphic */}
-          <div className="relative mt-16 w-full max-w-sm h-64 flex items-center justify-center">
-            {/* Background glowing circle */}
-            <div className="absolute inset-0 m-auto h-48 w-48 rounded-full bg-gradient-primary opacity-20 blur-2xl animate-pulse" />
-
-            {/* Smart Basket Card Mockup */}
-            <div className="relative w-72 bg-white/10 backdrop-blur-md border border-white/15 rounded-2xl p-5 shadow-elevated animate-float z-10">
-              <div className="flex items-center justify-between mb-4 border-b border-white/10 pb-2">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-accent-soft">
-                  Simulasi Keranjang
-                </span>
-                <span className="text-[10px] font-medium bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full">
-                  -12% Lebih Hemat
-                </span>
-              </div>
-
-              <div className="space-y-3">
-                <div className="flex items-center justify-between text-xs">
-                  <div className="flex items-center gap-2">
-                    <div className="w-2.5 h-2.5 rounded-full bg-amber-400" />
-                    <span className="font-medium text-white/90">Minyak Goreng 2L</span>
-                  </div>
-                  <span className="font-bold text-white">
-                    Rp28.500{" "}
-                    <span className="text-white/40 line-through text-[10px]">Rp32.000</span>
-                  </span>
-                </div>
-
-                <div className="flex items-center justify-between text-xs">
-                  <div className="flex items-center gap-2">
-                    <div className="w-2.5 h-2.5 rounded-full bg-emerald-400" />
-                    <span className="font-medium text-white/90">Beras Premium 5kg</span>
-                  </div>
-                  <span className="font-bold text-white">
-                    Rp64.000{" "}
-                    <span className="text-white/40 line-through text-[10px]">Rp69.000</span>
-                  </span>
-                </div>
-
-                <div className="flex items-center justify-between text-xs">
-                  <div className="flex items-center gap-2">
-                    <div className="w-2.5 h-2.5 rounded-full bg-sky-400" />
-                    <span className="font-medium text-white/90">Telur Ayam 1kg</span>
-                  </div>
-                  <span className="font-bold text-white">
-                    Rp26.000{" "}
-                    <span className="text-white/40 line-through text-[10px]">Rp29.000</span>
-                  </span>
-                </div>
-              </div>
-
-              <div className="mt-4 pt-3 border-t border-white/10 flex items-center justify-between">
-                <span className="text-[11px] font-semibold text-white/70">Total Penghematan</span>
-                <span className="text-xs font-black text-emerald-400 bg-emerald-500/10 px-2 py-1 rounded-lg">
-                  Hemat Rp11.500
-                </span>
-              </div>
-            </div>
-
-            {/* Floating Icons */}
-            {/* MapPin Icon */}
-            <div
-              className="absolute -top-4 right-12 z-20 bg-white/10 backdrop-blur-md border border-white/15 p-3 rounded-full text-accent shadow-card animate-float"
-              style={{ animationDelay: "1s", animationDuration: "5s" }}
-            >
-              <MapPin className="h-5 w-5" />
-            </div>
-
-            {/* TrendingDown Icon */}
-            <div
-              className="absolute -bottom-6 left-12 z-20 bg-white/10 backdrop-blur-md border border-white/15 p-3 rounded-full text-emerald-400 shadow-card animate-float"
-              style={{ animationDelay: "2s", animationDuration: "7s" }}
-            >
-              <TrendingDown className="h-5 w-5" />
-            </div>
-
-            {/* Celengan Ayam */}
-            <div
-              className="absolute top-12 -left-10 z-20 bg-white/10 backdrop-blur-md border border-white/15 p-2 rounded-2xl shadow-card animate-float"
-              style={{ animationDelay: "0.5s", animationDuration: "6s" }}
-            >
-              <CelenganAyamIcon className="w-12 h-12" />
-            </div>
-
-            {/* Uang Koin Rupiah */}
-            <div
-              className="absolute top-2 -left-16 z-30 bg-white/10 backdrop-blur-md border border-white/15 p-2 rounded-full shadow-card animate-float"
-              style={{ animationDelay: "1.5s", animationDuration: "5s" }}
-            >
-              <svg
-                viewBox="0 0 32 32"
-                className="w-6 h-6"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <circle
-                  cx="16"
-                  cy="16"
-                  r="14"
-                  fill="url(#goldGrad)"
-                  stroke="#b45309"
-                  strokeWidth="1"
-                />
-                <circle
-                  cx="16"
-                  cy="16"
-                  r="11"
-                  stroke="#fef08a"
-                  strokeWidth="0.7"
-                  strokeDasharray="1.5 1"
-                />
-                <text
-                  x="16"
-                  y="19.5"
-                  fontFamily="system-ui, sans-serif"
-                  fontWeight="900"
-                  fontSize="10"
-                  fill="#78350f"
-                  textAnchor="middle"
-                >
-                  Rp
-                </text>
-                <path d="M8 8L9.5 9.5" stroke="white" strokeWidth="1" strokeLinecap="round" />
-                <defs>
-                  <linearGradient
-                    id="goldGrad"
-                    x1="2"
-                    y1="2"
-                    x2="30"
-                    y2="30"
-                    gradientUnits="userSpaceOnUse"
-                  >
-                    <stop offset="0%" stopColor="#fcd34d" />
-                    <stop offset="50%" stopColor="#eab308" />
-                    <stop offset="100%" stopColor="#ca8a04" />
-                  </linearGradient>
-                </defs>
-              </svg>
-            </div>
-
-            {/* Sparkles Icon */}
-            <div
-              className="absolute bottom-12 -right-4 z-20 bg-white/10 backdrop-blur-md border border-white/15 p-3 rounded-full text-amber-300 shadow-card animate-float"
-              style={{ animationDelay: "3s", animationDuration: "8s" }}
-            >
-              <Sparkles className="h-5 w-5" />
-            </div>
-          </div>
-        </div>
-
-        <p className="text-sm text-white/50 relative z-10">© {new Date().getFullYear()} PasarCek</p>
-      </div>
-      <div className="flex items-center justify-center bg-[var(--color-gray-50)] p-6">
-        <div className="w-full max-w-sm">
+    <div className="grid min-h-screen bg-background lg:grid-cols-[1.05fr_1fr]">
+      <AuthAside />
+      <div className="grain relative flex flex-col px-5 py-6 sm:px-10">
+        <div className="relative z-10 flex items-center justify-between">
+          <Logo className="lg:invisible" />
           <Link
             to="/"
-            className="mb-8 inline-flex items-center gap-2 text-sm font-bold lg:hidden group"
+            className="inline-flex items-center gap-1.5 text-sm text-foreground/60 transition-colors hover:text-foreground"
           >
-            <div className="grid h-8 w-8 place-items-center rounded-lg bg-gradient-primary text-white shadow-soft group-hover:scale-105 transition-transform duration-200">
-              <ShoppingBasket className="h-4.5 w-4.5" />
-            </div>
-            <span className="font-display text-lg font-bold text-primary">PasarCek</span>
+            <ArrowLeft className="h-4 w-4" /> Beranda
           </Link>
+        </div>
+        <div className="relative z-10 mx-auto my-auto w-full max-w-sm py-12">
           <Tabs value={activeTab} onValueChange={handleTabChange}>
-            <TabsList className="mb-6 grid w-full grid-cols-3">
-              <TabsTrigger value="login">Masuk</TabsTrigger>
-              <TabsTrigger value="register">Daftar</TabsTrigger>
-              <TabsTrigger value="forgot">Lupa</TabsTrigger>
+            <TabsList className="mb-10 grid h-auto w-full grid-cols-3 rounded-none border-b border-rule bg-transparent p-0">
+              <TabsTrigger value="login" className="-mb-px rounded-none border-0 border-b-2 border-transparent bg-transparent pb-3 pt-1 text-[0.95rem] text-foreground/55 shadow-none data-[state=active]:border-foreground data-[state=active]:bg-transparent data-[state=active]:text-foreground data-[state=active]:shadow-none dark:data-[state=active]:bg-transparent">Masuk</TabsTrigger>
+              <TabsTrigger value="register" className="-mb-px rounded-none border-0 border-b-2 border-transparent bg-transparent pb-3 pt-1 text-[0.95rem] text-foreground/55 shadow-none data-[state=active]:border-foreground data-[state=active]:bg-transparent data-[state=active]:text-foreground data-[state=active]:shadow-none dark:data-[state=active]:bg-transparent">Daftar</TabsTrigger>
+              <TabsTrigger value="forgot" className="-mb-px rounded-none border-0 border-b-2 border-transparent bg-transparent pb-3 pt-1 text-[0.95rem] text-foreground/55 shadow-none data-[state=active]:border-foreground data-[state=active]:bg-transparent data-[state=active]:text-foreground data-[state=active]:shadow-none dark:data-[state=active]:bg-transparent">Lupa</TabsTrigger>
             </TabsList>
             <TabsContent value="login">
               <LoginForm />
@@ -264,6 +92,55 @@ function AuthPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+function AuthAside() {
+  const { data: boards = [] } = useMarketBoards();
+  const rows = boards.slice(0, 5);
+  return (
+    <aside className="grain relative hidden overflow-hidden bg-[#0f1d47] text-[#f4efe4] lg:flex lg:flex-col">
+      <MarketField tone="light" className="opacity-80" />
+      <div className="relative z-10 flex flex-1 flex-col justify-between p-12 xl:p-16">
+        <Logo inverted />
+        <div className="max-w-md">
+          <h1 className="display-xl text-[clamp(3rem,4.6vw,4.6rem)]">
+            Cek harga dulu, <span className="text-turmeric">baru</span> ke pasar.
+          </h1>
+          <p className="mt-6 text-lg leading-relaxed text-[#f4efe4]/65">
+            Satu akun untuk papan harga, Smart Basket, dan alarm harga turun di pasar-pasar sekitar
+            Anda.
+          </p>
+          <div className="mt-10 rounded-[12px] border border-white/12 bg-[#0f1d47]/70 backdrop-blur-sm" data-field-avoid>
+            <div className="flex justify-between border-b border-white/10 px-5 py-3">
+              <span className="eyebrow text-[#f4efe4]/50">Termurah hari ini</span>
+              {rows[0] && (
+                <span className="eyebrow text-[#f4efe4]/40">
+                  dicatat {recordedLabel(rows[0].recordedAt, "id")}
+                </span>
+              )}
+            </div>
+            <ul className="px-5 py-2">
+              {rows.map((b) => (
+                <li
+                  key={b.name}
+                  className="flex items-baseline justify-between gap-4 border-b border-dashed border-white/10 py-2.5 text-[0.95rem] last:border-0"
+                >
+                  <span>
+                    {b.name}
+                    <span className="ml-2 text-sm text-[#f4efe4]/45">{b.quotes[0]?.market}</span>
+                  </span>
+                  <span className="font-mono text-sm text-turmeric tabular">{rupiah(b.min)}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+        <p className="font-mono text-[11px] tracking-wide text-[#f4efe4]/40">
+          © {new Date().getFullYear()} PasarCek · Jakarta
+        </p>
+      </div>
+    </aside>
   );
 }
 
@@ -400,27 +277,30 @@ function LoginForm() {
     navigate({ to: "/dashboard", replace: true });
   }
   return (
-    <form onSubmit={submit} className="space-y-4">
-      <h2 className="text-2xl font-black">Masuk ke akun Anda</h2>
+    <form onSubmit={submit} className="space-y-5">
+      <h2 className="display-xl text-[2.6rem]">Selamat datang kembali.</h2>
+      <p className="-mt-2 text-foreground/60">Masuk untuk melihat harga hari ini.</p>
       <GoogleButton flow="login" />
-      <div className="relative my-4 text-center text-xs text-[var(--color-gray-500)]">
-        <span className="bg-[var(--color-gray-50)] px-2">atau email</span>
-        <div className="absolute inset-x-0 top-1/2 -z-10 h-px bg-[var(--color-gray-100)]" />
+      <div className="eyebrow my-5 flex items-center gap-3 text-foreground/45">
+        <span className="h-px flex-1 bg-rule" />
+        atau dengan email
+        <span className="h-px flex-1 bg-rule" />
       </div>
       <div>
-        <Label>Email</Label>
-        <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+        <Label className="mb-2 block text-sm text-foreground/75">Email</Label>
+        <Input className="h-12 bg-card" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
       </div>
       <div>
-        <Label>Password</Label>
+        <Label className="mb-2 block text-sm text-foreground/75">Password</Label>
         <Input
+          className="h-12 bg-card"
           type="password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
         />
       </div>
-      <Button type="submit" className="w-full" disabled={busy}>
+      <Button type="submit" className="h-12 w-full rounded-md text-[0.95rem]" disabled={busy}>
         {busy ? "Memproses..." : "Masuk"}
       </Button>
     </form>
@@ -465,16 +345,19 @@ function RegisterForm() {
     navigate({ to: "/dashboard", replace: true });
   }
   return (
-    <form onSubmit={submit} className="space-y-4">
-      <h2 className="text-2xl font-black">Buat akun gratis</h2>
+    <form onSubmit={submit} className="space-y-5">
+      <h2 className="display-xl text-[2.6rem]">Buat akun gratis.</h2>
+      <p className="-mt-2 text-foreground/60">Satu menit, tanpa kartu.</p>
       <GoogleButton flow="register" />
-      <div className="relative my-4 text-center text-xs text-[var(--color-gray-500)]">
-        <span className="bg-[var(--color-gray-50)] px-2">atau email</span>
-        <div className="absolute inset-x-0 top-1/2 -z-10 h-px bg-[var(--color-gray-100)]" />
+      <div className="eyebrow my-5 flex items-center gap-3 text-foreground/45">
+        <span className="h-px flex-1 bg-rule" />
+        atau dengan email
+        <span className="h-px flex-1 bg-rule" />
       </div>
       <div>
-        <Label>Nama lengkap</Label>
+        <Label className="mb-2 block text-sm text-foreground/75">Nama lengkap</Label>
         <Input
+          className="h-12 bg-card"
           value={fullName}
           onChange={(e) => setFullName(e.target.value)}
           required
@@ -482,12 +365,13 @@ function RegisterForm() {
         />
       </div>
       <div>
-        <Label>Email</Label>
-        <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+        <Label className="mb-2 block text-sm text-foreground/75">Email</Label>
+        <Input className="h-12 bg-card" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
       </div>
       <div>
-        <Label>Password</Label>
+        <Label className="mb-2 block text-sm text-foreground/75">Password</Label>
         <Input
+          className="h-12 bg-card"
           type="password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
@@ -496,9 +380,17 @@ function RegisterForm() {
         />
       </div>
       <p className="text-xs text-[var(--color-gray-500)]">
-        Dengan mendaftar Anda setuju dengan syarat & ketentuan PasarCek.
+        Dengan mendaftar, Anda menyetujui{" "}
+        <Link to="/ketentuan" target="_blank" className="text-tarp underline underline-offset-2">
+          Syarat & Ketentuan
+        </Link>{" "}
+        dan{" "}
+        <Link to="/privasi" target="_blank" className="text-tarp underline underline-offset-2">
+          Kebijakan Privasi
+        </Link>{" "}
+        PasarCek.
       </p>
-      <Button type="submit" className="w-full" disabled={busy}>
+      <Button type="submit" className="h-12 w-full rounded-md text-[0.95rem]" disabled={busy}>
         {busy ? "Memproses..." : "Daftar"}
       </Button>
     </form>
@@ -525,16 +417,16 @@ function ForgotForm() {
     toast.success("Link reset password telah dikirim ke email Anda.");
   }
   return (
-    <form onSubmit={submit} className="space-y-4">
-      <h2 className="text-2xl font-black">Lupa password</h2>
+    <form onSubmit={submit} className="space-y-5">
+      <h2 className="display-xl text-[2.6rem]">Lupa password.</h2>
       <p className="text-sm text-[var(--color-gray-500)]">
         Masukkan email Anda, kami akan kirim tautan untuk mengatur ulang password.
       </p>
       <div>
-        <Label>Email</Label>
-        <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+        <Label className="mb-2 block text-sm text-foreground/75">Email</Label>
+        <Input className="h-12 bg-card" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
       </div>
-      <Button type="submit" className="w-full" disabled={busy}>
+      <Button type="submit" className="h-12 w-full rounded-md text-[0.95rem]" disabled={busy}>
         {busy ? "Mengirim..." : "Kirim Link Reset"}
       </Button>
     </form>

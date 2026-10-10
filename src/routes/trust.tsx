@@ -1,6 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Shield, Lock, Database, UserCheck, FileText, Mail, ShoppingBasket } from "lucide-react";
-import { useAuth } from "@/hooks/use-auth";
+import { PublicPage, PageIntro } from "@/components/site/public-page";
 
 export const Route = createFileRoute("/trust")({
   head: () => ({
@@ -23,42 +22,60 @@ export const Route = createFileRoute("/trust")({
   component: TrustPage,
 });
 
+const SECTIONS = [
+  "Akses & autentikasi",
+  "Penyimpanan data",
+  "Pembayaran",
+  "Tanggung jawab bersama",
+  "Retensi & penghapusan",
+  "Laporkan masalah keamanan",
+];
+
 function TrustPage() {
-  const { user } = useAuth();
   return (
-    <div className="min-h-screen bg-white text-[var(--color-ink)]">
-      <header className="border-b border-[var(--color-gray-100)]">
-        <div className="mx-auto flex max-w-[1100px] items-center justify-between px-6 py-4">
-          <Link to="/" className="flex items-center gap-2 font-bold tracking-tight group">
-            <div className="grid h-8 w-8 place-items-center rounded-lg bg-gradient-primary text-white shadow-soft group-hover:scale-105 transition-transform duration-200">
-              <ShoppingBasket className="h-4.5 w-4.5" />
-            </div>
-            <span className="font-display text-lg font-bold text-primary">PasarCek</span>
-          </Link>
-          <nav className="flex gap-5 text-sm">
-            <Link to="/features">Fitur</Link>
-            <Link to="/pricing">Paket</Link>
-            <Link to={user ? "/dashboard" : "/auth"}>{user ? "Dashboard" : "Masuk"}</Link>
+    <PublicPage>
+      <PageIntro
+        eyebrow="Trust center"
+        title="Keamanan & privasi di PasarCek."
+        lede="Jawaban langsung untuk pertanyaan tentang akses akun, penyimpanan data, dan pembayaran — ditulis oleh tim yang membangun aplikasinya."
+      />
+      <div className="mx-auto grid max-w-[1240px] grid-cols-1 gap-12 px-5 py-20 sm:px-8 lg:grid-cols-12 lg:gap-10">
+        <aside className="lg:col-span-3">
+          <nav className="lg:sticky lg:top-36">
+            <div className="eyebrow text-foreground/45">Isi halaman</div>
+            <ol className="mt-4 space-y-2.5">
+              {SECTIONS.map((t, i) => (
+                <li key={t}>
+                  <a
+                    href={`#s-${i + 1}`}
+                    className="group flex gap-3 text-[0.95rem] text-foreground/65 transition-colors hover:text-foreground"
+                  >
+                    <span className="font-mono text-xs leading-6 text-foreground/35 group-hover:text-chili">
+                      0{i + 1}
+                    </span>
+                    {t}
+                  </a>
+                </li>
+              ))}
+            </ol>
           </nav>
-        </div>
-      </header>
+        </aside>
+        <article className="lg:col-span-8 lg:col-start-5">
+          <p className="rounded-[10px] border border-rule bg-card px-5 py-4 text-[0.95rem] leading-relaxed text-foreground/65">
+            Halaman ini bersifat informatif dan bukan sertifikasi independen. Tanggung jawab keamanan
+            dibagi antara penyedia infrastruktur, PasarCek sebagai pemilik aplikasi, dan pengguna yang
+            menjaga kredensial masing-masing. Rincian pemrosesan data pribadi ada di{" "}
+            <Link to="/privasi" className="text-tarp underline underline-offset-4">
+              Kebijakan Privasi
+            </Link>{" "}
+            dan aturan penggunaan layanan di{" "}
+            <Link to="/ketentuan" className="text-tarp underline underline-offset-4">
+              Syarat & Ketentuan
+            </Link>
+            .
+          </p>
 
-      <main className="mx-auto max-w-[900px] px-6 py-16">
-        <p className="mb-2 text-xs font-bold uppercase tracking-widest text-[var(--color-brand-blue)]">
-          Trust Center
-        </p>
-        <h1 className="mb-4 text-4xl font-black md:text-5xl">Keamanan & privasi di PasarCek</h1>
-        <p className="mb-2 max-w-2xl text-lg text-[var(--color-gray-600)]">
-          Halaman ini dikelola oleh tim PasarCek untuk menjawab pertanyaan umum tentang keamanan,
-          akses akun, dan cara kami menangani data Anda.
-        </p>
-        <p className="mb-12 text-sm text-[var(--color-gray-500)]">
-          Halaman ini bersifat informatif dan bukan sertifikasi independen. Tanggung jawab keamanan
-          dibagi antara penyedia infrastruktur, PasarCek sebagai pemilik aplikasi, dan pengguna yang
-          menjaga kredensial masing-masing.
-        </p>
-
-        <Section icon={UserCheck} title="Akses & autentikasi">
+        <Section n={1} title="Akses & autentikasi">
           <ul className="list-disc space-y-2 pl-5">
             <li>Login email/password dan Google OAuth dengan sesi terenkripsi.</li>
             <li>
@@ -72,7 +89,7 @@ function TrustPage() {
           </ul>
         </Section>
 
-        <Section icon={Database} title="Penyimpanan data">
+        <Section n={2} title="Penyimpanan data">
           <ul className="list-disc space-y-2 pl-5">
             <li>
               Data aplikasi (profil, basket, pesanan) disimpan pada database terkelola dengan
@@ -86,7 +103,7 @@ function TrustPage() {
           </ul>
         </Section>
 
-        <Section icon={Lock} title="Pembayaran">
+        <Section n={3} title="Pembayaran">
           <ul className="list-disc space-y-2 pl-5">
             <li>
               Pembayaran saat ini dilakukan manual via transfer bank/e-wallet, kemudian diverifikasi
@@ -97,7 +114,7 @@ function TrustPage() {
           </ul>
         </Section>
 
-        <Section icon={Shield} title="Tanggung jawab bersama">
+        <Section n={4} title="Tanggung jawab bersama">
           <ul className="list-disc space-y-2 pl-5">
             <li>
               <strong>Infrastruktur:</strong> isolasi tenant, enkripsi at-rest & in-transit,
@@ -114,14 +131,14 @@ function TrustPage() {
           </ul>
         </Section>
 
-        <Section icon={FileText} title="Retensi & penghapusan">
+        <Section n={5} title="Retensi & penghapusan">
           <p>
             Anda dapat menghapus bukti transfer dan favorit Anda kapan saja dari aplikasi. Untuk
             permintaan penghapusan akun secara penuh, silakan hubungi tim kami.
           </p>
         </Section>
 
-        <Section icon={Mail} title="Laporkan masalah keamanan">
+        <Section n={6} title="Laporkan masalah keamanan">
           <p>
             Jika Anda menemukan potensi celah keamanan, mohon laporkan secara bertanggung jawab
             melalui kanal kontak di halaman utama. Tim kami akan menindaklanjuti laporan secara
@@ -129,33 +146,26 @@ function TrustPage() {
           </p>
         </Section>
 
-        <p className="mt-12 text-xs text-[var(--color-gray-500)]">
-          Halaman ini diperbarui secara berkala oleh tim PasarCek. Detail spesifik (sertifikasi,
-          audit independen, SLA) belum dipublikasikan.
-        </p>
-      </main>
-    </div>
+          <p className="mt-14 font-mono text-xs text-foreground/45">
+            Diperbarui berkala oleh tim PasarCek. Detail spesifik (sertifikasi, audit independen, SLA)
+            belum dipublikasikan.
+          </p>
+        </article>
+      </div>
+    </PublicPage>
   );
 }
 
-function Section({
-  icon: Icon,
-  title,
-  children,
-}: {
-  icon: any;
-  title: string;
-  children: React.ReactNode;
-}) {
+function Section({ n, title, children }: { n: number; title: string; children: React.ReactNode }) {
   return (
-    <section className="mb-10">
-      <div className="mb-3 flex items-center gap-3">
-        <span className="flex h-9 w-9 items-center justify-center rounded-md bg-[var(--color-brand-blue)] text-white">
-          <Icon className="h-4 w-4" />
-        </span>
-        <h2 className="text-xl font-bold">{title}</h2>
+    <section id={`s-${n}`} className="scroll-mt-36 border-b border-rule py-10 first-of-type:pt-12">
+      <div className="flex items-baseline gap-4">
+        <span className="font-mono text-sm text-chili">0{n}</span>
+        <h2 className="text-2xl font-semibold tracking-tight sm:text-[1.7rem]">{title}</h2>
       </div>
-      <div className="text-[var(--color-gray-700)]">{children}</div>
+      <div className="mt-5 pl-0 leading-relaxed text-foreground/75 sm:pl-10 [&_li]:marker:text-foreground/30 [&_strong]:font-semibold [&_strong]:text-foreground">
+        {children}
+      </div>
     </section>
   );
 }

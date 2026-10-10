@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check } from "lucide-react";
+import { PublicPage, PageIntro } from "@/components/site/public-page";
 import { useAuth } from "@/hooks/use-auth";
 
 const details: Record<string, { title: string; desc: string; bullets: string[] }> = {
@@ -58,7 +58,12 @@ function FeatureDetail() {
   const { slug } = Route.useParams();
   const { user } = useAuth();
   const d = details[slug];
-  if (!d) return <div className="p-10 text-center">Fitur tidak ditemukan.</div>;
+  if (!d)
+    return (
+      <PublicPage>
+        <PageIntro eyebrow="404" title="Fitur tidak ditemukan." lede="Mungkin tautannya sudah berubah." />
+      </PublicPage>
+    );
 
   const authRoutes: Record<string, string> = {
     "harga-hari-ini": "/prices",
@@ -72,29 +77,43 @@ function FeatureDetail() {
   const targetLink = user ? (authRoutes[slug] ?? "/dashboard") : "/auth?tab=register";
 
   return (
-    <div className="min-h-screen bg-[var(--color-gray-50)]">
-      <header className="border-b border-[var(--color-gray-100)] bg-white">
-        <div className="mx-auto max-w-4xl px-4 py-4">
-          <Link to="/features" className="flex items-center gap-2 text-sm font-semibold">
-            <ArrowLeft className="h-4 w-4" />
-            Semua Fitur
+    <PublicPage>
+      <PageIntro
+        eyebrow={
+          <Link to="/features" className="inline-flex items-center gap-1.5 transition-colors hover:text-foreground">
+            <ArrowLeft className="h-3.5 w-3.5" /> Semua fitur
           </Link>
-        </div>
-      </header>
-      <main className="mx-auto max-w-3xl px-4 py-16">
-        <h1 className="text-4xl font-black sm:text-5xl">{d.title}</h1>
-        <p className="mt-4 text-lg text-[var(--color-gray-700)]">{d.desc}</p>
-        <ul className="mt-8 space-y-2">
+        }
+        title={d.title}
+        lede={d.desc}
+      />
+      <div className="mx-auto grid max-w-[1240px] grid-cols-1 gap-12 px-5 py-16 sm:px-8 md:py-24 lg:grid-cols-12">
+        <ul className="border-t border-rule lg:col-span-7">
           {d.bullets.map((b, i) => (
-            <li key={i} className="rounded-lg bg-white p-4 font-medium">
-              ✓ {b}
+            <li key={i} className="flex items-center gap-5 border-b border-rule py-5 text-lg">
+              <span className="font-mono text-sm text-foreground/40">0{i + 1}</span>
+              <span className="flex-1">{b}</span>
+              <Check className="h-5 w-5 text-leaf" strokeWidth={2.25} />
             </li>
           ))}
         </ul>
-        <Button asChild className="mt-8" size="lg">
-          <Link to={targetLink}>{user ? "Buka Fitur" : "Mulai Gratis"}</Link>
-        </Button>
-      </main>
-    </div>
+        <div className="lg:col-span-4 lg:col-start-9">
+          <div className="rounded-[14px] border border-rule bg-card p-7">
+            <p className="leading-relaxed text-foreground/70">
+              {user
+                ? "Fitur ini sudah tersedia di akun Anda."
+                : "Gratis untuk dicoba — cukup buat akun dalam satu menit."}
+            </p>
+            <a
+              href={targetLink}
+              className="group mt-6 inline-flex h-12 w-full items-center justify-center gap-2 rounded-md bg-tarp font-medium text-primary-foreground transition-colors hover:bg-tarp-ink dark:hover:bg-leaf"
+            >
+              {user ? "Buka fitur" : "Mulai gratis"}
+              <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+            </a>
+          </div>
+        </div>
+      </div>
+    </PublicPage>
   );
 }

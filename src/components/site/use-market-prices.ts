@@ -10,6 +10,7 @@ export type CommodityBoard = {
   max: number;
   avg: number;
   change: number; // avg vs previous recorded day, as a fraction
+  recordedAt: string; // ISO date of the latest price
 };
 
 // Snapshot of the public price table, used until (or if) the live query resolves.
@@ -29,7 +30,13 @@ const FALLBACK: Record<string, [string, Record<string, number>]> = {
 };
 const FALLBACK_CHANGE = [-0.021, 0.004, -0.012, 0.018, -0.034, 0.002, 0.027, -0.006, -0.015, 0.009, -0.011, 0.0];
 
-function toBoard(name: string, unit: string, byMarket: Record<string, number>, change: number) {
+function toBoard(
+  name: string,
+  unit: string,
+  byMarket: Record<string, number>,
+  change: number,
+  recordedAt = "2026-06-22",
+) {
   const quotes = Object.entries(byMarket)
     .map(([market, price]) => ({ market, price }))
     .sort((a, b) => a.price - b.price);
@@ -42,6 +49,7 @@ function toBoard(name: string, unit: string, byMarket: Record<string, number>, c
     max: prices[prices.length - 1],
     avg: prices.reduce((a, b) => a + b, 0) / prices.length,
     change,
+    recordedAt,
   } satisfies CommodityBoard;
 }
 
@@ -80,7 +88,7 @@ async function fetchBoards(): Promise<CommodityBoard[]> {
   const boards: CommodityBoard[] = [];
   for (const [name, g] of grouped) {
     if (Object.keys(g.now).length < 2) continue;
-    const b = toBoard(name, g.unit, g.now, 0);
+    const b = toBoard(name, g.unit, g.now, 0, latest);
     const prevAvg = g.prev.length ? g.prev.reduce((a, c) => a + c, 0) / g.prev.length : b.avg;
     b.change = (b.avg - prevAvg) / prevAvg;
     boards.push(b);
@@ -107,3 +115,7 @@ export function useMarketBoards() {
 
 export const rupiah = (n: number) => "Rp" + new Intl.NumberFormat("id-ID").format(Math.round(n));
 export const shortMarket = (m: string) => m.replace(/^Pasar\s+/i, "");
+export const recordedLabel = (iso: string, lang: "id" | "en") =>
+  new Intl.DateTimeFormat(lang === "id" ? "id-ID" : "en-GB", { day: "numeric", month: "short" }).format(
+    new Date(iso + "T00:00:00"),
+  );

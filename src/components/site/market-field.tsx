@@ -6,12 +6,21 @@ type Ping = { x: number; y: number; born: number; label: string; down: boolean }
 const LABELS_DOWN = ["−Rp500", "−Rp1.200", "−Rp2.000", "−Rp800", "−Rp3.500", "−Rp1.500"];
 const LABELS_UP = ["+Rp300", "+Rp700", "+Rp1.000"];
 
-function readColors() {
+function readColors(tone: "ink" | "light") {
   const cs = getComputedStyle(document.documentElement);
   const v = (name: string, fallback: string) => cs.getPropertyValue(name).trim() || fallback;
+  if (tone === "light") {
+    return {
+      dot: "#f4efe4",
+      down: "#6fd6d3",
+      up: "#ff8a70",
+      mono: v("--font-mono", "monospace"),
+      dark: true,
+    };
+  }
   return {
-    dot: v("--tarp-ink", "#0a2e22"),
-    down: v("--leaf", "#2f8a5b"),
+    dot: v("--tarp-ink", "#0f1d47"),
+    down: v("--leaf", "#127a79"),
     up: v("--chili", "#d0412a"),
     mono: v("--font-mono", "monospace"),
     dark: document.documentElement.classList.contains("dark"),
@@ -22,7 +31,16 @@ function readColors() {
  * Halftone "market field": a grid of dots that swell in slow waves like a crowd moving
  * between stalls, reacts to the cursor, and occasionally lets a stall "ping" a price change.
  */
-export function MarketField({ className, density = 22 }: { className?: string; density?: number }) {
+export function MarketField({
+  className,
+  density = 22,
+  tone = "ink",
+}: {
+  className?: string;
+  density?: number;
+  /** "ink" follows the theme; "light" is for dark, fixed-colour sections. */
+  tone?: "ink" | "light";
+}) {
   const ref = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -32,7 +50,7 @@ export function MarketField({ className, density = 22 }: { className?: string; d
     if (!ctx) return;
 
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    let colors = readColors();
+    let colors = readColors(tone);
     let w = 0;
     let h = 0;
     let dpr = 1;
@@ -54,15 +72,37 @@ export function MarketField({ className, density = 22 }: { className?: string; d
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     };
 
+    // Only ping in empty space — never on top of copy, buttons or cards.
+    const isClear = (x: number, y: number) => {
+      const rect = canvas.getBoundingClientRect();
+      const px = rect.left + x;
+      const py = rect.top + y;
+      if (px < 0 || py < 0 || px > window.innerWidth || py > window.innerHeight) return false;
+      for (const [ox, oy] of [[0, 0], [0, -26], [-30, -26], [30, -26]]) {
+        const el = document.elementFromPoint(px + ox, py + oy);
+        if (el?.closest("h1,h2,h3,p,a,button,li,dl,figure,img,[data-field-avoid]")) return false;
+      }
+      return true;
+    };
+
     const spawnPing = (now: number) => {
       const cols = Math.floor(w / density);
       const rows = Math.floor(h / density);
       if (cols < 2 || rows < 2) return;
+      let x = 0;
+      let y = 0;
+      let found = false;
+      for (let attempt = 0; attempt < 8 && !found; attempt++) {
+        x = (1 + Math.floor(Math.random() * (cols - 1))) * density - density / 2;
+        y = (1 + Math.floor(Math.random() * (rows - 1))) * density - density / 2;
+        found = isClear(x, y);
+      }
+      if (!found) return;
       const down = Math.random() < 0.72;
       const pool = down ? LABELS_DOWN : LABELS_UP;
       pings.push({
-        x: (1 + Math.floor(Math.random() * (cols - 1))) * density,
-        y: (1 + Math.floor(Math.random() * (rows - 1))) * density,
+        x,
+        y,
         born: now,
         label: pool[Math.floor(Math.random() * pool.length)],
         down,
@@ -180,7 +220,7 @@ export function MarketField({ className, density = 22 }: { className?: string; d
     io.observe(canvas);
 
     const mo = new MutationObserver(() => {
-      colors = readColors();
+      colors = readColors(tone);
       if (!running) draw(performance.now());
     });
     mo.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
@@ -198,7 +238,7 @@ export function MarketField({ className, density = 22 }: { className?: string; d
       document.removeEventListener("pointerleave", onLeave);
       document.removeEventListener("visibilitychange", onVisibility);
     };
-  }, [density]);
+  }, [density, tone]);
 
   return (
     <canvas

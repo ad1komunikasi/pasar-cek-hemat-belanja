@@ -1,5 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { TrendingUp, Scale, MapPin, ShoppingBasket, Bell, BarChart3 } from "lucide-react";
+import { TrendingUp, Scale, MapPin, ShoppingBasket, Bell, BarChart3, ArrowUpRight } from "lucide-react";
+import { PublicPage, PageIntro } from "@/components/site/public-page";
+import { useReveal } from "@/components/site/use-reveal";
 
 const features = [
   {
@@ -60,46 +62,37 @@ export const Route = createFileRoute("/features")({
 });
 
 function FeaturesPage() {
+  useReveal();
   return (
-    <div className="min-h-screen bg-[var(--color-gray-50)]">
-      <header className="border-b border-[var(--color-gray-100)] bg-white">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4">
-          <Link to="/" className="flex items-center gap-2 font-bold group">
-            <div className="grid h-8 w-8 place-items-center rounded-lg bg-gradient-primary text-white shadow-soft group-hover:scale-105 transition-transform duration-200">
-              <ShoppingBasket className="h-4.5 w-4.5" />
-            </div>
-            <span className="font-display text-lg font-bold text-primary">PasarCek</span>
-          </Link>
-          <Link
-            to="/auth"
-            className="text-sm font-semibold text-primary hover:text-accent transition-colors"
-          >
-            Masuk
-          </Link>
-        </div>
-      </header>
-      <main className="mx-auto max-w-6xl px-4 py-16">
-        <div className="mx-auto max-w-2xl text-center">
-          <h1 className="text-4xl font-black sm:text-5xl">Fitur PasarCek</h1>
-          <p className="mt-4 text-[var(--color-gray-500)]">
-            Semua yang Anda butuhkan untuk belanja sembako lebih hemat.
-          </p>
-        </div>
-        <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {features.map((f) => (
-            <Link
-              key={f.slug}
-              to="/features/$slug"
-              params={{ slug: f.slug }}
-              className="rounded-lg border border-[var(--color-gray-100)] bg-white p-6 transition-colors hover:border-[var(--color-brand-blue)]"
-            >
-              <f.icon className="h-8 w-8 text-[var(--color-brand-blue)]" />
-              <h3 className="mt-4 text-lg font-bold">{f.title}</h3>
-              <p className="mt-2 text-sm text-[var(--color-gray-500)]">{f.desc}</p>
-            </Link>
+    <PublicPage>
+      <PageIntro
+        eyebrow="Fitur"
+        title="Semua alat untuk belanja sembako dengan data, bukan tebakan."
+        lede="Enam bagian kecil yang saling terhubung: dari harga pagi ini, sampai berapa yang sudah Anda hemat bulan ini."
+      />
+      <div className="mx-auto max-w-[1240px] px-5 py-16 sm:px-8 md:py-24">
+        <ul className="grid border-l border-t border-rule sm:grid-cols-2 lg:grid-cols-3">
+          {features.map((f, i) => (
+            <li key={f.slug} data-reveal style={{ ["--reveal-delay" as string]: `${(i % 3) * 70}ms` }}>
+              <Link
+                to="/features/$slug"
+                params={{ slug: f.slug }}
+                className="group flex h-full min-h-[17rem] flex-col border-b border-r border-rule p-7 transition-colors hover:bg-card sm:p-8"
+              >
+                <div className="flex items-start justify-between">
+                  <span className="font-mono text-sm text-foreground/40 transition-colors group-hover:text-chili">
+                    0{i + 1}
+                  </span>
+                  <ArrowUpRight className="h-5 w-5 text-foreground/30 transition-all duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-foreground" />
+                </div>
+                <f.icon className="mt-auto h-7 w-7 text-tarp transition-transform duration-300 group-hover:-rotate-6" strokeWidth={1.6} />
+                <h3 className="mt-5 text-[1.45rem] font-semibold leading-tight tracking-tight">{f.title}</h3>
+                <p className="mt-2 leading-relaxed text-foreground/65">{f.desc}</p>
+              </Link>
+            </li>
           ))}
-        </div>
-      </main>
-    </div>
+        </ul>
+      </div>
+    </PublicPage>
   );
 }
