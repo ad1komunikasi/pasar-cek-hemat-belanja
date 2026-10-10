@@ -291,7 +291,16 @@ function LoginForm() {
         <Input className="h-12 bg-card" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
       </div>
       <div>
-        <Label className="mb-2 block text-sm text-foreground/75">Password</Label>
+        <div className="mb-2 flex items-center justify-between">
+          <Label className="text-sm text-foreground/75">Password</Label>
+          <button
+            type="button"
+            onClick={() => navigate({ to: ".", search: { tab: "forgot" } })}
+            className="text-sm text-tarp underline underline-offset-4 hover:text-foreground"
+          >
+            Lupa password?
+          </button>
+        </div>
         <Input
           className="h-12 bg-card"
           type="password"
