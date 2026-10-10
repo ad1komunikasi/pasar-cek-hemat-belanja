@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate, useRouter, redirect } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -267,54 +267,113 @@ function AuthPage() {
   );
 }
 
+const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID as string | undefined;
+
+type GoogleIdApi = {
+  initialize: (config: Record<string, unknown>) => void;
+  renderButton: (el: HTMLElement, options: Record<string, unknown>) => void;
+};
+
+let gisScriptPromise: Promise<void> | undefined;
+function loadGoogleIdentityScript(): Promise<void> {
+  if ((window as any).google?.accounts?.id) return Promise.resolve();
+  gisScriptPromise ??= new Promise<void>((resolve, reject) => {
+    const script = document.createElement("script");
+    script.src = "https://accounts.google.com/gsi/client";
+    script.async = true;
+    script.defer = true;
+    script.onload = () => resolve();
+    script.onerror = () => {
+      gisScriptPromise = undefined;
+      reject(new Error("Gagal memuat Google Identity Services"));
+    };
+    document.head.appendChild(script);
+  });
+  return gisScriptPromise;
+}
+
+async function createNonce(): Promise<[raw: string, hashed: string]> {
+  const raw = btoa(String.fromCharCode(...crypto.getRandomValues(new Uint8Array(32))));
+  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(raw));
+  const hashed = Array.from(new Uint8Array(digest))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+  return [raw, hashed];
+}
+
+/**
+ * Login Google memakai Google Identity Services (popup di domain kita sendiri) lalu
+ * menukar ID token ke Supabase via signInWithIdToken. Dengan cara ini layar Google
+ * menampilkan nama aplikasi / domain PasarCek, bukan "xxxx.supabase.co" seperti pada
+ * signInWithOAuth (redirect lewat domain Supabase).
+ *
+ * Butuh env VITE_GOOGLE_CLIENT_ID (Web client ID yang sama dengan di Supabase → Auth →
+ * Providers → Google). Domain aplikasi harus terdaftar di Google Cloud Console →
+ * Credentials → Authorized JavaScript origins. Jika env belum diisi atau GIS gagal
+ * dimuat, login Google dinonaktifkan agar tidak kembali ke redirect Supabase.
+ */
 function GoogleButton({ flow }: { flow: "login" | "register" }) {
-  const [busy, setBusy] = useState(false);
-  async function signIn() {
-    setBusy(true);
+  const navigate = useNavigate();
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [gisFailed, setGisFailed] = useState(false);
 
-    // PENTING: redirectTo harus mengarah ke /auth/callback — bukan langsung ke /dashboard.
-    // Jika diarahkan langsung ke /dashboard di deployment lama, Supabase akan mendapat
-    // error 404 DEPLOYMENT_NOT_FOUND karena URL origin bisa berbeda dari deployment aktif.
-    // Route /auth/callback bertugas menukar token dan me-redirect ke /dashboard.
-    const callbackUrl = `${window.location.origin}/auth/callback`;
+  useEffect(() => {
+    if (!GOOGLE_CLIENT_ID) return;
+    let cancelled = false;
 
-    const res = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo: callbackUrl,
-        queryParams: {
-          // Simpan flow (login/register) sebagai parameter tambahan jika diperlukan
-          // untuk analitik atau logika onboarding di callback.
-          prompt: "select_account",
-        },
-      },
-    });
-    if (res.error) {
-      toast.error("Gagal masuk dengan Google");
-      setBusy(false);
-    }
+    (async () => {
+      try {
+        const [rawNonce, hashedNonce] = await createNonce();
+        await loadGoogleIdentityScript();
+        if (cancelled || !containerRef.current) return;
+
+        const gid = (window as any).google.accounts.id as GoogleIdApi;
+        gid.initialize({
+          client_id: GOOGLE_CLIENT_ID,
+          nonce: hashedNonce,
+          use_fedcm_for_prompt: true,
+          callback: async (response: { credential: string }) => {
+            const { error } = await supabase.auth.signInWithIdToken({
+              provider: "google",
+              token: response.credential,
+              nonce: rawNonce,
+            });
+            if (error) {
+              console.error("[GoogleSignIn]", error);
+              toast.error("Gagal masuk dengan Google");
+              return;
+            }
+            toast.success("Selamat datang di PasarCek!");
+            navigate({ to: "/dashboard", replace: true });
+          },
+        });
+        gid.renderButton(containerRef.current, {
+          type: "standard",
+          theme: "outline",
+          size: "large",
+          shape: "rectangular",
+          text: flow === "register" ? "signup_with" : "continue_with",
+          logo_alignment: "center",
+          locale: "id",
+          width: Math.min(400, containerRef.current.offsetWidth || 384),
+        });
+      } catch (err) {
+        console.error("[GoogleSignIn]", err);
+        if (!cancelled) setGisFailed(true);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [flow, navigate]);
+
+  if (GOOGLE_CLIENT_ID && !gisFailed) {
+    return <div ref={containerRef} className="flex min-h-[44px] w-full justify-center" />;
   }
   return (
-    <Button type="button" variant="outline" className="w-full" onClick={signIn} disabled={busy}>
-      <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">
-        <path
-          fill="#4285F4"
-          d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-        />
-        <path
-          fill="#34A853"
-          d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-        />
-        <path
-          fill="#FBBC05"
-          d="M5.84 14.1c-.22-.66-.35-1.36-.35-2.1s.13-1.44.35-2.1V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.83z"
-        />
-        <path
-          fill="#EA4335"
-          d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84C6.71 7.31 9.14 5.38 12 5.38z"
-        />
-      </svg>
-      Lanjutkan dengan Google
+    <Button type="button" variant="outline" className="w-full" disabled>
+      Login Google belum tersedia
     </Button>
   );
 }
