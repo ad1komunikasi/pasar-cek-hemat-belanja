@@ -37,7 +37,7 @@ function NotFoundComponent() {
   );
 }
 
-function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
+function ErrorComponent({ error, reset }: { error: unknown; reset: () => void }) {
   console.error(error);
   const router = useRouter();
 
@@ -55,7 +55,7 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
           <pre className="whitespace-pre-wrap">
             {error instanceof Error ? error.message : String(error)}
           </pre>
-          {error?.stack && (
+          {error instanceof Error && error.stack && (
             <details className="mt-2">
               <summary className="cursor-pointer font-bold">Stack Trace</summary>
               <pre className="mt-1 text-[10px] opacity-75">{error.stack}</pre>
