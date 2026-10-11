@@ -1,0 +1,83 @@
+{
+  "_note": "Pasar pantauan SP2KP Kemendag (DKI Jakarta) yang ditambahkan ke PasarCek. Nama & kota dari SP2KP; alamat dari SP2KP bila tersedia, selain itu dari OpenStreetMap. Koordinat dari OpenStreetMap Nominatim (© kontributor OpenStreetMap, ODbL) — hanya titik amenity=marketplace yang namanya cocok; null bila tidak ada kecocokan yang pasti.",
+  "markets": {
+    "Pasar Anyar Bahari": {
+      "city": "Jakarta Utara",
+      "address": "Jl. Tenggiri Raya, Tanjung Priok",
+      "lat": -6.114832,
+      "lng": 106.87911
+    },
+    "Pasar Cengkareng": {
+      "city": "Jakarta Barat",
+      "address": "Jl. Bangun Nusa Raya, Cengkareng Timur",
+      "lat": -6.152087,
+      "lng": 106.728719
+    },
+    "Pasar Grogol": {
+      "city": "Jakarta Barat",
+      "address": "Jl. Dr. Muwardi, Grogol Petamburan",
+      "lat": -6.162739,
+      "lng": 106.797245
+    },
+    "Pasar Jaya Kelapa Gading": {
+      "city": "Jakarta Utara",
+      "address": "Jl. Pasar Inpres, Kelapa Gading Timur",
+      "lat": -6.175433,
+      "lng": 106.906335
+    },
+    "Pasar Jembatan Lima": {
+      "city": "Jakarta Barat",
+      "address": "Jl. K.H. Moch. Mansyur, Jembatan Lima, Tambora",
+      "lat": -6.145009,
+      "lng": 106.806419
+    },
+    "Pasar Jembatan Merah": {
+      "city": "Jakarta Pusat",
+      "address": "Jl. Mangga Besar Raya, Taman Sari",
+      "lat": -6.148837,
+      "lng": 106.825673
+    },
+    "Pasar Johar Baru": {
+      "city": "Jakarta Pusat",
+      "address": "Jl. Johar Baru II, Johar Baru",
+      "lat": -6.185426,
+      "lng": 106.855549
+    },
+    "Pasar Kalideres": {
+      "city": "Jakarta Barat",
+      "address": "Jl. Benda Raya, Kalideres",
+      "lat": null,
+      "lng": null
+    },
+    "Pasar Koja Baru": {
+      "city": "Jakarta Utara",
+      "address": "Jl. Kramat Jaya, Tugu Utara, Koja",
+      "lat": -6.121534,
+      "lng": 106.915871
+    },
+    "Pasar Pal Meriam": {
+      "city": "Jakarta Timur",
+      "address": "Matraman, Jakarta Timur",
+      "lat": null,
+      "lng": null
+    },
+    "Pasar Palmerah": {
+      "city": "Jakarta Pusat",
+      "address": "Jl. Gelora IX, Gelora, Tanah Abang",
+      "lat": -6.20825,
+      "lng": 106.79594
+    },
+    "Pasar Pondok Labu": {
+      "city": "Jakarta Selatan",
+      "address": "Jl. R.S. Fatmawati Ujung, Pondok Labu, Cilandak",
+      "lat": -6.312269,
+      "lng": 106.793731
+    },
+    "Pasar Sunter Podomoro": {
+      "city": "Jakarta Utara",
+      "address": "Jl. Sunter Karya Utara II, Sunter Agung",
+      "lat": -6.139228,
+      "lng": 106.870522
+    }
+  }
+}

@@ -10,6 +10,7 @@
  *   node scripts/sync-sp2kp.mjs --dry-run            # hanya tampilkan, tidak menulis
  *   node scripts/sync-sp2kp.mjs                      # tulis ke Supabase (butuh service role key)
  *   node scripts/sync-sp2kp.mjs --days 5 --date 2026-10-09
+ *   node scripts/sync-sp2kp.mjs --add-markets        # tambahkan pasar dari sp2kp-markets.json yang belum ada
  *
  * Env: SUPABASE_URL (atau VITE_SUPABASE_URL), SUPABASE_SERVICE_ROLE_KEY (wajib kecuali --dry-run),
  *      VITE_SUPABASE_PUBLISHABLE_KEY (cukup untuk --dry-run).
@@ -55,6 +56,7 @@ const opt = (name, fallback) => {
   return i >= 0 && args[i + 1] ? args[i + 1] : fallback;
 };
 const DRY_RUN = flag("dry-run");
+const ADD_MARKETS = flag("add-markets");
 const DAYS = Math.min(Number(opt("days", "4")), 14);
 const END_DATE = opt("date", new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Jakarta" }));
 
@@ -127,6 +129,42 @@ async function main() {
   ]);
   const productByName = new Map(products.map((p) => [norm(p.name), p]));
   const marketByName = new Map(markets.map((m) => [norm(m.name), m]));
+
+  if (ADD_MARKETS) {
+    const { readFile } = await import("node:fs/promises");
+    const curated = JSON.parse(
+      await readFile(new URL("./sp2kp-markets.json", import.meta.url), "utf8"),
+    ).markets;
+    const missing = Object.entries(curated).filter(([name]) => !marketByName.has(norm(name)));
+    const rows = missing.map(([name, m]) => ({
+      name,
+      slug: name
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/(^-|-$)/g, ""),
+      city: m.city,
+      province: "DKI Jakarta",
+      address: m.address,
+      type: "tradisional",
+      lat: m.lat,
+      lng: m.lng,
+      google_maps_url: `https://maps.google.com/?q=${encodeURIComponent(`${name}, ${m.city}`)}`,
+      is_active: true,
+    }));
+    console.log(
+      `Pasar baru dari SP2KP: ${rows.length}${rows.length ? ` (${rows.map((r) => r.name).join(", ")})` : ""}`,
+    );
+    if (rows.length && !DRY_RUN) {
+      const inserted = await supabase("markets?select=id,name", {
+        method: "POST",
+        key: SERVICE_KEY,
+        headers: { Prefer: "return=representation" },
+        body: JSON.stringify(rows),
+      });
+      for (const m of inserted ?? []) marketByName.set(norm(m.name), m);
+      console.log(`  ${inserted?.length ?? 0} pasar ditambahkan.`);
+    }
+  }
 
   const payload = [];
   const unmatchedMarkets = new Set();

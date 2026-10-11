@@ -108,7 +108,9 @@ sumber `SP2KP Kemendag`.
 - **Manual:** Actions → _Sinkron harga SP2KP_ → _Run workflow_ (default _dry run_).
 - **Lokal:** `npm run sync:sp2kp -- --dry-run`
 - **Secret wajib:** `SUPABASE_SERVICE_ROLE_KEY` di Settings → Secrets and variables → Actions.
-- **Cakupan:** DKI Jakarta, 18 produk; hanya pasar yang namanya sudah ada di tabel `markets`.
+- **Cakupan:** DKI Jakarta, 18 produk, 20 pasar pantauan SP2KP. Pasar SP2KP baru ditambahkan
+  dengan `--add-markets` dari [`scripts/sp2kp-markets.json`](scripts/sp2kp-markets.json)
+  (alamat dari SP2KP/OpenStreetMap; koordinat © kontributor OpenStreetMap, ODbL).
   Pasar/produk tanpa data tetap memakai data contoh dan ditandai “contoh” di aplikasi.
 
 Endpoint SP2KP yang dipakai adalah endpoint publik yang tidak terdokumentasi resmi. Skrip memakai
