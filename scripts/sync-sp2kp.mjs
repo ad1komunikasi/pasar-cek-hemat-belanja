@@ -111,7 +111,9 @@ async function supabase(path, init = {}) {
     },
   });
   if (!res.ok) throw new Error(`Supabase ${path}: HTTP ${res.status} ${await res.text()}`);
-  return res.status === 204 ? null : res.json();
+  // Writes with "return=minimal" answer 201/204 with an empty body.
+  const text = await res.text();
+  return text ? JSON.parse(text) : null;
 }
 
 async function main() {
