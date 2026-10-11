@@ -153,13 +153,20 @@ function DashboardPage() {
   const { data: dbProducts } = useQuery({
     queryKey: ["products-list-alert"],
     queryFn: async () =>
-      (await supabase.from("products").select("id,name,unit,category").order("name")).data ?? [],
+      (
+        await supabase
+          .from("products")
+          .select("id,name,unit,category")
+          .eq("is_active", true)
+          .order("name")
+      ).data ?? [],
   });
 
   const { data: dbMarkets } = useQuery({
     queryKey: ["markets-list-alert"],
     queryFn: async () =>
-      (await supabase.from("markets").select("id,name,city").order("name")).data ?? [],
+      (await supabase.from("markets").select("id,name,city").eq("is_active", true).order("name"))
+        .data ?? [],
   });
 
   // Fetch real savings history for this user

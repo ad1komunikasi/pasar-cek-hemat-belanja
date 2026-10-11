@@ -11,6 +11,7 @@
  *   node scripts/sync-sp2kp.mjs                      # tulis ke Supabase (butuh service role key)
  *   node scripts/sync-sp2kp.mjs --days 5 --date 2026-10-09
  *   node scripts/sync-sp2kp.mjs --add-markets        # tambahkan pasar dari sp2kp-markets.json yang belum ada
+ *   node scripts/sync-sp2kp.mjs --deactivate-unmonitored  # nonaktifkan pasar/produk tanpa data SP2KP
  *
  * Env: SUPABASE_URL (atau VITE_SUPABASE_URL), SUPABASE_SERVICE_ROLE_KEY (wajib kecuali --dry-run),
  *      VITE_SUPABASE_PUBLISHABLE_KEY (cukup untuk --dry-run).
@@ -57,6 +58,7 @@ const opt = (name, fallback) => {
 };
 const DRY_RUN = flag("dry-run");
 const ADD_MARKETS = flag("add-markets");
+const DEACTIVATE = flag("deactivate-unmonitored");
 const DAYS = Math.min(Number(opt("days", "4")), 14);
 const END_DATE = opt("date", new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Jakarta" }));
 
@@ -124,10 +126,10 @@ async function main() {
     throw new Error("SUPABASE_SERVICE_ROLE_KEY wajib untuk menulis (atau pakai --dry-run)");
 
   const [products, markets] = await Promise.all([
-    supabase("products?select=id,name,unit&is_active=eq.true"),
-    supabase("markets?select=id,name"),
+    supabase("products?select=id,name,unit,is_active"),
+    supabase("markets?select=id,name,is_active"),
   ]);
-  const productByName = new Map(products.map((p) => [norm(p.name), p]));
+  const productByName = new Map(products.filter((p) => p.is_active).map((p) => [norm(p.name), p]));
   const marketByName = new Map(markets.map((m) => [norm(m.name), m]));
 
   if (ADD_MARKETS) {
@@ -223,6 +225,54 @@ async function main() {
     );
   if (skipped.unit || skipped.price)
     console.log(`Dilewati: ${skipped.unit} beda satuan, ${skipped.price} harga tidak valid`);
+
+  if (DEACTIVATE) {
+    // Only act on a healthy SP2KP response — never deactivate everything because the API was down.
+    const monitored = new Set(unique.map((p) => p.market_id));
+    if (monitored.size < 5)
+      throw new Error(`Hanya ${monitored.size} pasar cocok dari SP2KP — penonaktifan dibatalkan`);
+    const mappedProducts = new Set(Object.values(VARIANT_TO_PRODUCT).map(norm));
+    const offMarkets = markets.filter((m) => m.is_active && !monitored.has(m.id));
+    const offProducts = products.filter((p) => p.is_active && !mappedProducts.has(norm(p.name)));
+    console.log(
+      `\nNonaktifkan ${offMarkets.length} pasar tanpa data SP2KP: ${
+        offMarkets
+          .map((m) => m.name)
+          .sort()
+          .join(", ") || "-"
+      }`,
+    );
+    console.log(
+      `Nonaktifkan ${offProducts.length} produk tanpa padanan SP2KP: ${
+        offProducts
+          .map((p) => p.name)
+          .sort()
+          .join(", ") || "-"
+      }`,
+    );
+    if (!DRY_RUN) {
+      const patch = (table, ids) =>
+        ids.length
+          ? supabase(`${table}?id=in.(${ids.join(",")})`, {
+              method: "PATCH",
+              key: SERVICE_KEY,
+              headers: { Prefer: "return=minimal" },
+              body: JSON.stringify({ is_active: false }),
+            })
+          : null;
+      await patch(
+        "markets",
+        offMarkets.map((m) => m.id),
+      );
+      await patch(
+        "products",
+        offProducts.map((p) => p.id),
+      );
+      console.log(
+        "  Selesai dinonaktifkan (data tidak dihapus; bisa diaktifkan lagi lewat admin).",
+      );
+    }
+  }
 
   if (DRY_RUN) {
     console.log("\n--dry-run: tidak ada yang ditulis. Contoh:");

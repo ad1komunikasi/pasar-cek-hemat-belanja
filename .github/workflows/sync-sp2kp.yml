@@ -17,6 +17,10 @@ on:
         description: "Jumlah hari ke belakang yang diambil (maks 14)"
         required: false
         default: "4"
+      deactivate_unmonitored:
+        description: "Nonaktifkan pasar & produk yang tidak ada di SP2KP"
+        type: boolean
+        default: false
       add_markets:
         description: "Tambahkan pasar SP2KP yang belum ada (dari scripts/sp2kp-markets.json)"
         type: boolean
@@ -49,5 +53,6 @@ jobs:
           ARGS="--days ${{ inputs.days || '4' }}"
           if [ -n "${{ inputs.date }}" ]; then ARGS="$ARGS --date ${{ inputs.date }}"; fi
           if [ "${{ inputs.add_markets }}" = "true" ]; then ARGS="$ARGS --add-markets"; fi
+          if [ "${{ inputs.deactivate_unmonitored }}" = "true" ]; then ARGS="$ARGS --deactivate-unmonitored"; fi
           if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.dry_run }}" = "true" ]; then ARGS="$ARGS --dry-run"; fi
           node scripts/sync-sp2kp.mjs $ARGS

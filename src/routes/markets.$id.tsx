@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { idr } from "@/lib/format";
-import { getDeterministicBenchmarkPrices } from "@/lib/benchmark";
+import { fetchLatestRealPriceDate } from "@/lib/benchmark";
 import { DataNotice } from "@/components/data-notice";
 import { useEffect, useRef, useMemo } from "react";
 import { ArrowLeft, MapPin, Clock, ExternalLink, Star, Store, Heart } from "lucide-react";
@@ -86,69 +86,27 @@ function MarketDetail() {
     queryFn: async () => {
       const today = new Date().toLocaleDateString("en-CA");
 
-      const { data: latestDateRow } = await supabase
-        .from("product_prices")
-        .select("recorded_at")
-        .lte("recorded_at", today)
-        .order("recorded_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
+      const dateToUse = (await fetchLatestRealPriceDate(supabase, today)) ?? today;
 
-      let dateToUse = latestDateRow?.recorded_at || today;
-      if (dateToUse > today) {
-        dateToUse = today;
-      }
-
-      const { data: products } = await supabase
-        .from("products")
-        .select("id,name,category,unit")
-        .order("name");
-      const { data: markets } = await supabase.from("markets").select("id,name,city").order("name");
-
-      if (!products || !markets) return [];
-
-      const currentMarket = markets.find((m) => m.id === id);
-      if (!currentMarket) return [];
-
+      // Only recorded prices for active products at this market — no simulated fill-ins.
       const { data } = await supabase
         .from("product_prices")
-        .select("price, source, product_id, product:products(id,name,unit,category)")
+        .select(
+          "price, source, recorded_at, product_id, product:products!inner(id,name,unit,category,is_active)",
+        )
         .eq("market_id", id)
-        .eq("recorded_at", dateToUse);
+        .eq("recorded_at", dateToUse)
+        .eq("product.is_active", true)
+        .not("source", "in", "(seed,simulasi)");
 
-      const dbPrices = data ?? [];
-      const dbPriceMap = new Map<string, any>();
-      dbPrices.forEach((r: any) => {
-        const pId = r.product_id || r.product?.id;
-        if (pId) {
-          dbPriceMap.set(pId, r);
-        }
-      });
-
-      const benchmarkPrices = getDeterministicBenchmarkPrices(
-        products as any[],
-        [currentMarket] as any[],
-        dateToUse,
-      );
-
-      const mergedPrices = benchmarkPrices.map((bp: any) => {
-        const key = bp.product_id;
-        if (dbPriceMap.has(key)) {
-          const dbRow = dbPriceMap.get(key);
-          return {
-            price: Number(dbRow.price),
-            product: dbRow.product || bp.product,
-            source: dbRow.source as string | null,
-          };
-        }
-        return {
-          price: bp.price,
-          product: bp.product,
-          source: bp.source as string | null,
-        };
-      });
-
-      return mergedPrices;
+      return (data ?? [])
+        .map((r: any) => ({
+          price: Number(r.price),
+          product: r.product,
+          source: r.source as string | null,
+          recorded_at: r.recorded_at as string,
+        }))
+        .sort((x: any, y: any) => x.product.name.localeCompare(y.product.name, "id"));
     },
   });
 
@@ -256,7 +214,9 @@ function MarketDetail() {
           <ArrowLeft className="h-4 w-4" /> Kembali ke Peta Pasar
         </Link>
       </div>
-      {!!prices?.length && <DataNotice rows={prices} className="mb-6" />}
+      {!!prices?.length && (
+        <DataNotice rows={prices} date={prices[0].recorded_at} className="mb-6" />
+      )}
       {/* Top Info Banner Card */}
       <div className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm mb-8">
         <div className="flex flex-wrap items-start justify-between gap-4">

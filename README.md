@@ -111,7 +111,9 @@ sumber `SP2KP Kemendag`.
 - **Cakupan:** DKI Jakarta, 18 produk, 20 pasar pantauan SP2KP. Pasar SP2KP baru ditambahkan
   dengan `--add-markets` dari [`scripts/sp2kp-markets.json`](scripts/sp2kp-markets.json)
   (alamat dari SP2KP/OpenStreetMap; koordinat © kontributor OpenStreetMap, ODbL).
-  Pasar/produk tanpa data tetap memakai data contoh dan ditandai “contoh” di aplikasi.
+  Aplikasi hanya menampilkan harga tercatat (SP2KP atau input admin) untuk pasar & produk aktif —
+  tidak ada lagi harga simulasi. Pasar/produk tanpa data SP2KP dinonaktifkan dengan
+  `--deactivate-unmonitored` (hanya flag `is_active`, bisa diaktifkan lagi di panel admin).
 
 Endpoint SP2KP yang dipakai adalah endpoint publik yang tidak terdokumentasi resmi. Skrip memakai
 satu provinsi, jeda antar-permintaan, dan maksimal sekali sehari; izin resmi tetap sedang diajukan.

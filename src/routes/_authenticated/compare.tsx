@@ -4,7 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useState, useEffect, useMemo } from "react";
 import { idr } from "@/lib/format";
-import { getDeterministicBenchmarkPrices, mergeWithDefaultMarkets } from "@/lib/benchmark";
+import { fetchLatestRealPriceDate } from "@/lib/benchmark";
 import { DataNotice } from "@/components/data-notice";
 import {
   Select,
@@ -45,17 +45,28 @@ function ComparePage() {
   const { data: products } = useQuery({
     queryKey: ["products-list"],
     queryFn: async () =>
-      (await supabase.from("products").select("id,name,category,unit").order("name")).data ?? [],
+      (
+        await supabase
+          .from("products")
+          .select("id,name,category,unit")
+          .eq("is_active", true)
+          .order("name")
+      ).data ?? [],
   });
 
   const { data: dbMarkets } = useQuery({
     queryKey: ["markets-list"],
     queryFn: async () =>
-      (await supabase.from("markets").select("id,name,city,address").order("name")).data ?? [],
+      (
+        await supabase
+          .from("markets")
+          .select("id,name,city,address")
+          .eq("is_active", true)
+          .order("name")
+      ).data ?? [],
   });
 
-  // Combine DB markets with standard default markets (including Depok, JakBar, JakUt, Bogor, Bekasi, Tangerang)
-  const allMarkets = useMemo(() => mergeWithDefaultMarkets(dbMarkets as any), [dbMarkets]);
+  const allMarkets = useMemo(() => (dbMarkets ?? []) as any[], [dbMarkets]);
 
   // Dynamically extract and sort unique cities from all active/available markets
   const cities = useMemo(() => {
@@ -72,60 +83,27 @@ function ComparePage() {
     queryFn: async () => {
       const today = new Date().toLocaleDateString("en-CA");
 
-      const { data: latestDateRow } = await supabase
-        .from("product_prices")
-        .select("recorded_at")
-        .lte("recorded_at", today)
-        .order("recorded_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-
-      let dateToUse = latestDateRow?.recorded_at || today;
-      if (dateToUse > today) {
-        dateToUse = today;
-      }
+      const dateToUse = (await fetchLatestRealPriceDate(supabase, today)) ?? today;
 
       const selectedProduct = (products ?? []).find((p: any) => p.id === productId);
       if (!selectedProduct) return [];
 
-      const query = supabase
+      const { data } = await supabase
         .from("product_prices")
-        .select("price, source, market_id, market:markets(id,name,city,address)")
+        .select("price, source, recorded_at, market_id, market:markets(id,name,city,address)")
         .eq("recorded_at", dateToUse)
-        .eq("product_id", productId);
-      const { data } = await query;
+        .eq("product_id", productId)
+        .not("source", "in", "(seed,simulasi)");
 
-      const dbPrices = data ?? [];
-      const dbPriceMap = new Map<string, any>();
-      dbPrices.forEach((r: any) => {
-        const mId = r.market_id || r.market?.id;
-        if (mId) {
-          dbPriceMap.set(mId, r);
-        }
-      });
-
-      const benchmarkPrices = getDeterministicBenchmarkPrices(
-        [selectedProduct] as any[],
-        allMarkets as any[],
-        dateToUse,
-      );
-
-      const mergedPrices = benchmarkPrices.map((bp: any) => {
-        const key = bp.market_id;
-        if (dbPriceMap.has(key)) {
-          const dbRow = dbPriceMap.get(key);
-          return {
-            price: Number(dbRow.price),
-            market: dbRow.market || bp.market,
-            source: dbRow.source as string | null,
-          };
-        }
-        return {
-          price: bp.price,
-          market: bp.market,
-          source: bp.source as string | null,
-        };
-      });
+      const activeIds = new Set(allMarkets.map((m: any) => m.id));
+      const mergedPrices = (data ?? [])
+        .filter((r: any) => activeIds.has(r.market_id))
+        .map((r: any) => ({
+          price: Number(r.price),
+          market: r.market,
+          source: r.source as string | null,
+          recorded_at: r.recorded_at as string,
+        }));
 
       let out = mergedPrices;
       if (city !== "all") out = out.filter((r) => r.market?.city === city);
@@ -145,7 +123,7 @@ function ComparePage() {
         description='"Di pasar mana saya bisa belanja paling hemat hari ini?"'
       />
 
-      {!!rows?.length && <DataNotice rows={rows} className="mb-6" />}
+      {!!rows?.length && <DataNotice rows={rows} date={rows[0].recorded_at} className="mb-6" />}
 
       <div className="mb-6 grid gap-3 sm:grid-cols-2">
         <div>

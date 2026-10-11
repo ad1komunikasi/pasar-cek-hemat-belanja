@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/select";
 import { idr } from "@/lib/format";
 import { useRealTimePrices } from "@/hooks/use-real-time-prices";
-import { getDeterministicBenchmarkPrices } from "@/lib/benchmark";
+import { fetchLatestRealPriceDate } from "@/lib/benchmark";
 import { DataNotice } from "@/components/data-notice";
 import {
   Plus,
@@ -392,7 +392,8 @@ function WishlistPage() {
   const { data: products } = useQuery({
     queryKey: ["products-list-wishlist"],
     queryFn: async () =>
-      (await supabase.from("products").select("id,name,unit").order("name")).data ?? [],
+      (await supabase.from("products").select("id,name,unit").eq("is_active", true).order("name"))
+        .data ?? [],
   });
 
   const { data: pricesByMarket } = useQuery({
@@ -407,64 +408,26 @@ function WishlistPage() {
     queryFn: async () => {
       const today = new Date().toLocaleDateString("en-CA");
       const productIds = items!.map((i: any) => i.product_id);
-      const dateToUse = today;
+      const dateToUse = (await fetchLatestRealPriceDate(supabase, today)) ?? today;
 
-      const { data: productsList } = await supabase
-        .from("products")
-        .select("id,name,category,unit")
-        .order("name");
-      const { data: marketsList } = await supabase
-        .from("markets")
-        .select("id,name,city,lat,lng,address,hours")
-        .order("name");
-
-      if (!productsList || !marketsList) return [];
-
+      // Recorded prices only, at active markets — no simulated fill-ins.
       const { data } = await supabase
         .from("product_prices")
         .select(
-          "price,source,product_id,market_id,market:markets(id,name,city,lat,lng,address,hours)",
+          "price,source,recorded_at,product_id,market_id,market:markets!inner(id,name,city,lat,lng,address,hours,is_active)",
         )
         .eq("recorded_at", dateToUse)
-        .in("product_id", productIds);
+        .eq("market.is_active", true)
+        .in("product_id", productIds)
+        .not("source", "in", "(seed,simulasi)");
 
-      const dbPrices = data ?? [];
-      const dbPriceMap = new Map<string, any>();
-      dbPrices.forEach((r: any) => {
-        const pId = r.product_id;
-        const mId = r.market_id || r.market?.id;
-        if (pId && mId) {
-          dbPriceMap.set(`${pId}:${mId}`, r);
-        }
-      });
-
-      const activeProducts = productsList.filter((p) => productIds.includes(p.id));
-      const benchmarkPrices = getDeterministicBenchmarkPrices(
-        activeProducts as any[],
-        marketsList as any[],
-        dateToUse,
-      );
-
-      const mergedPrices = benchmarkPrices.map((bp: any) => {
-        const key = `${bp.product_id}:${bp.market_id}`;
-        if (dbPriceMap.has(key)) {
-          const dbRow = dbPriceMap.get(key);
-          return {
-            price: Number(dbRow.price),
-            product_id: bp.product_id,
-            market: dbRow.market || bp.market,
-            source: dbRow.source as string | null,
-          };
-        }
-        return {
-          price: bp.price,
-          product_id: bp.product_id,
-          market: bp.market,
-          source: bp.source as string | null,
-        };
-      });
-
-      return mergedPrices;
+      return (data ?? []).map((r: any) => ({
+        price: Number(r.price),
+        product_id: r.product_id as string,
+        market: r.market,
+        source: r.source as string | null,
+        recorded_at: r.recorded_at as string,
+      }));
     },
   });
 
@@ -697,7 +660,11 @@ function WishlistPage() {
         }
       />
 
-      <DataNotice rows={livePricesByMarket ?? []} date={todayStr} className="mb-4" />
+      <DataNotice
+        rows={livePricesByMarket ?? []}
+        date={(livePricesByMarket as any[] | undefined)?.[0]?.recorded_at ?? null}
+        className="mb-4"
+      />
 
       <div className="grid gap-6 lg:grid-cols-[1fr_380px]">
         {/* Left Side: Wishlist Items */}

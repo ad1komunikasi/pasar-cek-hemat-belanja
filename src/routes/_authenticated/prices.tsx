@@ -5,7 +5,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { useState, useMemo } from "react";
 import { idr, deltaPct, fmtDate, fmtDateTime } from "@/lib/format";
 import { useRealTimePrices } from "@/hooks/use-real-time-prices";
-import { getDeterministicBenchmarkPrices, isSimulatedSource } from "@/lib/benchmark";
 import { DataNotice } from "@/components/data-notice";
 import { Input } from "@/components/ui/input";
 import {
@@ -210,7 +209,8 @@ function PricesPage() {
   const { data: markets } = useQuery({
     queryKey: ["markets-list"],
     queryFn: async () =>
-      (await supabase.from("markets").select("id,name,city").order("name")).data ?? [],
+      (await supabase.from("markets").select("id,name,city").eq("is_active", true).order("name"))
+        .data ?? [],
   });
 
   const { data: prices, isLoading } = useQuery({
@@ -232,104 +232,35 @@ function PricesPage() {
       }
 
       const dateToUseMs = new Date(dateToUse).getTime();
-      const ydaystr = new Date(dateToUseMs - 86400000).toISOString().slice(0, 10);
 
-      // Always fetch products and markets first to ensure complete coverage
-      const { data: products } = await supabase
-        .from("products")
-        .select("id,name,category,unit")
-        .order("name");
-      const { data: markets } = await supabase.from("markets").select("id,name,city").order("name");
+      // Only recorded prices for active products and markets — no simulated fill-ins.
+      const [{ data: products }, { data: markets }] = await Promise.all([
+        supabase.from("products").select("id").eq("is_active", true),
+        supabase.from("markets").select("id").eq("is_active", true),
+      ]);
+      const activeProducts = new Set((products ?? []).map((p) => p.id));
+      const activeMarkets = new Set((markets ?? []).map((m) => m.id));
 
-      if (!products || !markets) {
-        return { dateUsed: dateToUse, isBenchmark: false, list: [] };
-      }
-
-      // Query database for selected date
       let query = supabase
         .from("product_prices")
         .select(
           "id, price, recorded_at, created_at, source, product_id, market_id, product:products(id,name,category,unit), market:markets(id,name,city)",
         )
-        .eq("recorded_at", dateToUse);
+        .eq("recorded_at", dateToUse)
+        .not("source", "in", "(seed,simulasi)");
       if (marketId !== "all") query = query.eq("market_id", marketId);
       const { data } = await query;
 
-      const dbPrices = data ?? [];
-      const dbPriceMap = new Map<string, any>();
-      dbPrices.forEach((r: any) => {
-        const pId = r.product_id || r.product?.id;
-        const mId = r.market_id || r.market?.id;
-        if (pId && mId) {
-          dbPriceMap.set(`${pId}:${mId}`, r);
-        }
-      });
+      const rows = (data ?? [])
+        .filter((r: any) => activeProducts.has(r.product_id) && activeMarkets.has(r.market_id))
+        .map((r: any) => ({ ...r, price: Number(r.price) }))
+        .sort(
+          (a: any, b: any) =>
+            a.product.name.localeCompare(b.product.name, "id") ||
+            a.market.name.localeCompare(b.market.name, "id"),
+        );
 
-      // Filter markets if a specific one is selected
-      const activeMarkets = marketId !== "all" ? markets.filter((m) => m.id === marketId) : markets;
-
-      // Generate all benchmark prices for active markets and products
-      const benchmarkPrices = getDeterministicBenchmarkPrices(
-        products as any[],
-        activeMarkets as any[],
-        dateToUse,
-      );
-
-      // Merge: prefer DB prices over benchmark prices
-      const mergedPrices = benchmarkPrices.map((bp: any) => {
-        const key = `${bp.product_id}:${bp.market_id}`;
-        if (dbPriceMap.has(key)) {
-          const dbRow = dbPriceMap.get(key);
-          return {
-            id: dbRow.id,
-            product_id: bp.product_id,
-            market_id: bp.market_id,
-            price: Number(dbRow.price),
-            recorded_at: dbRow.recorded_at,
-            created_at: dbRow.created_at,
-            source: dbRow.source || "database",
-            product: dbRow.product || bp.product,
-            market: dbRow.market || bp.market,
-          };
-        }
-        return bp; // benchmark price
-      });
-
-      const isBenchmark = mergedPrices.some((r: any) => isSimulatedSource(r.source));
-
-      // Query yesterday's prices
-      const yresQuery = supabase
-        .from("product_prices")
-        .select("product_id,market_id,price")
-        .eq("recorded_at", ydaystr);
-      const yres = await yresQuery;
-      const yDbPrices = yres.data ?? [];
-      const yDbPriceMap = new Map<string, number>();
-      yDbPrices.forEach((r: any) => {
-        const pId = r.product_id || (r.product as any)?.id;
-        const mId = r.market_id || (r.market as any)?.id;
-        if (pId && mId) {
-          yDbPriceMap.set(`${pId}:${mId}`, Number(r.price));
-        }
-      });
-
-      const yBenchmarkPrices = getDeterministicBenchmarkPrices(
-        products as any[],
-        markets as any[],
-        ydaystr,
-      );
-      const ymap = new Map<string, number>();
-      yBenchmarkPrices.forEach((bp: any) => {
-        const key = `${bp.product_id}:${bp.market_id}`;
-        if (yDbPriceMap.has(key)) {
-          ymap.set(key, yDbPriceMap.get(key)!);
-        } else {
-          ymap.set(key, bp.price);
-        }
-      });
-
-      // Recorded prices are compared with the previous recorded price (skipping weekends and
-      // gaps), never with a simulated value.
+      // Compare with the previous recorded price (skipping weekends and gaps).
       const { data: prevReal } = await supabase
         .from("product_prices")
         .select("product_id,market_id,price,recorded_at")
@@ -337,7 +268,7 @@ function PricesPage() {
         .gte("recorded_at", new Date(dateToUseMs - 14 * 86400000).toISOString().slice(0, 10))
         .not("source", "in", "(seed,simulasi)")
         .order("recorded_at", { ascending: false })
-        .limit(5000);
+        .limit(10000);
       const prevRealMap = new Map<string, number>();
       for (const r of prevReal ?? []) {
         const key = `${r.product_id}:${r.market_id}`;
@@ -346,16 +277,10 @@ function PricesPage() {
 
       return {
         dateUsed: dateToUse,
-        isBenchmark,
-        list: mergedPrices.map((r: any) => {
-          const key = r.product_id + ":" + r.market_id;
-          return {
-            ...r,
-            prev: isSimulatedSource(r.source)
-              ? (ymap.get(key) ?? null)
-              : (prevRealMap.get(key) ?? null),
-          };
-        }),
+        list: rows.map((r: any) => ({
+          ...r,
+          prev: prevRealMap.get(`${r.product_id}:${r.market_id}`) ?? null,
+        })),
       };
     },
   });
@@ -519,14 +444,6 @@ function PricesPage() {
                     <div className="flex flex-col">
                       <div className="flex items-center gap-1.5 flex-wrap">
                         <span>{r.product.name}</span>
-                        {isSimulatedSource(r.source) && (
-                          <span
-                            title="Data contoh (simulasi), bukan harga sebenarnya"
-                            className="rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-900 dark:bg-amber-500/15 dark:text-amber-200"
-                          >
-                            contoh
-                          </span>
-                        )}
                         <button
                           onClick={() => {
                             if (!isPremium) {
