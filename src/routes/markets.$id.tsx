@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { idr } from "@/lib/format";
-import { getDeterministicBenchmarkPrices, isSimulatedSource } from "@/lib/benchmark";
+import { getDeterministicBenchmarkPrices } from "@/lib/benchmark";
 import { DataNotice } from "@/components/data-notice";
 import { useEffect, useRef, useMemo } from "react";
 import { ArrowLeft, MapPin, Clock, ExternalLink, Star, Store, Heart } from "lucide-react";
@@ -256,12 +256,7 @@ function MarketDetail() {
           <ArrowLeft className="h-4 w-4" /> Kembali ke Peta Pasar
         </Link>
       </div>
-      {!!prices?.length && (
-        <DataNotice
-          simulated={prices.some((r: any) => isSimulatedSource(r.source))}
-          className="mb-6"
-        />
-      )}
+      {!!prices?.length && <DataNotice rows={prices} className="mb-6" />}
       {/* Top Info Banner Card */}
       <div className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm mb-8">
         <div className="flex flex-wrap items-start justify-between gap-4">

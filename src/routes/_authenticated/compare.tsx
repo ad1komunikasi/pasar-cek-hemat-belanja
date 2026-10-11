@@ -4,11 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useState, useEffect, useMemo } from "react";
 import { idr } from "@/lib/format";
-import {
-  getDeterministicBenchmarkPrices,
-  isSimulatedSource,
-  mergeWithDefaultMarkets,
-} from "@/lib/benchmark";
+import { getDeterministicBenchmarkPrices, mergeWithDefaultMarkets } from "@/lib/benchmark";
 import { DataNotice } from "@/components/data-notice";
 import {
   Select,
@@ -149,12 +145,7 @@ function ComparePage() {
         description='"Di pasar mana saya bisa belanja paling hemat hari ini?"'
       />
 
-      {!!rows?.length && (
-        <DataNotice
-          simulated={rows.some((r: any) => isSimulatedSource(r.source))}
-          className="mb-6"
-        />
-      )}
+      {!!rows?.length && <DataNotice rows={rows} className="mb-6" />}
 
       <div className="mb-6 grid gap-3 sm:grid-cols-2">
         <div>

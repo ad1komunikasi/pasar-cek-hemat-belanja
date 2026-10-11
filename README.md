@@ -97,6 +97,23 @@ Konsep visual **“papan harga pasar”**: latar kertas krem `#f4efe4`, biru bra
 Font: Bricolage Grotesque (judul), Instrument Sans (teks), JetBrains Mono (harga & label).
 Token warna ada di `src/styles.css`; mode gelap tersedia di seluruh halaman.
 
+## Data harga (SP2KP Kemendag)
+
+Harga per pasar diambil dari SP2KP Kementerian Perdagangan lewat skrip
+[`scripts/sync-sp2kp.mjs`](scripts/sync-sp2kp.mjs) dan disimpan ke `product_prices` dengan
+sumber `SP2KP Kemendag`.
+
+- **Jadwal:** GitHub Actions [`sync-sp2kp.yml`](.github/workflows/sync-sp2kp.yml), Senin–Jumat
+  pukul 15.00 WIB, mengambil 4 hari terakhir (upsert, aman dijalankan ulang).
+- **Manual:** Actions → _Sinkron harga SP2KP_ → _Run workflow_ (default _dry run_).
+- **Lokal:** `npm run sync:sp2kp -- --dry-run`
+- **Secret wajib:** `SUPABASE_SERVICE_ROLE_KEY` di Settings → Secrets and variables → Actions.
+- **Cakupan:** DKI Jakarta, 18 produk; hanya pasar yang namanya sudah ada di tabel `markets`.
+  Pasar/produk tanpa data tetap memakai data contoh dan ditandai “contoh” di aplikasi.
+
+Endpoint SP2KP yang dipakai adalah endpoint publik yang tidak terdokumentasi resmi. Skrip memakai
+satu provinsi, jeda antar-permintaan, dan maksimal sekali sehari; izin resmi tetap sedang diajukan.
+
 ## Deploy
 
 Setiap push ke `main` otomatis di-deploy oleh Vercel ke

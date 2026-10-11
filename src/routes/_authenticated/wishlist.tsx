@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/select";
 import { idr } from "@/lib/format";
 import { useRealTimePrices } from "@/hooks/use-real-time-prices";
-import { getDeterministicBenchmarkPrices, isSimulatedSource } from "@/lib/benchmark";
+import { getDeterministicBenchmarkPrices } from "@/lib/benchmark";
 import { DataNotice } from "@/components/data-notice";
 import {
   Plus,
@@ -697,11 +697,7 @@ function WishlistPage() {
         }
       />
 
-      <DataNotice
-        simulated={(livePricesByMarket ?? []).some((r: any) => isSimulatedSource(r.source))}
-        date={todayStr}
-        className="mb-4"
-      />
+      <DataNotice rows={livePricesByMarket ?? []} date={todayStr} className="mb-4" />
 
       <div className="grid gap-6 lg:grid-cols-[1fr_380px]">
         {/* Left Side: Wishlist Items */}

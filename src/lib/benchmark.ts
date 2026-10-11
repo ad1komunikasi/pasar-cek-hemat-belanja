@@ -224,3 +224,21 @@ export function getDeterministicBenchmarkPrices(
 
   return prices;
 }
+
+/** Most recent date (≤ `onOrBefore`) that has recorded, non-sample prices — or null. */
+export async function fetchLatestRealPriceDate(
+  client: {
+    from: (t: "product_prices") => any;
+  },
+  onOrBefore: string,
+): Promise<string | null> {
+  const { data } = await client
+    .from("product_prices")
+    .select("recorded_at")
+    .lte("recorded_at", onOrBefore)
+    .not("source", "in", "(seed,simulasi)")
+    .order("recorded_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  return data?.recorded_at ?? null;
+}

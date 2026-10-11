@@ -10,7 +10,8 @@
     "build:dev": "vite build --mode development",
     "preview": "vite preview",
     "lint": "eslint .",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "sync:sp2kp": "node scripts/sync-sp2kp.mjs"
   },
   "dependencies": {
     "@fontsource/roboto": "^5.2.10",

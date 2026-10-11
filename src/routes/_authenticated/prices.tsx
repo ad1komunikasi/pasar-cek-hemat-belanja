@@ -216,7 +216,20 @@ function PricesPage() {
   const { data: prices, isLoading } = useQuery({
     queryKey: ["prices-today", marketId, category, selectedDate],
     queryFn: async () => {
-      const dateToUse = selectedDate || today;
+      // Default to the most recent date that has recorded (non-sample) prices: official
+      // sources such as SP2KP publish on working days only.
+      let dateToUse = selectedDate || today;
+      if (!selectedDate) {
+        const { data: latestReal } = await supabase
+          .from("product_prices")
+          .select("recorded_at")
+          .lte("recorded_at", today)
+          .not("source", "in", "(seed,simulasi)")
+          .order("recorded_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        if (latestReal?.recorded_at) dateToUse = latestReal.recorded_at;
+      }
 
       const dateToUseMs = new Date(dateToUse).getTime();
       const ydaystr = new Date(dateToUseMs - 86400000).toISOString().slice(0, 10);
@@ -315,13 +328,34 @@ function PricesPage() {
         }
       });
 
+      // Recorded prices are compared with the previous recorded price (skipping weekends and
+      // gaps), never with a simulated value.
+      const { data: prevReal } = await supabase
+        .from("product_prices")
+        .select("product_id,market_id,price,recorded_at")
+        .lt("recorded_at", dateToUse)
+        .gte("recorded_at", new Date(dateToUseMs - 14 * 86400000).toISOString().slice(0, 10))
+        .not("source", "in", "(seed,simulasi)")
+        .order("recorded_at", { ascending: false })
+        .limit(5000);
+      const prevRealMap = new Map<string, number>();
+      for (const r of prevReal ?? []) {
+        const key = `${r.product_id}:${r.market_id}`;
+        if (!prevRealMap.has(key)) prevRealMap.set(key, Number(r.price));
+      }
+
       return {
         dateUsed: dateToUse,
         isBenchmark,
-        list: mergedPrices.map((r: any) => ({
-          ...r,
-          prev: ymap.get(r.product_id + ":" + r.market_id) ?? null,
-        })),
+        list: mergedPrices.map((r: any) => {
+          const key = r.product_id + ":" + r.market_id;
+          return {
+            ...r,
+            prev: isSimulatedSource(r.source)
+              ? (ymap.get(key) ?? null)
+              : (prevRealMap.get(key) ?? null),
+          };
+        }),
       };
     },
   });
@@ -409,9 +443,7 @@ function PricesPage() {
         </Select>
       </div>
 
-      {pricesList.length > 0 && (
-        <DataNotice simulated={!!prices?.isBenchmark} date={activeDate} className="mb-4" />
-      )}
+      {pricesList.length > 0 && <DataNotice rows={pricesList} date={activeDate} className="mb-4" />}
 
       <div className="overflow-hidden rounded-lg border border-[var(--color-gray-100)] bg-white">
         <table className="w-full text-sm">
@@ -487,6 +519,14 @@ function PricesPage() {
                     <div className="flex flex-col">
                       <div className="flex items-center gap-1.5 flex-wrap">
                         <span>{r.product.name}</span>
+                        {isSimulatedSource(r.source) && (
+                          <span
+                            title="Data contoh (simulasi), bukan harga sebenarnya"
+                            className="rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-900 dark:bg-amber-500/15 dark:text-amber-200"
+                          >
+                            contoh
+                          </span>
+                        )}
                         <button
                           onClick={() => {
                             if (!isPremium) {

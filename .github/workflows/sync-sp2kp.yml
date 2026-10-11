@@ -1,0 +1,48 @@
+name: Sinkron harga SP2KP
+
+on:
+  schedule:
+    # 08:00 UTC = 15:00 WIB, Senin–Jumat (setelah petugas SP2KP menginput harga)
+    - cron: "0 8 * * 1-5"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Hanya tampilkan, jangan tulis ke database"
+        type: boolean
+        default: true
+      date:
+        description: "Tanggal akhir (YYYY-MM-DD), kosong = hari ini (WIB)"
+        required: false
+      days:
+        description: "Jumlah hari ke belakang yang diambil (maks 14)"
+        required: false
+        default: "4"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: sync-sp2kp
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Sinkronisasi
+        env:
+          SUPABASE_URL: https://nqbpykmvvjrytnwljkir.supabase.co
+          # Kunci publik (sama dengan yang ada di kode klien) — cukup untuk --dry-run.
+          VITE_SUPABASE_PUBLISHABLE_KEY: sb_publishable_ZftPqa-FN2fEFn6RofNDYg_cK46QKO7
+          # Kunci rahasia untuk menulis; set di Settings → Secrets and variables → Actions.
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          ARGS="--days ${{ inputs.days || '4' }}"
+          if [ -n "${{ inputs.date }}" ]; then ARGS="$ARGS --date ${{ inputs.date }}"; fi
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.dry_run }}" = "true" ]; then ARGS="$ARGS --dry-run"; fi
+          node scripts/sync-sp2kp.mjs $ARGS

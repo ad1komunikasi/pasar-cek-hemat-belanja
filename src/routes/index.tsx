@@ -1329,6 +1329,8 @@ function Pricing() {
 
 function FAQ() {
   const { tx } = useTx();
+  const { data: boards = [] } = useMarketBoards();
+  const sample = boardsAreSimulated(boards);
   const items = [
     [
       tx("Apakah PasarCek benar-benar gratis?", "Is PasarCek really free?"),
@@ -1339,17 +1341,27 @@ function FAQ() {
     ],
     [
       tx("Dari mana data harganya?", "Where do the prices come from?"),
-      tx(
-        "Saat ini PasarCek masih versi beta dan harga yang tampil adalah data contoh (simulasi), ditandai jelas di setiap halaman harga. Kami sedang menyiapkan integrasi dengan sumber harga resmi pemerintah; setelah aktif, sumber dan tanggal pencatatan akan tercantum di setiap harga.",
-        "PasarCek is in beta and the prices shown are sample (simulated) data, clearly marked on every price page. We're preparing an integration with an official government price source; once live, the source and recording date will be shown with every price.",
-      ),
+      sample
+        ? tx(
+            "Saat ini PasarCek masih versi beta dan harga yang tampil adalah data contoh (simulasi), ditandai jelas di setiap halaman harga. Kami sedang menyiapkan integrasi dengan sumber harga resmi pemerintah; setelah aktif, sumber dan tanggal pencatatan akan tercantum di setiap harga.",
+            "PasarCek is in beta and the prices shown are sample (simulated) data, clearly marked on every price page. We're preparing an integration with an official government price source; once live, the source and recording date will be shown with every price.",
+          )
+        : tx(
+            "Dari SP2KP (Sistem Pemantauan Pasar dan Kebutuhan Pokok) Kementerian Perdagangan: harga per pasar yang dicatat petugas setiap hari kerja. Setiap harga tampil bersama sumber dan tanggalnya. Pasar atau produk yang belum dipantau SP2KP masih memakai data contoh dan ditandai “contoh”.",
+            "From SP2KP, the Ministry of Trade's market monitoring system: per-market prices recorded by officers every working day. Every price shows its source and date. Markets or items SP2KP doesn't cover yet still use sample data, marked “sample”.",
+          ),
     ],
     [
       tx("Seberapa sering harga diperbarui?", "How often are prices updated?"),
-      tx(
-        "Mengikuti jadwal sumber resmi yang nanti kami gunakan — umumnya harian pada hari kerja. Setiap harga selalu ditampilkan bersama tanggal pencatatannya, jadi Anda tahu seberapa baru datanya.",
-        "It will follow the schedule of the official source we connect — typically daily on working days. Every price always shows the date it was recorded, so you know how fresh it is.",
-      ),
+      sample
+        ? tx(
+            "Mengikuti jadwal sumber resmi yang nanti kami gunakan — umumnya harian pada hari kerja. Setiap harga selalu ditampilkan bersama tanggal pencatatannya, jadi Anda tahu seberapa baru datanya.",
+            "It will follow the schedule of the official source we connect — typically daily on working days. Every price always shows the date it was recorded, so you know how fresh it is.",
+          )
+        : tx(
+            "Sekali sehari pada hari kerja, setelah petugas SP2KP menginput harga (sekitar siang hari). Sabtu, Minggu, dan hari libur tidak ada pembaruan — yang tampil adalah harga hari kerja terakhir, lengkap dengan tanggalnya.",
+            "Once a day on working days, after SP2KP officers enter prices (around midday). There are no updates on weekends or holidays — you'll see the last working day's prices, with their date.",
+          ),
     ],
     [
       tx("Kota mana saja yang sudah tersedia?", "Which cities are covered?"),

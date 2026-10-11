@@ -3,7 +3,7 @@ import { AppShell, PageHeader, EmptyState } from "@/components/app-shell";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/select";
 import { idr, fmtDate } from "@/lib/format";
 import { useRealTimePrices } from "@/hooks/use-real-time-prices";
-import { getDeterministicBenchmarkPrices, isSimulatedSource } from "@/lib/benchmark";
+import { fetchLatestRealPriceDate, getDeterministicBenchmarkPrices } from "@/lib/benchmark";
 import { DataNotice } from "@/components/data-notice";
 import {
   Plus,
@@ -206,6 +206,18 @@ function SmartBasketPage() {
 
   const today = new Date().toLocaleDateString("en-CA");
   const [selectedDate, setSelectedDate] = useState<string>(today);
+  const dateTouched = useRef(false);
+
+  // Start on the latest date with recorded prices (official sources skip weekends).
+  useEffect(() => {
+    let cancelled = false;
+    fetchLatestRealPriceDate(supabase, today).then((d) => {
+      if (!cancelled && d && !dateTouched.current) setSelectedDate(d);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [today]);
 
   const handleOpenLock = (feature: string) => {
     setLockedFeatureName(feature);
@@ -458,17 +470,16 @@ function SmartBasketPage() {
               className="pl-9 h-9 cursor-pointer text-xs bg-white"
               value={selectedDate}
               max={today}
-              onChange={(e) => setSelectedDate(e.target.value)}
+              onChange={(e) => {
+                dateTouched.current = true;
+                setSelectedDate(e.target.value);
+              }}
             />
           </div>
         </div>
       </div>
 
-      <DataNotice
-        simulated={(livePricesByMarket ?? []).some((r: any) => isSimulatedSource(r.source))}
-        date={selectedDate}
-        className="mb-6"
-      />
+      <DataNotice rows={livePricesByMarket ?? []} date={selectedDate} className="mb-6" />
 
       <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
         <div className="rounded-lg border border-[var(--color-gray-100)] bg-white @container">
