@@ -26,6 +26,7 @@ import heroImg from "@/assets/hero-illustration.jpg";
 import problemImg from "@/assets/problem-illustration.jpg";
 import familyImg from "@/assets/family-illustration.jpg";
 import {
+  boardsAreSimulated,
   recordedLabel,
   rupiah,
   useMarketBoards,
@@ -282,6 +283,7 @@ function Hero() {
   const { user } = useAuth();
   const { tx, lang } = useTx();
   const { data: boards = [] } = useMarketBoards();
+  const sample = boardsAreSimulated(boards);
   // Lead with whichever everyday staple has the widest gap in the latest log, and open the board on it.
   const candidates = HERO_PICKS.map((n) => boards.find((b) => b.name === n)).filter(
     (b): b is CommodityBoard => !!b,
@@ -339,9 +341,14 @@ function Hero() {
 
           <p className="mt-8 max-w-[34rem] text-lg leading-relaxed text-foreground/70 animate-rise [animation-delay:160ms]">
             {tx(
-              "PasarCek membandingkan harga sembako antar pasar di sekitar Anda, supaya Anda tahu harus belanja di mana sebelum keluar rumah. Versi beta: angka di papan harga masih data contoh selama integrasi sumber harga resmi disiapkan.",
-              "PasarCek compares staple prices across the markets near you, so you know where to shop before you leave the house. Beta: the numbers on the board are sample data while we connect an official price source.",
+              "PasarCek membandingkan harga sembako antar pasar di sekitar Anda, supaya Anda tahu harus belanja di mana sebelum keluar rumah.",
+              "PasarCek compares staple prices across the markets near you, so you know where to shop before you leave the house.",
             )}
+            {sample &&
+              tx(
+                " Versi beta: angka di papan harga masih data contoh selama integrasi sumber harga resmi disiapkan.",
+                " Beta: the numbers on the board are sample data while we connect an official price source.",
+              )}
           </p>
 
           <div className="mt-10 flex flex-wrap items-center gap-x-6 gap-y-4 animate-rise [animation-delay:240ms]">
@@ -363,7 +370,12 @@ function Hero() {
             {[
               [String(marketCount || 6), tx("pasar", "markets")],
               [String(boards.length || 20), tx("komoditas", "staples")],
-              ["Beta", tx("data masih contoh", "sample data for now")],
+              sample
+                ? ["Beta", tx("data masih contoh", "sample data for now")]
+                : [
+                    recordedLabel(boards[0]?.recordedAt ?? "", lang),
+                    tx("tanggal data terbaru", "latest data date"),
+                  ],
             ].map(([v, l]) => (
               <div key={l}>
                 <dt className="font-display text-3xl font-semibold tracking-tight">{v}</dt>
@@ -431,8 +443,11 @@ function PriceBoard({
             {tx("Harga per", "Price per")} {b.unit}
           </span>
           <span className="eyebrow flex items-center gap-1.5 text-foreground/55">
-            <span className="h-1.5 w-1.5 rounded-full bg-leaf" />
-            {tx("data contoh", "sample data")} · {recordedLabel(b.recordedAt, lang)}
+            <span
+              className={cn("h-1.5 w-1.5 rounded-full", b.simulated ? "bg-turmeric" : "bg-leaf")}
+            />
+            {b.simulated ? tx("data contoh", "sample data") : tx("dicatat", "recorded")} ·{" "}
+            {recordedLabel(b.recordedAt, lang)}
           </span>
         </div>
 
@@ -642,8 +657,9 @@ function Receipt({
 }
 
 function Problem() {
-  const { tx } = useTx();
+  const { tx, lang } = useTx();
   const { data: boards = [] } = useMarketBoards();
+  const sample = boardsAreSimulated(boards);
   const totals = basketTotals(boards, WEEKLY);
   const best = totals[0];
   const worst = totals[totals.length - 1];
@@ -709,10 +725,15 @@ function Problem() {
           {best && worst && best.market !== worst.market ? (
             <>
               <p data-reveal className="max-w-sm text-foreground/65 lg:ml-auto lg:text-right">
-                {tx(
-                  "Ilustrasi: daftar belanja yang sama, dihitung dengan data contoh di dua pasar Jakarta.",
-                  "Illustration: the same shopping list, priced with sample data at two Jakarta markets.",
-                )}
+                {sample
+                  ? tx(
+                      "Ilustrasi: daftar belanja yang sama, dihitung dengan data contoh di dua pasar Jakarta.",
+                      "Illustration: the same shopping list, priced with sample data at two Jakarta markets.",
+                    )
+                  : tx(
+                      `Daftar belanja yang sama, dihitung dengan harga tercatat ${recordedLabel(boards[0]?.recordedAt ?? "", lang)} di dua pasar:`,
+                      `The same shopping list, priced with recorded prices from ${recordedLabel(boards[0]?.recordedAt ?? "", lang)} at two markets:`,
+                    )}
               </p>
               <Snapshot
                 src={problemImg}
@@ -748,7 +769,9 @@ function Problem() {
                 className="mt-14 flex items-baseline justify-center gap-4 lg:justify-end"
               >
                 <span className="eyebrow text-foreground/55">
-                  {tx("Contoh selisih seminggu", "Example weekly difference")}
+                  {sample
+                    ? tx("Contoh selisih seminggu", "Example weekly difference")
+                    : tx("Selisih seminggu", "Weekly difference")}
                 </span>
                 <span className="font-display text-5xl font-bold tracking-tight text-leaf">
                   {rupiah(diff)}
@@ -756,7 +779,7 @@ function Problem() {
               </div>
               <p data-reveal className="mt-2 text-center text-sm text-foreground/50 lg:text-right">
                 {tx(
-                  `Kira-kira ${rupiah(diff * 52)} setahun pada contoh ini.`,
+                  `Kira-kira ${rupiah(diff * 52)} setahun${sample ? " pada contoh ini" : ", untuk satu keluarga"}.`,
                   `Roughly ${rupiah(diff * 52)} a year, for one household.`,
                 )}
               </p>
@@ -982,6 +1005,7 @@ function SmartBasket() {
   const { user } = useAuth();
   const { tx } = useTx();
   const { data: boards = [] } = useMarketBoards();
+  const sample = boardsAreSimulated(boards);
   const available = BASKET_CHOICES.filter(([n]) => boards.some((b) => b.name === n));
   const [picked, setPicked] = useState<string[]>([
     "Beras Premium",
@@ -1035,10 +1059,8 @@ function SmartBasket() {
           </p>
           <div data-reveal className="mt-8">
             <div className="eyebrow text-[#f4efe4]/45">
-              {tx(
-                "Coba — ketuk untuk ubah daftar (data contoh)",
-                "Try it — tap to edit the list (sample data)",
-              )}
+              {tx("Coba — ketuk untuk ubah daftar", "Try it — tap to edit the list")}
+              {sample && tx(" (data contoh)", " (sample data)")}
             </div>
             <div className="mt-4 flex flex-wrap gap-2">
               {available.map(([n, q]) => {

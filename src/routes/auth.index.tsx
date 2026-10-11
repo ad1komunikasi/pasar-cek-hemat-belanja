@@ -11,7 +11,12 @@ import { z } from "zod";
 import { ArrowLeft } from "lucide-react";
 import { Logo } from "@/components/site/logo";
 import { MarketField } from "@/components/site/market-field";
-import { rupiah, useMarketBoards } from "@/components/site/use-market-prices";
+import {
+  boardsAreSimulated,
+  recordedLabel,
+  rupiah,
+  useMarketBoards,
+} from "@/components/site/use-market-prices";
 
 export const Route = createFileRoute("/auth/")({
   validateSearch: (s: Record<string, unknown>): { tab?: string } => ({
@@ -127,8 +132,16 @@ function AuthAside() {
             data-field-avoid
           >
             <div className="flex justify-between border-b border-white/10 px-5 py-3">
-              <span className="eyebrow text-[#f4efe4]/50">Contoh papan harga</span>
-              {rows[0] && <span className="eyebrow text-[#f4efe4]/40">data contoh</span>}
+              <span className="eyebrow text-[#f4efe4]/50">
+                {boardsAreSimulated(boards) ? "Contoh papan harga" : "Termurah terbaru"}
+              </span>
+              {rows[0] && (
+                <span className="eyebrow text-[#f4efe4]/40">
+                  {rows[0].simulated
+                    ? "data contoh"
+                    : `dicatat ${recordedLabel(rows[0].recordedAt, "id")}`}
+                </span>
+              )}
             </div>
             <ul className="px-5 py-2">
               {rows.map((b) => (

@@ -1,10 +1,13 @@
 import { toast } from "sonner";
 import { useSettings } from "@/hooks/use-settings-context";
 import { LogoMark } from "./logo";
+import { boardsAreSimulated, useMarketBoards } from "./use-market-prices";
 
 export function SiteFooter() {
   const { lang } = useSettings();
   const id = lang === "id";
+  const { data: boards = [] } = useMarketBoards();
+  const sample = boardsAreSimulated(boards);
   const soon = (name: string) => (e: React.MouseEvent) => {
     e.preventDefault();
     toast.info(
@@ -78,9 +81,13 @@ export function SiteFooter() {
         <div className="mx-auto flex max-w-[1240px] flex-col gap-2 px-5 py-6 font-mono text-[11px] tracking-wide text-[#f4efe4]/45 sm:flex-row sm:justify-between sm:px-8">
           <span>© {new Date().getFullYear()} PasarCek</span>
           <span>
-            {id
-              ? "Versi beta · harga yang tampil masih data contoh"
-              : "Beta · prices shown are sample data"}
+            {sample
+              ? id
+                ? "Versi beta · harga yang tampil masih data contoh"
+                : "Beta · prices shown are sample data"
+              : id
+                ? "Harga tampil bersama sumber & tanggal pencatatannya"
+                : "Prices are shown with their source & recording date"}
           </span>
         </div>
       </div>

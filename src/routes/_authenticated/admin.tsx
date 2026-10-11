@@ -14,6 +14,7 @@ import {
   Menu,
   X,
   ArrowLeft,
+  Tags,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
@@ -42,6 +43,7 @@ const adminNav = [
   { to: "/admin/payments", label: "Pembayaran", icon: CreditCard },
   { to: "/admin/markets", label: "Pasar", icon: Store },
   { to: "/admin/products", label: "Produk", icon: Boxes },
+  { to: "/admin/prices", label: "Input Harga", icon: Tags },
   { to: "/admin/reports", label: "Laporan", icon: BarChart3 },
   { to: "/admin/auth-monitor", label: "Auth Monitor", icon: LogIn },
   { to: "/admin/settings", label: "Pengaturan", icon: Settings },
