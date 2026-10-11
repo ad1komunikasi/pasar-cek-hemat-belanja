@@ -368,8 +368,8 @@ function Hero() {
 
           <dl className="mt-14 grid max-w-lg grid-cols-3 border-t border-rule pt-5 animate-rise [animation-delay:320ms]">
             {[
-              [String(marketCount || 6), tx("pasar", "markets")],
-              [String(boards.length || 20), tx("komoditas", "staples")],
+              [marketCount ? String(marketCount) : "—", tx("pasar", "markets")],
+              [boards.length ? String(boards.length) : "—", tx("komoditas", "staples")],
               sample
                 ? ["Beta", tx("data masih contoh", "sample data for now")]
                 : [

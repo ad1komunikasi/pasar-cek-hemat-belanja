@@ -120,8 +120,11 @@ export function useMarketBoards() {
 
 export const rupiah = (n: number) => "Rp" + new Intl.NumberFormat("id-ID").format(Math.round(n));
 export const shortMarket = (m: string) => m.replace(/^Pasar\s+/i, "");
-export const recordedLabel = (iso: string, lang: "id" | "en") =>
-  new Intl.DateTimeFormat(lang === "id" ? "id-ID" : "en-GB", {
+export const recordedLabel = (iso: string | null | undefined, lang: "id" | "en") => {
+  const d = iso ? new Date(iso + "T00:00:00") : null;
+  if (!d || Number.isNaN(d.getTime())) return "—";
+  return new Intl.DateTimeFormat(lang === "id" ? "id-ID" : "en-GB", {
     day: "numeric",
     month: "short",
-  }).format(new Date(iso + "T00:00:00"));
+  }).format(d);
+};
