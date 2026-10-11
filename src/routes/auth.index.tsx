@@ -11,11 +11,7 @@ import { z } from "zod";
 import { ArrowLeft } from "lucide-react";
 import { Logo } from "@/components/site/logo";
 import { MarketField } from "@/components/site/market-field";
-import {
-  recordedLabel,
-  rupiah,
-  useMarketBoards,
-} from "@/components/site/use-market-prices";
+import { rupiah, useMarketBoards } from "@/components/site/use-market-prices";
 
 export const Route = createFileRoute("/auth/")({
   validateSearch: (s: Record<string, unknown>): { tab?: string } => ({
@@ -75,9 +71,24 @@ function AuthPage() {
         <div className="relative z-10 mx-auto my-auto w-full max-w-sm py-12">
           <Tabs value={activeTab} onValueChange={handleTabChange}>
             <TabsList className="mb-10 grid h-auto w-full grid-cols-3 rounded-none border-b border-rule bg-transparent p-0">
-              <TabsTrigger value="login" className="-mb-px rounded-none border-0 border-b-2 border-transparent bg-transparent pb-3 pt-1 text-[0.95rem] text-foreground/55 shadow-none data-[state=active]:border-foreground data-[state=active]:bg-transparent data-[state=active]:text-foreground data-[state=active]:shadow-none dark:data-[state=active]:bg-transparent">Masuk</TabsTrigger>
-              <TabsTrigger value="register" className="-mb-px rounded-none border-0 border-b-2 border-transparent bg-transparent pb-3 pt-1 text-[0.95rem] text-foreground/55 shadow-none data-[state=active]:border-foreground data-[state=active]:bg-transparent data-[state=active]:text-foreground data-[state=active]:shadow-none dark:data-[state=active]:bg-transparent">Daftar</TabsTrigger>
-              <TabsTrigger value="forgot" className="-mb-px rounded-none border-0 border-b-2 border-transparent bg-transparent pb-3 pt-1 text-[0.95rem] text-foreground/55 shadow-none data-[state=active]:border-foreground data-[state=active]:bg-transparent data-[state=active]:text-foreground data-[state=active]:shadow-none dark:data-[state=active]:bg-transparent">Lupa</TabsTrigger>
+              <TabsTrigger
+                value="login"
+                className="-mb-px rounded-none border-0 border-b-2 border-transparent bg-transparent pb-3 pt-1 text-[0.95rem] text-foreground/55 shadow-none data-[state=active]:border-foreground data-[state=active]:bg-transparent data-[state=active]:text-foreground data-[state=active]:shadow-none dark:data-[state=active]:bg-transparent"
+              >
+                Masuk
+              </TabsTrigger>
+              <TabsTrigger
+                value="register"
+                className="-mb-px rounded-none border-0 border-b-2 border-transparent bg-transparent pb-3 pt-1 text-[0.95rem] text-foreground/55 shadow-none data-[state=active]:border-foreground data-[state=active]:bg-transparent data-[state=active]:text-foreground data-[state=active]:shadow-none dark:data-[state=active]:bg-transparent"
+              >
+                Daftar
+              </TabsTrigger>
+              <TabsTrigger
+                value="forgot"
+                className="-mb-px rounded-none border-0 border-b-2 border-transparent bg-transparent pb-3 pt-1 text-[0.95rem] text-foreground/55 shadow-none data-[state=active]:border-foreground data-[state=active]:bg-transparent data-[state=active]:text-foreground data-[state=active]:shadow-none dark:data-[state=active]:bg-transparent"
+              >
+                Lupa
+              </TabsTrigger>
             </TabsList>
             <TabsContent value="login">
               <LoginForm />
@@ -111,14 +122,13 @@ function AuthAside() {
             Satu akun untuk papan harga, Smart Basket, dan alarm harga turun di pasar-pasar sekitar
             Anda.
           </p>
-          <div className="mt-10 rounded-[12px] border border-white/12 bg-[#0f1d47]/70 backdrop-blur-sm" data-field-avoid>
+          <div
+            className="mt-10 rounded-[12px] border border-white/12 bg-[#0f1d47]/70 backdrop-blur-sm"
+            data-field-avoid
+          >
             <div className="flex justify-between border-b border-white/10 px-5 py-3">
-              <span className="eyebrow text-[#f4efe4]/50">Termurah hari ini</span>
-              {rows[0] && (
-                <span className="eyebrow text-[#f4efe4]/40">
-                  dicatat {recordedLabel(rows[0].recordedAt, "id")}
-                </span>
-              )}
+              <span className="eyebrow text-[#f4efe4]/50">Contoh papan harga</span>
+              {rows[0] && <span className="eyebrow text-[#f4efe4]/40">data contoh</span>}
             </div>
             <ul className="px-5 py-2">
               {rows.map((b) => (
@@ -288,7 +298,13 @@ function LoginForm() {
       </div>
       <div>
         <Label className="mb-2 block text-sm text-foreground/75">Email</Label>
-        <Input className="h-12 bg-card" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+        <Input
+          className="h-12 bg-card"
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
+        />
       </div>
       <div>
         <div className="mb-2 flex items-center justify-between">
@@ -375,7 +391,13 @@ function RegisterForm() {
       </div>
       <div>
         <Label className="mb-2 block text-sm text-foreground/75">Email</Label>
-        <Input className="h-12 bg-card" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+        <Input
+          className="h-12 bg-card"
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
+        />
       </div>
       <div>
         <Label className="mb-2 block text-sm text-foreground/75">Password</Label>
@@ -433,7 +455,13 @@ function ForgotForm() {
       </p>
       <div>
         <Label className="mb-2 block text-sm text-foreground/75">Email</Label>
-        <Input className="h-12 bg-card" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+        <Input
+          className="h-12 bg-card"
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
+        />
       </div>
       <Button type="submit" className="h-12 w-full rounded-md text-[0.95rem]" disabled={busy}>
         {busy ? "Mengirim..." : "Kirim Link Reset"}

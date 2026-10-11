@@ -1,5 +1,13 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { TrendingUp, Scale, MapPin, ShoppingBasket, Bell, BarChart3, ArrowUpRight } from "lucide-react";
+import {
+  TrendingUp,
+  Scale,
+  MapPin,
+  ShoppingBasket,
+  Bell,
+  BarChart3,
+  ArrowUpRight,
+} from "lucide-react";
 import { PublicPage, PageIntro } from "@/components/site/public-page";
 import { useReveal } from "@/components/site/use-reveal";
 
@@ -8,7 +16,7 @@ const features = [
     slug: "harga-hari-ini",
     icon: TrendingUp,
     title: "Harga Sembako Hari Ini",
-    desc: "Pantau harga terbaru sembako di pasar sekitar Anda, diperbarui setiap hari.",
+    desc: "Lihat harga sembako di pasar sekitar Anda, lengkap dengan tanggal pencatatannya.",
   },
   {
     slug: "bandingkan-harga",
@@ -73,7 +81,11 @@ function FeaturesPage() {
       <div className="mx-auto max-w-[1240px] px-5 py-16 sm:px-8 md:py-24">
         <ul className="grid border-l border-t border-rule sm:grid-cols-2 lg:grid-cols-3">
           {features.map((f, i) => (
-            <li key={f.slug} data-reveal style={{ ["--reveal-delay" as string]: `${(i % 3) * 70}ms` }}>
+            <li
+              key={f.slug}
+              data-reveal
+              style={{ ["--reveal-delay" as string]: `${(i % 3) * 70}ms` }}
+            >
               <Link
                 to="/features/$slug"
                 params={{ slug: f.slug }}
@@ -85,8 +97,13 @@ function FeaturesPage() {
                   </span>
                   <ArrowUpRight className="h-5 w-5 text-foreground/30 transition-all duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-foreground" />
                 </div>
-                <f.icon className="mt-auto h-7 w-7 text-tarp transition-transform duration-300 group-hover:-rotate-6" strokeWidth={1.6} />
-                <h3 className="mt-5 text-[1.45rem] font-semibold leading-tight tracking-tight">{f.title}</h3>
+                <f.icon
+                  className="mt-auto h-7 w-7 text-tarp transition-transform duration-300 group-hover:-rotate-6"
+                  strokeWidth={1.6}
+                />
+                <h3 className="mt-5 text-[1.45rem] font-semibold leading-tight tracking-tight">
+                  {f.title}
+                </h3>
                 <p className="mt-2 leading-relaxed text-foreground/65">{f.desc}</p>
               </Link>
             </li>

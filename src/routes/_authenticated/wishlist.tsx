@@ -13,9 +13,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { idr, fmtDateTimeWithSeconds } from "@/lib/format";
+import { idr } from "@/lib/format";
 import { useRealTimePrices } from "@/hooks/use-real-time-prices";
-import { getDeterministicBenchmarkPrices } from "@/lib/benchmark";
+import { getDeterministicBenchmarkPrices, isSimulatedSource } from "@/lib/benchmark";
+import { DataNotice } from "@/components/data-notice";
 import {
   Plus,
   Trash2,
@@ -421,7 +422,9 @@ function WishlistPage() {
 
       const { data } = await supabase
         .from("product_prices")
-        .select("price,product_id,market_id,market:markets(id,name,city,lat,lng,address,hours)")
+        .select(
+          "price,source,product_id,market_id,market:markets(id,name,city,lat,lng,address,hours)",
+        )
         .eq("recorded_at", dateToUse)
         .in("product_id", productIds);
 
@@ -450,12 +453,14 @@ function WishlistPage() {
             price: Number(dbRow.price),
             product_id: bp.product_id,
             market: dbRow.market || bp.market,
+            source: dbRow.source as string | null,
           };
         }
         return {
           price: bp.price,
           product_id: bp.product_id,
           market: bp.market,
+          source: bp.source as string | null,
         };
       });
 
@@ -464,10 +469,7 @@ function WishlistPage() {
   });
 
   const todayStr = new Date().toLocaleDateString("en-CA");
-  const { prices: livePricesByMarket, lastUpdated: liveLastUpdated } = useRealTimePrices(
-    pricesByMarket,
-    todayStr,
-  );
+  const { prices: livePricesByMarket } = useRealTimePrices(pricesByMarket, todayStr);
 
   const productCheapestPrices = useMemo(() => {
     if (!items || !livePricesByMarket) return {};
@@ -695,21 +697,11 @@ function WishlistPage() {
         }
       />
 
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-lg bg-[var(--color-gray-50)] p-4 border border-[var(--color-gray-100)] text-xs text-[var(--color-gray-700)]">
-        <div className="flex items-center gap-1.5 font-medium">
-          <span className="relative flex h-2 w-2">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[var(--color-success)] opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-2 w-2 bg-[var(--color-success)]"></span>
-          </span>
-          <span>Feed Harga Kemendag SP2KP Terhubung (Real-Time)</span>
-        </div>
-        <div className="text-[var(--color-gray-500)]">
-          Update Terkini:{" "}
-          <strong className="text-[var(--color-brand-green)] font-bold">
-            {fmtDateTimeWithSeconds(liveLastUpdated)}
-          </strong>
-        </div>
-      </div>
+      <DataNotice
+        simulated={(livePricesByMarket ?? []).some((r: any) => isSimulatedSource(r.source))}
+        date={todayStr}
+        className="mb-4"
+      />
 
       <div className="grid gap-6 lg:grid-cols-[1fr_380px]">
         {/* Left Side: Wishlist Items */}

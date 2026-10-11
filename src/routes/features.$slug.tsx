@@ -6,8 +6,13 @@ import { useAuth } from "@/hooks/use-auth";
 const details: Record<string, { title: string; desc: string; bullets: string[] }> = {
   "harga-hari-ini": {
     title: "Harga Sembako Hari Ini",
-    desc: "Update harga real-time dari pasar tradisional di sekitar Anda.",
-    bullets: ["Update harian", "Filter per kategori", "Status naik/turun/stabil", "Riwayat harga"],
+    desc: "Harga sembako per pasar di sekitar Anda, lengkap dengan tanggal pencatatannya.",
+    bullets: [
+      "Tanggal pencatatan di setiap harga",
+      "Filter per kategori",
+      "Status naik/turun/stabil",
+      "Riwayat harga",
+    ],
   },
   "bandingkan-harga": {
     title: "Bandingkan Harga Antar Pasar",
@@ -23,7 +28,7 @@ const details: Record<string, { title: string; desc: string; bullets: string[] }
     title: "Smart Basket Simulator",
     desc: "Simulasikan keranjang belanja Anda dan AI menemukan pasar termurah.",
     bullets: [
-      "CRUD produk realtime",
+      "Tambah & ubah daftar produk",
       "Estimasi biaya per pasar",
       "Rekomendasi pasar termurah",
       "Simpan & bagikan",
@@ -61,7 +66,11 @@ function FeatureDetail() {
   if (!d)
     return (
       <PublicPage>
-        <PageIntro eyebrow="404" title="Fitur tidak ditemukan." lede="Mungkin tautannya sudah berubah." />
+        <PageIntro
+          eyebrow="404"
+          title="Fitur tidak ditemukan."
+          lede="Mungkin tautannya sudah berubah."
+        />
       </PublicPage>
     );
 
@@ -80,7 +89,10 @@ function FeatureDetail() {
     <PublicPage>
       <PageIntro
         eyebrow={
-          <Link to="/features" className="inline-flex items-center gap-1.5 transition-colors hover:text-foreground">
+          <Link
+            to="/features"
+            className="inline-flex items-center gap-1.5 transition-colors hover:text-foreground"
+          >
             <ArrowLeft className="h-3.5 w-3.5" /> Semua fitur
           </Link>
         }

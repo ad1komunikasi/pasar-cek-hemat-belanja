@@ -3,7 +3,8 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { idr } from "@/lib/format";
-import { getDeterministicBenchmarkPrices } from "@/lib/benchmark";
+import { getDeterministicBenchmarkPrices, isSimulatedSource } from "@/lib/benchmark";
+import { DataNotice } from "@/components/data-notice";
 import { useEffect, useRef, useMemo } from "react";
 import { ArrowLeft, MapPin, Clock, ExternalLink, Star, Store, Heart } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
@@ -111,7 +112,7 @@ function MarketDetail() {
 
       const { data } = await supabase
         .from("product_prices")
-        .select("price, product_id, product:products(id,name,unit,category)")
+        .select("price, source, product_id, product:products(id,name,unit,category)")
         .eq("market_id", id)
         .eq("recorded_at", dateToUse);
 
@@ -137,11 +138,13 @@ function MarketDetail() {
           return {
             price: Number(dbRow.price),
             product: dbRow.product || bp.product,
+            source: dbRow.source as string | null,
           };
         }
         return {
           price: bp.price,
           product: bp.product,
+          source: bp.source as string | null,
         };
       });
 
@@ -253,6 +256,12 @@ function MarketDetail() {
           <ArrowLeft className="h-4 w-4" /> Kembali ke Peta Pasar
         </Link>
       </div>
+      {!!prices?.length && (
+        <DataNotice
+          simulated={prices.some((r: any) => isSimulatedSource(r.source))}
+          className="mb-6"
+        />
+      )}
       {/* Top Info Banner Card */}
       <div className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm mb-8">
         <div className="flex flex-wrap items-start justify-between gap-4">

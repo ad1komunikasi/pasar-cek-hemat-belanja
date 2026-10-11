@@ -1,5 +1,12 @@
-// Deterministic benchmark price generator for food prices in traditional markets.
-// This simulates a real-time price provider integration.
+// Deterministic SIMULATED prices for markets/dates that have no recorded price yet.
+// These are placeholder values for demo purposes only — not official or observed prices.
+// Every row is tagged with SIMULATED_SOURCE so the UI can disclose it.
+
+export const SIMULATED_SOURCE = "simulasi";
+
+/** True for generated placeholders and for the randomised `seed` rows from the initial migration. */
+export const isSimulatedSource = (source?: string | null) =>
+  !source || source === SIMULATED_SOURCE || source === "seed";
 
 export interface Product {
   id: string;
@@ -22,19 +29,79 @@ export interface Market {
 }
 
 export const DEFAULT_MARKETS: Market[] = [
-  { id: "8c7647ec-8579-4c9c-bff4-c1928256332d", name: "Pasar Tanah Abang", city: "Jakarta Pusat", address: "Jl. Fachrudin, Tanah Abang" },
-  { id: "6fa2a1ab-3a44-41da-8619-0c233ebf565f", name: "Pasar Senen", city: "Jakarta Pusat", address: "Jl. Pasar Senen, Senen" },
-  { id: "a708c13e-0813-41bc-8e6f-7a7435378815", name: "Pasar Kramat Jati", city: "Jakarta Timur", address: "Jl. Raya Bogor KM 17" },
-  { id: "0821497c-d785-469a-85ca-0699ba947169", name: "Pasar Jatinegara", city: "Jakarta Timur", address: "Jl. Jatinegara Timur" },
-  { id: "7de886ac-879d-46c6-ac33-b21206a82b66", name: "Pasar Mayestik", city: "Jakarta Selatan", address: "Jl. Tebah, Gunung" },
-  { id: "376232e4-4a01-416d-b276-ceea0a9ba16f", name: "Pasar Minggu", city: "Jakarta Selatan", address: "Jl. Raya Pasar Minggu" },
-  { id: "def-depok-1", name: "Pasar Kemiri Muka", city: "Depok", address: "Jl. Margonda Raya, Beji" },
-  { id: "def-depok-2", name: "Pasar Cisalak", city: "Depok", address: "Jl. Raya Bogor KM 31, Cimanggis" },
-  { id: "def-jakbar-1", name: "Pasar Tomang Barat", city: "Jakarta Barat", address: "Jl. Tanjung Duren Raya" },
-  { id: "def-jakut-1", name: "Pasar Muara Karang", city: "Jakarta Utara", address: "Jl. Muara Karang Raya" },
-  { id: "def-bogor-1", name: "Pasar Anyar Bogor", city: "Bogor", address: "Jl. Dewi Sartika, Bogor Tengah" },
+  {
+    id: "8c7647ec-8579-4c9c-bff4-c1928256332d",
+    name: "Pasar Tanah Abang",
+    city: "Jakarta Pusat",
+    address: "Jl. Fachrudin, Tanah Abang",
+  },
+  {
+    id: "6fa2a1ab-3a44-41da-8619-0c233ebf565f",
+    name: "Pasar Senen",
+    city: "Jakarta Pusat",
+    address: "Jl. Pasar Senen, Senen",
+  },
+  {
+    id: "a708c13e-0813-41bc-8e6f-7a7435378815",
+    name: "Pasar Kramat Jati",
+    city: "Jakarta Timur",
+    address: "Jl. Raya Bogor KM 17",
+  },
+  {
+    id: "0821497c-d785-469a-85ca-0699ba947169",
+    name: "Pasar Jatinegara",
+    city: "Jakarta Timur",
+    address: "Jl. Jatinegara Timur",
+  },
+  {
+    id: "7de886ac-879d-46c6-ac33-b21206a82b66",
+    name: "Pasar Mayestik",
+    city: "Jakarta Selatan",
+    address: "Jl. Tebah, Gunung",
+  },
+  {
+    id: "376232e4-4a01-416d-b276-ceea0a9ba16f",
+    name: "Pasar Minggu",
+    city: "Jakarta Selatan",
+    address: "Jl. Raya Pasar Minggu",
+  },
+  {
+    id: "def-depok-1",
+    name: "Pasar Kemiri Muka",
+    city: "Depok",
+    address: "Jl. Margonda Raya, Beji",
+  },
+  {
+    id: "def-depok-2",
+    name: "Pasar Cisalak",
+    city: "Depok",
+    address: "Jl. Raya Bogor KM 31, Cimanggis",
+  },
+  {
+    id: "def-jakbar-1",
+    name: "Pasar Tomang Barat",
+    city: "Jakarta Barat",
+    address: "Jl. Tanjung Duren Raya",
+  },
+  {
+    id: "def-jakut-1",
+    name: "Pasar Muara Karang",
+    city: "Jakarta Utara",
+    address: "Jl. Muara Karang Raya",
+  },
+  {
+    id: "def-bogor-1",
+    name: "Pasar Anyar Bogor",
+    city: "Bogor",
+    address: "Jl. Dewi Sartika, Bogor Tengah",
+  },
   { id: "def-bekasi-1", name: "Pasar Kranji", city: "Bekasi", address: "Jl. Pemuda, Kranji" },
-  { id: "def-tangerang-1", name: "Pasar Anyar Tangerang", city: "Tangerang", address: "Jl. Ahmad Yani" },
+  {
+    id: "def-tangerang-1",
+    name: "Pasar Anyar Tangerang",
+    city: "Tangerang",
+    address: "Jl. Ahmad Yani",
+  },
 ];
 
 export function mergeWithDefaultMarkets(dbMarkets: Market[] | null | undefined): Market[] {
@@ -148,7 +215,7 @@ export function getDeterministicBenchmarkPrices(
         price: calculatedPrice,
         recorded_at: dateStr,
         created_at: createdAtIso,
-        source: "SP2KP Kemendag",
+        source: SIMULATED_SOURCE,
         product: p,
         market: m,
       });

@@ -4,7 +4,12 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useState, useEffect, useMemo } from "react";
 import { idr } from "@/lib/format";
-import { getDeterministicBenchmarkPrices, mergeWithDefaultMarkets } from "@/lib/benchmark";
+import {
+  getDeterministicBenchmarkPrices,
+  isSimulatedSource,
+  mergeWithDefaultMarkets,
+} from "@/lib/benchmark";
+import { DataNotice } from "@/components/data-notice";
 import {
   Select,
   SelectContent,
@@ -28,16 +33,12 @@ function ComparePage() {
   useEffect(() => {
     const channel = supabase
       .channel("realtime-markets-compare")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "markets" },
-        () => {
-          qc.invalidateQueries({ queryKey: ["cities"] });
-          qc.invalidateQueries({ queryKey: ["compare"] });
-          qc.invalidateQueries({ queryKey: ["markets-list"] });
-          qc.invalidateQueries({ queryKey: ["markets-public"] });
-        }
-      )
+      .on("postgres_changes", { event: "*", schema: "public", table: "markets" }, () => {
+        qc.invalidateQueries({ queryKey: ["cities"] });
+        qc.invalidateQueries({ queryKey: ["compare"] });
+        qc.invalidateQueries({ queryKey: ["markets-list"] });
+        qc.invalidateQueries({ queryKey: ["markets-public"] });
+      })
       .subscribe();
 
     return () => {
@@ -93,7 +94,7 @@ function ComparePage() {
 
       const query = supabase
         .from("product_prices")
-        .select("price, market_id, market:markets(id,name,city,address)")
+        .select("price, source, market_id, market:markets(id,name,city,address)")
         .eq("recorded_at", dateToUse)
         .eq("product_id", productId);
       const { data } = await query;
@@ -120,11 +121,13 @@ function ComparePage() {
           return {
             price: Number(dbRow.price),
             market: dbRow.market || bp.market,
+            source: dbRow.source as string | null,
           };
         }
         return {
           price: bp.price,
           market: bp.market,
+          source: bp.source as string | null,
         };
       });
 
@@ -145,6 +148,13 @@ function ComparePage() {
         title="Bandingkan Harga Antar Pasar"
         description='"Di pasar mana saya bisa belanja paling hemat hari ini?"'
       />
+
+      {!!rows?.length && (
+        <DataNotice
+          simulated={rows.some((r: any) => isSimulatedSource(r.source))}
+          className="mb-6"
+        />
+      )}
 
       <div className="mb-6 grid gap-3 sm:grid-cols-2">
         <div>

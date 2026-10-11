@@ -73,12 +73,15 @@ export function SiteFooter() {
             </div>
           ))}
         </div>
-
       </div>
       <div className="relative z-10 mt-16 border-t border-white/10">
         <div className="mx-auto flex max-w-[1240px] flex-col gap-2 px-5 py-6 font-mono text-[11px] tracking-wide text-[#f4efe4]/45 sm:flex-row sm:justify-between sm:px-8">
           <span>© {new Date().getFullYear()} PasarCek</span>
-          <span>{id ? "Harga dicatat harian · Jakarta & sekitarnya" : "Prices logged daily · Greater Jakarta"}</span>
+          <span>
+            {id
+              ? "Versi beta · harga yang tampil masih data contoh"
+              : "Beta · prices shown are sample data"}
+          </span>
         </div>
       </div>
       <div

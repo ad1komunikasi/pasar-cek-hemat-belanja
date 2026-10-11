@@ -3,9 +3,10 @@ import { AppShell, PageHeader, EmptyState } from "@/components/app-shell";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useState, useMemo } from "react";
-import { idr, deltaPct, fmtDate, fmtDateTime, fmtDateTimeWithSeconds } from "@/lib/format";
+import { idr, deltaPct, fmtDate, fmtDateTime } from "@/lib/format";
 import { useRealTimePrices } from "@/hooks/use-real-time-prices";
-import { getDeterministicBenchmarkPrices } from "@/lib/benchmark";
+import { getDeterministicBenchmarkPrices, isSimulatedSource } from "@/lib/benchmark";
+import { DataNotice } from "@/components/data-notice";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -21,8 +22,6 @@ import {
   Minus,
   Search,
   Calendar as CalendarIcon,
-  Database,
-  ExternalLink,
   Heart,
   TrendingUp,
   Crown,
@@ -237,7 +236,7 @@ function PricesPage() {
       let query = supabase
         .from("product_prices")
         .select(
-          "id, price, recorded_at, created_at, product_id, market_id, product:products(id,name,category,unit), market:markets(id,name,city)",
+          "id, price, recorded_at, created_at, source, product_id, market_id, product:products(id,name,category,unit), market:markets(id,name,city)",
         )
         .eq("recorded_at", dateToUse);
       if (marketId !== "all") query = query.eq("market_id", marketId);
@@ -283,7 +282,7 @@ function PricesPage() {
         return bp; // benchmark price
       });
 
-      const isBenchmark = mergedPrices.some((r: any) => r.source === "SP2KP Kemendag");
+      const isBenchmark = mergedPrices.some((r: any) => isSimulatedSource(r.source));
 
       // Query yesterday's prices
       const yresQuery = supabase
@@ -328,10 +327,7 @@ function PricesPage() {
   });
 
   const activeDate = (prices?.dateUsed ?? selectedDate) || today;
-  const { prices: livePrices, lastUpdated: liveLastUpdated } = useRealTimePrices(
-    prices?.list,
-    activeDate,
-  );
+  const { prices: livePrices } = useRealTimePrices(prices?.list, activeDate);
   const pricesList = livePrices;
   const categories = Array.from(new Set(pricesList.map((p: any) => p.product.category)));
 
@@ -340,8 +336,6 @@ function PricesPage() {
       (category === "all" || p.product.category === category) &&
       (!q || p.product.name.toLowerCase().includes(q.toLowerCase())),
   );
-
-  const lastUpdatedTimestamp = liveLastUpdated;
 
   return (
     <AppShell>
@@ -416,46 +410,7 @@ function PricesPage() {
       </div>
 
       {pricesList.length > 0 && (
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-lg bg-[var(--color-gray-50)] p-4 border border-[var(--color-gray-100)] text-xs text-[var(--color-gray-700)]">
-          <div className="flex items-center gap-1.5 font-medium">
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[var(--color-success)] opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-[var(--color-success)]"></span>
-            </span>
-            <span className="flex items-center gap-1">
-              <Database className="h-3.5 w-3.5 text-[var(--color-brand-blue)]" />
-              {prices?.isBenchmark ? (
-                <span className="flex items-center gap-1">
-                  Terintegrasi Acuan Online
-                  <a
-                    href="https://sp2kp.kemendag.go.id/"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="font-bold underline text-[var(--color-brand-blue)] hover:text-[var(--color-brand-green)] flex items-center gap-0.5"
-                  >
-                    SP2KP Kemendag <ExternalLink className="h-3 w-3 inline" />
-                  </a>
-                </span>
-              ) : (
-                "Terhubung ke Database Utama (Real-Time)"
-              )}
-            </span>
-          </div>
-          <div className="text-[var(--color-gray-500)]">
-            Tanggal Data:{" "}
-            <strong className="text-[var(--color-brand-blue)] font-bold">
-              {fmtDate(activeDate)}
-            </strong>
-            {lastUpdatedTimestamp && (
-              <span className="ml-2 pl-2 border-l border-[var(--color-gray-300)]">
-                Update Real-Time:{" "}
-                <strong className="text-[var(--color-brand-green)] font-bold">
-                  {fmtDateTimeWithSeconds(lastUpdatedTimestamp)}
-                </strong>
-              </span>
-            )}
-          </div>
-        </div>
+        <DataNotice simulated={!!prices?.isBenchmark} date={activeDate} className="mb-4" />
       )}
 
       <div className="overflow-hidden rounded-lg border border-[var(--color-gray-100)] bg-white">

@@ -13,9 +13,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { idr, fmtDateTimeWithSeconds, fmtDate } from "@/lib/format";
+import { idr, fmtDate } from "@/lib/format";
 import { useRealTimePrices } from "@/hooks/use-real-time-prices";
-import { getDeterministicBenchmarkPrices } from "@/lib/benchmark";
+import { getDeterministicBenchmarkPrices, isSimulatedSource } from "@/lib/benchmark";
+import { DataNotice } from "@/components/data-notice";
 import {
   Plus,
   Trash2,
@@ -273,7 +274,7 @@ function SmartBasketPage() {
 
       const { data } = await supabase
         .from("product_prices")
-        .select("price,product_id,market_id,market:markets(id,name,city)")
+        .select("price,source,product_id,market_id,market:markets(id,name,city)")
         .eq("recorded_at", dateToUse)
         .in("product_id", productIds);
 
@@ -302,12 +303,14 @@ function SmartBasketPage() {
             price: Number(dbRow.price),
             product_id: bp.product_id,
             market: dbRow.market || bp.market,
+            source: dbRow.source as string | null,
           };
         }
         return {
           price: bp.price,
           product_id: bp.product_id,
           market: bp.market,
+          source: bp.source as string | null,
         };
       });
 
@@ -315,10 +318,7 @@ function SmartBasketPage() {
     },
   });
 
-  const { prices: livePricesByMarket, lastUpdated: liveLastUpdated } = useRealTimePrices(
-    pricesByMarket,
-    selectedDate,
-  );
+  const { prices: livePricesByMarket } = useRealTimePrices(pricesByMarket, selectedDate);
 
   const recommendations = useMemo(() => {
     if (!items || !livePricesByMarket) return [];
@@ -462,27 +462,13 @@ function SmartBasketPage() {
             />
           </div>
         </div>
-        <div className="flex items-center gap-1.5 font-medium">
-          <span className="relative flex h-2 w-2">
-            {selectedDate === today && (
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[var(--color-success)] opacity-75"></span>
-            )}
-            <span
-              className={`relative inline-flex rounded-full h-2 w-2 ${selectedDate === today ? "bg-[var(--color-success)]" : "bg-amber-500"}`}
-            ></span>
-          </span>
-          {selectedDate === today ? (
-            <span>
-              Live Terupdate:{" "}
-              <strong className="text-[var(--color-brand-green)] font-bold">
-                {fmtDateTimeWithSeconds(liveLastUpdated)}
-              </strong>
-            </span>
-          ) : (
-            <span>Simulasi Arsip Historis ({fmtDate(selectedDate)})</span>
-          )}
-        </div>
       </div>
+
+      <DataNotice
+        simulated={(livePricesByMarket ?? []).some((r: any) => isSimulatedSource(r.source))}
+        date={selectedDate}
+        className="mb-6"
+      />
 
       <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
         <div className="rounded-lg border border-[var(--color-gray-100)] bg-white @container">

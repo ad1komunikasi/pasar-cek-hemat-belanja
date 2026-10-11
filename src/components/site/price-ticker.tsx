@@ -28,7 +28,11 @@ export function PriceTicker({ className }: { className?: string }) {
                 !down && !up && "text-white/45",
               )}
             >
-              {down ? "▼" : up ? "▲" : "■"} {Math.abs(b.change * 100).toFixed(1).replace(".", ",")}%
+              {down ? "▼" : up ? "▲" : "■"}{" "}
+              {Math.abs(b.change * 100)
+                .toFixed(1)
+                .replace(".", ",")}
+              %
             </span>
           </li>
         );
@@ -43,6 +47,9 @@ export function PriceTicker({ className }: { className?: string }) {
         className,
       )}
     >
+      <span className="absolute inset-y-0 left-0 z-10 flex items-center bg-[#0f1d47] pl-4 pr-3 text-turmeric">
+        DATA CONTOH
+      </span>
       <div className="flex w-max animate-ticker group-hover:[animation-play-state:paused]">
         {row()}
         {row(true)}

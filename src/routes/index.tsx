@@ -83,13 +83,8 @@ export const Route = createFileRoute("/")({
           },
           description:
             "Aplikasi cek harga sembako terbaru dan bandingkan antar pasar terdekat untuk belanja lebih hemat.",
-          aggregateRating: {
-            "@type": "AggregateRating",
-            ratingValue: "4.8",
-            ratingCount: "1000",
-          },
           featureList: [
-            "Harga sembako real-time",
+            "Harga sembako per pasar",
             "Bandingkan harga antar pasar",
             "Notifikasi harga turun",
             "Daftar belanja pintar",
@@ -157,8 +152,7 @@ function PrimaryButton({
       href={href}
       className={cn(
         "group inline-flex h-12 items-center gap-2 rounded-md px-5 text-[0.95rem] font-medium transition-[background-color,transform] duration-200 active:translate-y-px",
-        tone === "tarp" &&
-          "bg-tarp text-primary-foreground hover:bg-tarp-ink dark:hover:bg-leaf",
+        tone === "tarp" && "bg-tarp text-primary-foreground hover:bg-tarp-ink dark:hover:bg-leaf",
         tone === "paper" && "bg-[#f4efe4] text-[#0f1d47] hover:bg-white",
         tone === "turmeric" && "bg-turmeric text-[#2a1d03] hover:bg-[#f2bf4d]",
         className,
@@ -170,7 +164,15 @@ function PrimaryButton({
   );
 }
 
-function SectionLabel({ n, children, className }: { n: string; children: ReactNode; className?: string }) {
+function SectionLabel({
+  n,
+  children,
+  className,
+}: {
+  n: string;
+  children: ReactNode;
+  className?: string;
+}) {
   return (
     <div className={cn("eyebrow flex items-center gap-3 text-foreground/55", className)}>
       <span className="text-chili">{n}</span>
@@ -266,7 +268,15 @@ function Snapshot({
 
 /* ---------------- Hero ---------------- */
 
-const HERO_PICKS = ["Cabai Rawit", "Cabai Merah", "Daging Ayam", "Telur Ayam", "Bawang Merah", "Bawang Putih", "Beras Premium"];
+const HERO_PICKS = [
+  "Cabai Rawit",
+  "Cabai Merah",
+  "Daging Ayam",
+  "Telur Ayam",
+  "Bawang Merah",
+  "Bawang Putih",
+  "Beras Premium",
+];
 
 function Hero() {
   const { user } = useAuth();
@@ -290,7 +300,6 @@ function Hero() {
   }, [pinned, picks.length]);
 
   const board = picks[active] ?? boards[0];
-  const spread = lead ? lead.max - lead.min : 0;
   const marketCount = new Set(boards.flatMap((b) => b.quotes.map((q) => q.market))).size;
 
   return (
@@ -307,41 +316,39 @@ function Hero() {
           </div>
 
           <h1 className="display-xl mt-7 text-[clamp(2.75rem,6vw,5.1rem)] text-foreground animate-rise [animation-delay:80ms]">
-            {lead ? (
-              lang === "id" ? (
-                <>
-                  {lead.name} yang sama, beda{" "}
-                  <span className="relative inline-block whitespace-nowrap text-chili">
-                    {rupiah(spread)}
-                    <Scribble className="text-turmeric" />
-                  </span>{" "}
-                  sekilo.
-                </>
-              ) : (
-                <>
-                  Same {lead.name.toLowerCase()}.{" "}
-                  <span className="relative inline-block whitespace-nowrap text-chili">
-                    {rupiah(spread)}
-                    <Scribble className="text-turmeric" />
-                  </span>{" "}
-                  apart per kilo.
-                </>
-              )
+            {lang === "id" ? (
+              <>
+                Cabai yang sama, harganya bisa beda{" "}
+                <span className="relative inline-block whitespace-nowrap text-chili">
+                  ribuan rupiah
+                  <Scribble className="text-turmeric" />
+                </span>{" "}
+                sekilo.
+              </>
             ) : (
-              tx("Cek harga dulu, baru ke pasar.", "Check prices first, then go.")
+              <>
+                The same chili can cost{" "}
+                <span className="relative inline-block whitespace-nowrap text-chili">
+                  thousands
+                  <Scribble className="text-turmeric" />
+                </span>{" "}
+                more a kilo next door.
+              </>
             )}
           </h1>
 
           <p className="mt-8 max-w-[34rem] text-lg leading-relaxed text-foreground/70 animate-rise [animation-delay:160ms]">
             {tx(
-              `Itu selisih antara ${lead ? lead.quotes[0].market : "satu pasar"} dan ${lead ? lead.quotes[lead.quotes.length - 1].market : "pasar lain"} di catatan terakhir kami. PasarCek mencatat harga sembako di pasar sekitar Anda setiap hari, supaya Anda tahu harus belanja di mana sebelum keluar rumah.`,
-              `That's the gap between ${lead ? lead.quotes[0].market : "one market"} and ${lead ? lead.quotes[lead.quotes.length - 1].market : "another"} in our latest log. PasarCek logs staple prices at the markets near you every day, so you know where to shop before you leave the house.`,
+              "PasarCek membandingkan harga sembako antar pasar di sekitar Anda, supaya Anda tahu harus belanja di mana sebelum keluar rumah. Versi beta: angka di papan harga masih data contoh selama integrasi sumber harga resmi disiapkan.",
+              "PasarCek compares staple prices across the markets near you, so you know where to shop before you leave the house. Beta: the numbers on the board are sample data while we connect an official price source.",
             )}
           </p>
 
           <div className="mt-10 flex flex-wrap items-center gap-x-6 gap-y-4 animate-rise [animation-delay:240ms]">
             <PrimaryButton href={user ? "/dashboard" : "/auth?tab=register"}>
-              {user ? tx("Buka papan harga", "Open price board") : tx("Mulai cek harga — gratis", "Start checking — free")}
+              {user
+                ? tx("Buka papan harga", "Open price board")
+                : tx("Mulai cek harga — gratis", "Start checking — free")}
             </PrimaryButton>
             <a
               href="#cara-kerja"
@@ -354,9 +361,9 @@ function Hero() {
 
           <dl className="mt-14 grid max-w-lg grid-cols-3 border-t border-rule pt-5 animate-rise [animation-delay:320ms]">
             {[
-              [String(marketCount || 6), tx("pasar dipantau", "markets tracked")],
+              [String(marketCount || 6), tx("pasar", "markets")],
               [String(boards.length || 20), tx("komoditas", "staples")],
-              [tx("Harian", "Daily"), tx("pembaruan", "updates")],
+              ["Beta", tx("data masih contoh", "sample data for now")],
             ].map(([v, l]) => (
               <div key={l}>
                 <dt className="font-display text-3xl font-semibold tracking-tight">{v}</dt>
@@ -425,7 +432,7 @@ function PriceBoard({
           </span>
           <span className="eyebrow flex items-center gap-1.5 text-foreground/55">
             <span className="h-1.5 w-1.5 rounded-full bg-leaf" />
-            {tx("dicatat", "logged")} {recordedLabel(b.recordedAt, lang)}
+            {tx("data contoh", "sample data")} · {recordedLabel(b.recordedAt, lang)}
           </span>
         </div>
 
@@ -459,7 +466,12 @@ function PriceBoard({
               >
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">
-                    <span className={cn("truncate text-[0.95rem]", isBest ? "font-semibold" : "text-foreground/80")}>
+                    <span
+                      className={cn(
+                        "truncate text-[0.95rem]",
+                        isBest ? "font-semibold" : "text-foreground/80",
+                      )}
+                    >
                       {q.market}
                     </span>
                     {isBest && !compact && (
@@ -472,13 +484,22 @@ function PriceBoard({
                     <div
                       className={cn(
                         "h-full rounded-full transition-[width] duration-700 ease-out",
-                        isBest ? "bg-leaf" : i === b.quotes.length - 1 ? "bg-chili/80" : "bg-foreground/25",
+                        isBest
+                          ? "bg-leaf"
+                          : i === b.quotes.length - 1
+                            ? "bg-chili/80"
+                            : "bg-foreground/25",
                       )}
                       style={{ width: `${w}%` }}
                     />
                   </div>
                 </div>
-                <span className={cn("font-mono text-[0.95rem] tabular", isBest && "font-bold text-leaf")}>
+                <span
+                  className={cn(
+                    "font-mono text-[0.95rem] tabular",
+                    isBest && "font-bold text-leaf",
+                  )}
+                >
                   {rupiah(q.price)}
                 </span>
               </li>
@@ -488,7 +509,9 @@ function PriceBoard({
 
         <figcaption className="flex items-end justify-between gap-4 rounded-b-[14px] border-t border-rule bg-secondary/60 px-5 py-4">
           <div>
-            <div className="eyebrow text-foreground/50">{tx("Selisih termurah–termahal", "Cheapest-to-priciest gap")}</div>
+            <div className="eyebrow text-foreground/50">
+              {tx("Selisih termurah–termahal", "Cheapest-to-priciest gap")}
+            </div>
             <div className="mt-1 font-display text-2xl font-semibold tracking-tight">
               {rupiah(b.max - b.min)}
               <span className="ml-2 font-mono text-sm font-normal text-chili">
@@ -500,7 +523,10 @@ function PriceBoard({
             {boards.map((x, i) => (
               <span
                 key={x.name}
-                className={cn("h-1 rounded-full transition-all duration-500", i === active ? "w-6 bg-foreground" : "w-2 bg-foreground/20")}
+                className={cn(
+                  "h-1 rounded-full transition-all duration-500",
+                  i === active ? "w-6 bg-foreground" : "w-2 bg-foreground/20",
+                )}
               />
             ))}
           </div>
@@ -531,7 +557,11 @@ const WEEKLY: [name: string, qty: number][] = [
 
 function basketTotals(boards: CommodityBoard[], items: [string, number][]) {
   const markets = new Set(boards.flatMap((b) => b.quotes.map((q) => q.market)));
-  const out: { market: string; total: number; lines: { name: string; qty: number; unit: string; cost: number }[] }[] = [];
+  const out: {
+    market: string;
+    total: number;
+    lines: { name: string; qty: number; unit: string; cost: number }[];
+  }[] = [];
   for (const market of markets) {
     let total = 0;
     const lines = [];
@@ -579,28 +609,28 @@ function Receipt({
       )}
     >
       <div className="receipt-edge bg-[#fdfbf6] px-6 pb-10 pt-6 font-mono text-[12.5px] text-[#1a2033] dark:bg-[#ece7da]">
-      <div className="text-center">
-        <div className="font-bold uppercase tracking-[0.2em]">{market}</div>
-        <div className="mt-1 text-[10.5px] uppercase tracking-[0.18em] text-[#1a2033]/55">
-          {tx("belanja mingguan", "weekly shop")}
+        <div className="text-center">
+          <div className="font-bold uppercase tracking-[0.2em]">{market}</div>
+          <div className="mt-1 text-[10.5px] uppercase tracking-[0.18em] text-[#1a2033]/55">
+            {tx("belanja mingguan", "weekly shop")}
+          </div>
         </div>
-      </div>
-      <div className="my-4 border-t border-dashed border-[#1a2033]/30" />
-      <ul className="space-y-1.5">
-        {lines.map((l) => (
-          <li key={l.name} className="flex justify-between gap-3">
-            <span className="truncate">
-              {l.name} <span className="text-[#1a2033]/50">{qty(l.qty, l.unit)}</span>
-            </span>
-            <span className="tabular">{new Intl.NumberFormat("id-ID").format(l.cost)}</span>
-          </li>
-        ))}
-      </ul>
-      <div className="my-4 border-t border-dashed border-[#1a2033]/30" />
-      <div className="flex justify-between text-[15px] font-bold">
-        <span>TOTAL</span>
-        <span className="tabular">{rupiah(total)}</span>
-      </div>
+        <div className="my-4 border-t border-dashed border-[#1a2033]/30" />
+        <ul className="space-y-1.5">
+          {lines.map((l) => (
+            <li key={l.name} className="flex justify-between gap-3">
+              <span className="truncate">
+                {l.name} <span className="text-[#1a2033]/50">{qty(l.qty, l.unit)}</span>
+              </span>
+              <span className="tabular">{new Intl.NumberFormat("id-ID").format(l.cost)}</span>
+            </li>
+          ))}
+        </ul>
+        <div className="my-4 border-t border-dashed border-[#1a2033]/30" />
+        <div className="flex justify-between text-[15px] font-bold">
+          <span>TOTAL</span>
+          <span className="tabular">{rupiah(total)}</span>
+        </div>
       </div>
       {tone === "best" && (
         <div className="absolute -right-3 -top-3 rotate-[8deg] bg-[#fdfbf6] rounded-sm border-2 border-[#127a79] px-2 py-1 text-[10px] font-bold uppercase tracking-[0.2em] text-[#127a79]">
@@ -648,7 +678,10 @@ function Problem() {
       <div className="mx-auto grid max-w-[1240px] grid-cols-1 gap-16 px-5 py-24 sm:px-8 md:py-32 lg:grid-cols-12 lg:gap-10">
         <div className="lg:col-span-6">
           <SectionLabel n="01">{tx("Masalahnya", "The problem")}</SectionLabel>
-          <h2 data-reveal className="mt-6 text-[clamp(2.2rem,4.6vw,3.9rem)] font-bold leading-[1.02]">
+          <h2
+            data-reveal
+            className="mt-6 text-[clamp(2.2rem,4.6vw,3.9rem)] font-bold leading-[1.02]"
+          >
             {tx(
               "Harga di pasar tidak pernah sama. Selama ini Anda hanya tidak melihatnya.",
               "Market prices are never the same. You just couldn't see it.",
@@ -677,8 +710,8 @@ function Problem() {
             <>
               <p data-reveal className="max-w-sm text-foreground/65 lg:ml-auto lg:text-right">
                 {tx(
-                  "Daftar belanja yang sama, dihitung dengan harga hari ini di dua pasar Jakarta:",
-                  "The same shopping list, priced today at two Jakarta markets:",
+                  "Ilustrasi: daftar belanja yang sama, dihitung dengan data contoh di dua pasar Jakarta.",
+                  "Illustration: the same shopping list, priced with sample data at two Jakarta markets.",
                 )}
               </p>
               <Snapshot
@@ -710,13 +743,20 @@ function Problem() {
                   style={{ ["--reveal-delay" as string]: "140ms" }}
                 />
               </div>
-              <div data-reveal className="mt-14 flex items-baseline justify-center gap-4 lg:justify-end">
-                <span className="eyebrow text-foreground/55">{tx("Selisih seminggu", "Weekly difference")}</span>
-                <span className="font-display text-5xl font-bold tracking-tight text-leaf">{rupiah(diff)}</span>
+              <div
+                data-reveal
+                className="mt-14 flex items-baseline justify-center gap-4 lg:justify-end"
+              >
+                <span className="eyebrow text-foreground/55">
+                  {tx("Contoh selisih seminggu", "Example weekly difference")}
+                </span>
+                <span className="font-display text-5xl font-bold tracking-tight text-leaf">
+                  {rupiah(diff)}
+                </span>
               </div>
               <p data-reveal className="mt-2 text-center text-sm text-foreground/50 lg:text-right">
                 {tx(
-                  `Kira-kira ${rupiah(diff * 52)} setahun, untuk satu keluarga.`,
+                  `Kira-kira ${rupiah(diff * 52)} setahun pada contoh ini.`,
                   `Roughly ${rupiah(diff * 52)} a year, for one household.`,
                 )}
               </p>
@@ -738,8 +778,8 @@ function Features() {
       icon: LineChart,
       title: tx("Harga hari ini", "Today's prices"),
       desc: tx(
-        "Beras, cabai, telur, ayam, minyak, bawang — dicatat dari pasar-pasar terdekat setiap pagi.",
-        "Rice, chili, eggs, chicken, oil, shallots — logged from nearby markets every morning.",
+        "Beras, cabai, telur, ayam, minyak, bawang — per pasar, lengkap dengan tanggal pencatatannya.",
+        "Rice, chili, eggs, chicken, oil, shallots — per market, each with the date it was recorded.",
       ),
       href: "/prices",
     },
@@ -796,7 +836,10 @@ function Features() {
         <div className="lg:col-span-4">
           <div className="lg:sticky lg:top-36">
             <SectionLabel n="02">{tx("Isinya", "What's inside")}</SectionLabel>
-            <h2 data-reveal className="mt-6 text-[clamp(2.2rem,4.2vw,3.5rem)] font-bold leading-[1.02]">
+            <h2
+              data-reveal
+              className="mt-6 text-[clamp(2.2rem,4.2vw,3.5rem)] font-bold leading-[1.02]"
+            >
               {tx("Enam alat untuk berhenti menebak.", "Six tools to stop guessing.")}
             </h2>
             <p data-reveal className="mt-6 max-w-sm leading-relaxed text-foreground/65">
@@ -810,7 +853,11 @@ function Features() {
 
         <ul className="border-t border-rule lg:col-span-8">
           {features.map((f, i) => (
-            <li key={f.href} data-reveal style={{ ["--reveal-delay" as string]: `${(i % 3) * 70}ms` }}>
+            <li
+              key={f.href}
+              data-reveal
+              style={{ ["--reveal-delay" as string]: `${(i % 3) * 70}ms` }}
+            >
               <a
                 href={user ? f.href : "/auth?tab=register"}
                 className="group grid grid-cols-[2.25rem_1fr_auto] items-start gap-x-5 border-b border-rule py-7 transition-colors sm:grid-cols-[3rem_14rem_1fr_auto] sm:items-center"
@@ -819,10 +866,15 @@ function Features() {
                   0{i + 1}
                 </span>
                 <h3 className="flex items-center gap-3 text-xl font-semibold tracking-tight sm:text-[1.35rem]">
-                  <f.icon className="h-5 w-5 shrink-0 text-tarp transition-transform duration-300 group-hover:-rotate-6" strokeWidth={1.75} />
+                  <f.icon
+                    className="h-5 w-5 shrink-0 text-tarp transition-transform duration-300 group-hover:-rotate-6"
+                    strokeWidth={1.75}
+                  />
                   {f.title}
                 </h3>
-                <p className="col-start-2 mt-2 leading-relaxed text-foreground/65 sm:col-start-3 sm:mt-0">{f.desc}</p>
+                <p className="col-start-2 mt-2 leading-relaxed text-foreground/65 sm:col-start-3 sm:mt-0">
+                  {f.desc}
+                </p>
                 <ArrowUpRight className="col-start-3 row-start-1 h-5 w-5 text-foreground/30 transition-all duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-foreground sm:col-start-4" />
               </a>
             </li>
@@ -840,15 +892,24 @@ function HowItWorks() {
   const steps = [
     [
       tx("Pilih area Anda", "Pick your area"),
-      tx("Izinkan lokasi, atau pilih kota dan pasar secara manual.", "Share your location, or pick a city and markets yourself."),
+      tx(
+        "Izinkan lokasi, atau pilih kota dan pasar secara manual.",
+        "Share your location, or pick a city and markets yourself.",
+      ),
     ],
     [
       tx("Lihat siapa termurah", "See who's cheapest"),
-      tx("Bandingkan harga hari ini untuk barang yang Anda butuhkan.", "Compare today's prices for the things you need."),
+      tx(
+        "Bandingkan harga hari ini untuk barang yang Anda butuhkan.",
+        "Compare today's prices for the things you need.",
+      ),
     ],
     [
       tx("Berangkat dengan rencana", "Leave with a plan"),
-      tx("Datang ke pasar yang tepat, dengan perkiraan total di tangan.", "Head to the right market with an estimated total in hand."),
+      tx(
+        "Datang ke pasar yang tepat, dengan perkiraan total di tangan.",
+        "Head to the right market with an estimated total in hand.",
+      ),
     ],
   ];
   return (
@@ -857,11 +918,20 @@ function HowItWorks() {
         <div className="flex flex-col justify-between gap-6 md:flex-row md:items-end">
           <div>
             <SectionLabel n="03">{tx("Cara kerja", "How it works")}</SectionLabel>
-            <h2 data-reveal className="mt-6 max-w-xl text-[clamp(2.2rem,4.2vw,3.5rem)] font-bold leading-[1.02]">
-              {tx("Tiga langkah, sebelum kopi pagi habis.", "Three steps, before your coffee's done.")}
+            <h2
+              data-reveal
+              className="mt-6 max-w-xl text-[clamp(2.2rem,4.2vw,3.5rem)] font-bold leading-[1.02]"
+            >
+              {tx(
+                "Tiga langkah, sebelum kopi pagi habis.",
+                "Three steps, before your coffee's done.",
+              )}
             </h2>
           </div>
-          <p data-reveal className="max-w-xs border-l-2 border-turmeric pl-4 leading-relaxed text-foreground/65">
+          <p
+            data-reveal
+            className="max-w-xs border-l-2 border-turmeric pl-4 leading-relaxed text-foreground/65"
+          >
             {tx(
               "Tanpa install. PasarCek berjalan langsung di browser HP Anda — buka, cek, berangkat.",
               "Nothing to install. PasarCek runs right in your phone's browser — open, check, go.",
@@ -869,9 +939,17 @@ function HowItWorks() {
           </p>
         </div>
         <ol className="relative mt-16 grid gap-12 md:grid-cols-3 md:gap-8">
-          <div aria-hidden className="absolute left-0 right-0 top-[2.1rem] hidden border-t border-dashed border-foreground/25 md:block" />
+          <div
+            aria-hidden
+            className="absolute left-0 right-0 top-[2.1rem] hidden border-t border-dashed border-foreground/25 md:block"
+          />
           {steps.map(([title, desc], i) => (
-            <li key={title} data-reveal style={{ ["--reveal-delay" as string]: `${i * 120}ms` }} className="relative">
+            <li
+              key={title}
+              data-reveal
+              style={{ ["--reveal-delay" as string]: `${i * 120}ms` }}
+              className="relative"
+            >
               <div className="relative inline-grid h-[4.2rem] w-[4.2rem] place-items-center rounded-full border border-rule bg-background font-display text-2xl font-bold">
                 {i + 1}
               </div>
@@ -925,8 +1003,14 @@ function SmartBasket() {
     setPicked((p) => (p.includes(n) ? p.filter((x) => x !== n) : [...p, n]));
 
   return (
-    <section id="smart-basket" className="grain relative overflow-hidden bg-[#0f1d47] text-[#f4efe4]">
-      <MarketField tone="light" className="opacity-70 [mask-image:linear-gradient(90deg,transparent,#000_30%,#000_70%,transparent)]" />
+    <section
+      id="smart-basket"
+      className="grain relative overflow-hidden bg-[#0f1d47] text-[#f4efe4]"
+    >
+      <MarketField
+        tone="light"
+        className="opacity-70 [mask-image:linear-gradient(90deg,transparent,#000_30%,#000_70%,transparent)]"
+      />
       <div className="relative z-10 mx-auto grid max-w-[1240px] grid-cols-1 gap-14 px-5 py-24 sm:px-8 md:py-32 lg:grid-cols-12 lg:gap-12">
         <div className="lg:col-span-5">
           <div className="eyebrow flex items-center gap-3 text-[#f4efe4]/55">
@@ -934,8 +1018,14 @@ function SmartBasket() {
             <span className="h-px w-8 bg-current opacity-40" />
             Smart Basket
           </div>
-          <h2 data-reveal className="mt-6 text-[clamp(2.2rem,4.4vw,3.7rem)] font-bold leading-[1.02]">
-            {tx("Bukan barang termurah. Pasar termurah.", "Not the cheapest item. The cheapest market.")}
+          <h2
+            data-reveal
+            className="mt-6 text-[clamp(2.2rem,4.4vw,3.7rem)] font-bold leading-[1.02]"
+          >
+            {tx(
+              "Bukan barang termurah. Pasar termurah.",
+              "Not the cheapest item. The cheapest market.",
+            )}
           </h2>
           <p data-reveal className="mt-6 max-w-md text-lg leading-relaxed text-[#f4efe4]/70">
             {tx(
@@ -944,7 +1034,12 @@ function SmartBasket() {
             )}
           </p>
           <div data-reveal className="mt-8">
-            <div className="eyebrow text-[#f4efe4]/45">{tx("Coba — ketuk untuk ubah daftar", "Try it — tap to edit the list")}</div>
+            <div className="eyebrow text-[#f4efe4]/45">
+              {tx(
+                "Coba — ketuk untuk ubah daftar (data contoh)",
+                "Try it — tap to edit the list (sample data)",
+              )}
+            </div>
             <div className="mt-4 flex flex-wrap gap-2">
               {available.map(([n, q]) => {
                 const on = picked.includes(n);
@@ -962,9 +1057,18 @@ function SmartBasket() {
                         : "border-white/15 text-[#f4efe4]/70 hover:border-white/40 hover:text-[#f4efe4]",
                     )}
                   >
-                    {on ? <Check className="h-3.5 w-3.5" strokeWidth={3} /> : <Plus className="h-3.5 w-3.5" />}
+                    {on ? (
+                      <Check className="h-3.5 w-3.5" strokeWidth={3} />
+                    ) : (
+                      <Plus className="h-3.5 w-3.5" />
+                    )}
                     {n}
-                    <span className={cn("font-mono text-[11px]", on ? "text-[#2a1d03]/60" : "text-[#f4efe4]/40")}>
+                    <span
+                      className={cn(
+                        "font-mono text-[11px]",
+                        on ? "text-[#2a1d03]/60" : "text-[#f4efe4]/40",
+                      )}
+                    >
                       {String(q).replace(".", ",")}
                       {unit}
                     </span>
@@ -976,9 +1080,14 @@ function SmartBasket() {
         </div>
 
         <div className="lg:col-span-7 lg:pl-8">
-          <div data-reveal className="rounded-[14px] border border-white/12 bg-white/[0.04] p-6 backdrop-blur-sm sm:p-8">
+          <div
+            data-reveal
+            className="rounded-[14px] border border-white/12 bg-white/[0.04] p-6 backdrop-blur-sm sm:p-8"
+          >
             <div className="flex items-baseline justify-between">
-              <span className="eyebrow text-[#f4efe4]/50">{tx("Total per pasar", "Total per market")}</span>
+              <span className="eyebrow text-[#f4efe4]/50">
+                {tx("Total per pasar", "Total per market")}
+              </span>
               <span className="font-mono text-xs text-[#f4efe4]/45">
                 {items.length} {tx("barang", "items")}
               </span>
@@ -989,8 +1098,16 @@ function SmartBasket() {
                 {totals.map((t, i) => {
                   const w = 30 + ((t.total - minTotal) / (maxTotal - minTotal || 1)) * 70;
                   return (
-                    <li key={t.market} className="grid grid-cols-[1fr_auto] items-center gap-x-4 gap-y-1.5 sm:grid-cols-[10.5rem_1fr_auto]">
-                      <span className={cn("truncate text-[0.95rem]", i === 0 ? "font-semibold text-turmeric" : "text-[#f4efe4]/75")}>
+                    <li
+                      key={t.market}
+                      className="grid grid-cols-[1fr_auto] items-center gap-x-4 gap-y-1.5 sm:grid-cols-[10.5rem_1fr_auto]"
+                    >
+                      <span
+                        className={cn(
+                          "truncate text-[0.95rem]",
+                          i === 0 ? "font-semibold text-turmeric" : "text-[#f4efe4]/75",
+                        )}
+                      >
                         {t.market}
                       </span>
                       <div className="order-last col-span-2 h-2 overflow-hidden rounded-full bg-white/8 sm:order-none sm:col-span-1 sm:h-2.5">
@@ -1002,7 +1119,12 @@ function SmartBasket() {
                           style={{ width: `${w}%` }}
                         />
                       </div>
-                      <span className={cn("font-mono text-sm tabular", i === 0 && "font-bold text-turmeric")}>
+                      <span
+                        className={cn(
+                          "font-mono text-sm tabular",
+                          i === 0 && "font-bold text-turmeric",
+                        )}
+                      >
                         {rupiah(t.total)}
                       </span>
                     </li>
@@ -1010,7 +1132,9 @@ function SmartBasket() {
                 })}
               </ul>
             ) : (
-              <p className="mt-8 text-[#f4efe4]/55">{tx("Pilih minimal satu barang.", "Pick at least one item.")}</p>
+              <p className="mt-8 text-[#f4efe4]/55">
+                {tx("Pilih minimal satu barang.", "Pick at least one item.")}
+              </p>
             )}
 
             <div className="mt-8 flex flex-col justify-between gap-6 border-t border-white/12 pt-6 sm:flex-row sm:items-end">
@@ -1022,7 +1146,10 @@ function SmartBasket() {
                   {rupiah(shown)}
                 </div>
                 <div className="mt-2 text-sm text-[#f4efe4]/50">
-                  {tx("dibanding pasar termahal untuk daftar ini", "versus the priciest market for this list")}
+                  {tx(
+                    "dibanding pasar termahal untuk daftar ini",
+                    "versus the priciest market for this list",
+                  )}
                 </div>
               </div>
               <PrimaryButton tone="turmeric" href={user ? "/smart-basket" : "/auth?tab=register"}>
@@ -1044,12 +1171,26 @@ function ForWhom() {
     <section className="border-t border-rule">
       <div className="mx-auto max-w-[1240px] px-5 py-24 sm:px-8 md:py-32">
         <SectionLabel n="05">{tx("Untuk siapa", "Who it's for")}</SectionLabel>
-        <p data-reveal className="mt-8 max-w-5xl font-display text-[clamp(1.9rem,4vw,3.4rem)] font-semibold leading-[1.12] tracking-[-0.03em] text-foreground/35">
+        <p
+          data-reveal
+          className="mt-8 max-w-5xl font-display text-[clamp(1.9rem,4vw,3.4rem)] font-semibold leading-[1.12] tracking-[-0.03em] text-foreground/35"
+        >
           {tx("Untuk ", "For ")}
-          <span className="text-foreground">{tx("ibu yang belanja tiap pagi", "the parent shopping every morning")}</span>,{" "}
-          <span className="text-foreground">{tx("anak kos di akhir bulan", "the student at month's end")}</span>,{" "}
-          <span className="text-foreground">{tx("pemilik warung yang kulakan tiap minggu", "the warung owner restocking weekly")}</span>
-          {tx(", dan siapa pun yang pernah pulang dari pasar lalu berpikir, ", ", and anyone who's come home from the market thinking, ")}
+          <span className="text-foreground">
+            {tx("ibu yang belanja tiap pagi", "the parent shopping every morning")}
+          </span>
+          ,{" "}
+          <span className="text-foreground">
+            {tx("anak kos di akhir bulan", "the student at month's end")}
+          </span>
+          ,{" "}
+          <span className="text-foreground">
+            {tx("pemilik warung yang kulakan tiap minggu", "the warung owner restocking weekly")}
+          </span>
+          {tx(
+            ", dan siapa pun yang pernah pulang dari pasar lalu berpikir, ",
+            ", and anyone who's come home from the market thinking, ",
+          )}
           <span className="relative whitespace-nowrap italic text-chili">
             {tx("“kok mahal, ya?”", "“why was that so expensive?”")}
           </span>
@@ -1065,7 +1206,7 @@ function Pricing() {
   const { user } = useAuth();
   const { tx } = useTx();
   const free = [
-    tx("Harga harian semua komoditas", "Daily prices for every staple"),
+    tx("Harga semua komoditas per pasar", "Prices for every staple, per market"),
     tx("Bandingkan pasar", "Compare markets"),
     tx("Smart Basket dasar", "Basic Smart Basket"),
     tx("3 alarm harga", "3 price alerts"),
@@ -1082,8 +1223,14 @@ function Pricing() {
       <div className="mx-auto grid max-w-[1240px] grid-cols-1 gap-14 px-5 py-24 sm:px-8 md:py-32 lg:grid-cols-12 lg:gap-10">
         <div className="lg:col-span-4">
           <SectionLabel n="06">{tx("Paket", "Plans")}</SectionLabel>
-          <h2 data-reveal className="mt-6 text-[clamp(2.2rem,4.2vw,3.5rem)] font-bold leading-[1.02]">
-            {tx("Gratis untuk dipakai. Murah untuk ditingkatkan.", "Free to use. Cheap to upgrade.")}
+          <h2
+            data-reveal
+            className="mt-6 text-[clamp(2.2rem,4.2vw,3.5rem)] font-bold leading-[1.02]"
+          >
+            {tx(
+              "Gratis untuk dipakai. Murah untuk ditingkatkan.",
+              "Free to use. Cheap to upgrade.",
+            )}
           </h2>
           <p data-reveal className="mt-6 max-w-sm leading-relaxed text-foreground/65">
             {tx(
@@ -1097,7 +1244,9 @@ function Pricing() {
           <div data-reveal className="flex flex-col rounded-[14px] border border-rule bg-card p-8">
             <div className="eyebrow text-foreground/55">{tx("Gratis", "Free")}</div>
             <div className="mt-5 font-display text-6xl font-bold tracking-tight">Rp0</div>
-            <p className="mt-2 text-foreground/60">{tx("Selamanya, tanpa kartu.", "Forever, no card.")}</p>
+            <p className="mt-2 text-foreground/60">
+              {tx("Selamanya, tanpa kartu.", "Forever, no card.")}
+            </p>
             <ul className="mt-8 flex-1 space-y-3 border-t border-rule pt-6">
               {free.map((f) => (
                 <li key={f} className="flex items-start gap-3">
@@ -1129,7 +1278,9 @@ function Pricing() {
               <span className="font-display text-6xl font-bold tracking-tight">Rp9.900</span>
               <span className="text-[#f4efe4]/55">/{tx("bulan", "month")}</span>
             </div>
-            <p className="relative z-10 mt-2 text-[#f4efe4]/65">{tx("Batalkan kapan saja.", "Cancel anytime.")}</p>
+            <p className="relative z-10 mt-2 text-[#f4efe4]/65">
+              {tx("Batalkan kapan saja.", "Cancel anytime.")}
+            </p>
             <ul className="relative z-10 mt-8 flex-1 space-y-3 border-t border-white/12 pt-6">
               {premium.map((f) => (
                 <li key={f} className="flex items-start gap-3">
@@ -1160,22 +1311,22 @@ function FAQ() {
     [
       tx("Apakah PasarCek benar-benar gratis?", "Is PasarCek really free?"),
       tx(
-        "Ya. Harga harian, perbandingan pasar, dan Smart Basket dasar gratis selamanya. Premium hanya untuk yang butuh alarm tanpa batas dan prediksi harga.",
-        "Yes. Daily prices, market comparison and basic Smart Basket are free forever. Premium is for unlimited alerts and price forecasts.",
+        "Ya. Papan harga, perbandingan pasar, dan Smart Basket dasar gratis selamanya. Premium hanya untuk yang butuh alarm tanpa batas dan prediksi harga.",
+        "Yes. The price board, market comparison and basic Smart Basket are free forever. Premium is for unlimited alerts and price forecasts.",
       ),
     ],
     [
       tx("Dari mana data harganya?", "Where do the prices come from?"),
       tx(
-        "Dari mitra pasar tradisional, surveyor lokal yang terverifikasi, dan laporan komunitas yang kami periksa ulang.",
-        "From partner traditional markets, verified local surveyors, and community reports that we cross-check.",
+        "Saat ini PasarCek masih versi beta dan harga yang tampil adalah data contoh (simulasi), ditandai jelas di setiap halaman harga. Kami sedang menyiapkan integrasi dengan sumber harga resmi pemerintah; setelah aktif, sumber dan tanggal pencatatan akan tercantum di setiap harga.",
+        "PasarCek is in beta and the prices shown are sample (simulated) data, clearly marked on every price page. We're preparing an integration with an official government price source; once live, the source and recording date will be shown with every price.",
       ),
     ],
     [
       tx("Seberapa sering harga diperbarui?", "How often are prices updated?"),
       tx(
-        "Setiap hari. Komoditas yang bergerak cepat seperti cabai dan bawang bisa diperbarui beberapa kali sehari.",
-        "Every day. Fast movers like chili and shallots can update several times a day.",
+        "Mengikuti jadwal sumber resmi yang nanti kami gunakan — umumnya harian pada hari kerja. Setiap harga selalu ditampilkan bersama tanggal pencatatannya, jadi Anda tahu seberapa baru datanya.",
+        "It will follow the schedule of the official source we connect — typically daily on working days. Every price always shows the date it was recorded, so you know how fresh it is.",
       ),
     ],
     [
@@ -1205,7 +1356,10 @@ function FAQ() {
       <div className="mx-auto grid max-w-[1240px] grid-cols-1 gap-12 px-5 py-24 sm:px-8 md:py-32 lg:grid-cols-12 lg:gap-10">
         <div className="lg:col-span-4">
           <SectionLabel n="07">FAQ</SectionLabel>
-          <h2 data-reveal className="mt-6 text-[clamp(2.2rem,4.2vw,3.5rem)] font-bold leading-[1.02]">
+          <h2
+            data-reveal
+            className="mt-6 text-[clamp(2.2rem,4.2vw,3.5rem)] font-bold leading-[1.02]"
+          >
             {tx("Yang sering ditanyakan.", "Asked often.")}
           </h2>
         </div>
@@ -1246,7 +1400,9 @@ function FinalCTA() {
       if (error) {
         toast.error("Gagal mendaftar antrean prioritas: " + error.message);
       } else {
-        toast.success("Terima kasih! Akun Anda telah dimasukkan ke daftar prioritas antrean PasarCek.");
+        toast.success(
+          "Terima kasih! Akun Anda telah dimasukkan ke daftar prioritas antrean PasarCek.",
+        );
       }
     } else {
       localStorage.setItem("waitlist_priority_signup", "true");
@@ -1259,11 +1415,17 @@ function FinalCTA() {
 
   return (
     <section id="cta" className="relative overflow-hidden border-t border-rule">
-      <MarketField density={26} className="[mask-image:radial-gradient(ellipse_60%_80%_at_30%_100%,#000_20%,transparent_100%)]" />
+      <MarketField
+        density={26}
+        className="[mask-image:radial-gradient(ellipse_60%_80%_at_30%_100%,#000_20%,transparent_100%)]"
+      />
       <div className="relative mx-auto grid max-w-[1240px] grid-cols-1 items-center gap-16 px-5 py-24 sm:px-8 md:py-32 lg:grid-cols-12 lg:gap-10">
         <div className="lg:col-span-7">
           <h2 data-reveal className="display-xl max-w-3xl text-[clamp(2.8rem,6.4vw,5.6rem)]">
-            {tx("Besok pagi, belanja di pasar yang tepat.", "Tomorrow morning, shop at the right market.")}
+            {tx(
+              "Besok pagi, belanja di pasar yang tepat.",
+              "Tomorrow morning, shop at the right market.",
+            )}
           </h2>
           <p data-reveal className="mt-7 max-w-lg text-lg leading-relaxed text-foreground/65">
             {tx(
@@ -1281,7 +1443,9 @@ function FinalCTA() {
               disabled={busy}
               className="inline-flex h-12 items-center rounded-md border border-foreground/20 px-5 text-[0.95rem] font-medium transition-colors hover:border-foreground disabled:opacity-50"
             >
-              {busy ? tx("Memproses…", "Working…") : tx("Gabung waitlist aplikasi", "Join the app waitlist")}
+              {busy
+                ? tx("Memproses…", "Working…")
+                : tx("Gabung waitlist aplikasi", "Join the app waitlist")}
             </button>
           </div>
         </div>

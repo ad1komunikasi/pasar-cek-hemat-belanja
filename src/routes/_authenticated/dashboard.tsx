@@ -395,8 +395,8 @@ function DashboardPage() {
           </div>
           <p className="mt-2 text-sm text-[var(--color-gray-500)] sm:text-base">
             {lang === "id"
-              ? "Pantau fluktuasi harga bahan pokok secara real-time dan kelola belanja hemat Anda."
-              : "Monitor real-time grocery price fluctuations and manage your savings budget."}
+              ? "Pantau harga bahan pokok antar pasar dan kelola belanja hemat Anda."
+              : "Track staple prices across markets and manage your savings budget."}
           </p>
         </div>
       </div>

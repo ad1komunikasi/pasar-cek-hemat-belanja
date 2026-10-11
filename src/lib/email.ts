@@ -227,7 +227,7 @@ export const EmailService = {
         <p>Halo, <strong>${recipientName}</strong>,</p>
         <p>Kami dengan senang hati menginformasikan bahwa akun Anda dengan email <strong>${recipientEmail}</strong> telah disetujui untuk menjadi <strong>Admin Dashboard PasarCek</strong> oleh Super Admin.</p>
         
-        <p>Anda sekarang dapat mengakses Panel Admin dan berkontribusi penuh untuk memantau harga, laporan, dan data pasar terdekat secara real-time.</p>
+        <p>Anda sekarang dapat mengakses Panel Admin dan berkontribusi penuh untuk memantau harga, laporan, dan data pasar terdekat.</p>
         
         <div style="margin: 25px 0; text-align: center;">
           <a href="${dashboardLink}" style="background-color: #1e3a8a; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">Masuk ke Admin Panel</a>

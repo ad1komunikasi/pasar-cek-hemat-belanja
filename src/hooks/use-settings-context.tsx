@@ -40,7 +40,7 @@ export const translations = {
     // Landing Page
     "landing.hero.title": "Belanja Sembako Hemat dengan Cek Harga Terdekat",
     "landing.hero.subtitle":
-      "PasarCek membantu keluarga Indonesia membandingkan harga kebutuhan pokok real-time di pasar tradisional dan modern terdekat. Hemat hingga 30% uang belanja Anda!",
+      "PasarCek membantu keluarga Indonesia membandingkan harga kebutuhan pokok di pasar tradisional dan modern terdekat, supaya tahu harus belanja di mana sebelum berangkat.",
     "landing.hero.cta": "Mulai Cek Harga — Gratis",
     "landing.hero.watch": "Lihat Cara Kerja",
     "landing.hero.users": "Telah dipercayai oleh 10,000+ ibu rumah tangga & pelaku UMKM",
@@ -119,7 +119,7 @@ export const translations = {
     // Landing Page
     "landing.hero.title": "Shop Smarter by Comparing Nearby Grocery Prices",
     "landing.hero.subtitle":
-      "PasarCek helps families compare real-time prices of basic commodities across nearby traditional and modern markets. Save up to 30% on your daily shopping budget!",
+      "PasarCek helps families compare staple prices across nearby traditional and modern markets, so they know where to shop before heading out.",
     "landing.hero.cta": "Compare Prices Now — Free",
     "landing.hero.watch": "How it works",
     "landing.hero.users": "Trusted by 10,000+ homemakers & small businesses",

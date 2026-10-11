@@ -23,7 +23,7 @@ export function PremiumUpgradeModal({
   const benefits = [
     {
       title: "Alert Harga Tanpa Batas",
-      desc: "Pantau harga komoditas penting di pasar favorit Anda secara real-time.",
+      desc: "Pantau harga komoditas penting di pasar favorit Anda tanpa batas jumlah alarm.",
     },
     {
       title: "Prediksi Harga AI",

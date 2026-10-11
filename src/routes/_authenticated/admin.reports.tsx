@@ -1432,9 +1432,8 @@ function AdminReports() {
                       <div className="space-y-4">
                         <div className="bg-blue-50 border border-blue-100 rounded-lg p-3 text-[11px] text-blue-900 leading-relaxed print:hidden">
                           <strong>💡 Info Konsultan:</strong> Laporan ini dirumuskan berdasarkan
-                          data real-time PasarCek oleh tim virtual Business Analyst, Marketing
-                          Insight Strategist, Consumer Insight, IT Consultant, dan Strategic
-                          Planner.
+                          data PasarCek oleh tim virtual Business Analyst, Marketing Insight
+                          Strategist, Consumer Insight, IT Consultant, dan Strategic Planner.
                         </div>
                         <div id="ai-report-print-area" className="prose max-w-none">
                           {renderMarkdown(reportText)}
